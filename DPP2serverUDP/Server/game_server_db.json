@@ -1,0 +1,30 @@
+{
+  "players": {},
+  "characters": {},
+  "world_data": {
+    "name": "Эквестрия",
+    "time": "12:00",
+    "weather": "солнечно",
+    "day": 1,
+    "online_players": 0,
+    "protocol": "udp",
+    "udp_port": 80
+  },
+  "gifct_settings": {
+    "gifct_enabled": {
+      "Gifct1": true,
+      "Gifct2": true
+    },
+    "gifct_configs": {
+      "Gifct1": "Основная способность",
+      "Gifct2": "Вторичная способность"
+    }
+  },
+  "server_stats": {
+    "total_players": 0,
+    "total_characters": 0,
+    "total_playtime": 0,
+    "start_time": "2025-12-10T22:11:15.639353",
+    "protocol": "udp"
+  }
+}

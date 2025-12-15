@@ -1,0 +1,54 @@
+{
+  "1": [
+    {
+      "id": "02ef6a0a-f312-4ba8-86b4-decf676a5abf",
+      "name": "1_персонаж",
+      "owner": "1",
+      "created": "2025-12-11T20:14:05.998060",
+      "level": 1,
+      "health": 100,
+      "position": {
+        "x": -1.9553818702697754,
+        "y": -0.3839249610900879,
+        "z": 0.0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "inventory": [],
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      }
+    }
+  ],
+  "2": [
+    {
+      "id": "aeab0260-a713-47a5-a5dc-8b63ea5a1b12",
+      "name": "2_персонаж",
+      "owner": "2",
+      "created": "2025-12-11T20:28:04.619614",
+      "level": 1,
+      "health": 100,
+      "position": {
+        "x": -1.143021583557129,
+        "y": -0.05865335464477539,
+        "z": 0.0
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "inventory": [],
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      }
+    }
+  ]
+}
