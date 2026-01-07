@@ -10,9 +10,9 @@ from PIL import Image, ImageTk
 
 # Пути к GIF-файлам для каждого пони
 PONY_GIFS = {
-    "Twilight Sparkle": "twilight.gif",
-    "Rainbow Dash": "rainbow.gif",
-    "Pinkie Pie": "pinkie.gif",
+    "Twilight Sparkle": "twilight.gif",  # для поняшек надо добавить возможность менять размер в настройках
+    "Rainbow Dash": "rainbow.gif",  # а так же перерисовать на них каталоги
+    "Pinkie Pie": "pinkie.gif", # идея от @agonistwarp. добавить возможность их кормимть (неизвестно чем), временные выноски (при нажатии на поняшку), облака напоминалки
     "Apple Jack": "applejack.gif",
     "Fluttershy": "fluttershy.gif",
     "Rarity": "rarity.gif",
@@ -90,7 +90,6 @@ def import_pony_class(pony_name):
         return None
 
 
-
 # Импортируем всех пони
 PONY_CLASSES = {}
 pony_names = [
@@ -128,6 +127,12 @@ class DynamicPonySelector:
         self.current_card_bg = saved_theme.get('card_color', '#454545')
         self.current_text_color = saved_theme.get('text_color', 'white')
         self.current_theme_name = saved_theme.get('theme_name', 'black')
+
+        # Настройки масштаба пони
+        self.current_scale = saved_theme.get('pony_scale', 0.95)  # масштаб по умолчанию 0.95
+        self.scale_options = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0,
+                              1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8,
+                              1.85, 1.9, 1.95, 2.0]
 
         # Настройки цвета контекстного меню - загружаем из сохраненной темы
         self.menu_bg_color = saved_theme.get('menu_bg_color', '#2d2d2d')
@@ -244,7 +249,8 @@ class DynamicPonySelector:
             'menu_bg_color': '#2d2d2d',
             'menu_fg_color': '#ffffff',
             'menu_active_bg': '#0078d7',
-            'menu_active_fg': '#ffffff'
+            'menu_active_fg': '#ffffff',
+            'pony_scale': 1.0
         }
 
     def save_theme(self):
@@ -258,7 +264,8 @@ class DynamicPonySelector:
                 'menu_bg_color': self.menu_bg_color,
                 'menu_fg_color': self.menu_fg_color,
                 'menu_active_bg': self.menu_active_bg,
-                'menu_active_fg': self.menu_active_fg
+                'menu_active_fg': self.menu_active_fg,
+                'pony_scale': self.current_scale
             }
 
             with open(self.config_file, 'w', encoding='utf-8') as f:
@@ -367,7 +374,7 @@ class DynamicPonySelector:
         self.root.destroy()
 
     def calculate_columns(self):
-        """Вычисляет количество колонок в зависимости от ширины окна"""
+        """Вычисляет количество колонок в зависимости от ширина окна"""
         container_width = self.container.winfo_width()
         if container_width < 300:
             return 2
@@ -504,14 +511,14 @@ class DynamicPonySelector:
             self.root.after(100, self.update_layout)
 
     def show_options(self):
-        """Показывает окно опций с выпадающим списком тем"""
+        """Показывает окно опций с выпадающим списком тем и ползунком масштаба"""
         # Закрываем предыдущее окно опций если оно открыто
         if hasattr(self, 'options_window') and self.options_window and self.options_window.winfo_exists():
             self.options_window.destroy()
 
         self.options_window = tk.Toplevel(self.root)
         self.options_window.title("Options")
-        self.options_window.geometry("300x250")
+        self.options_window.geometry("350x320")
         self.options_window.configure(bg=self.current_bg)
         self.options_window.resizable(False, False)
 
@@ -540,6 +547,34 @@ class DynamicPonySelector:
 
         # Создаем кастомный выпадающий список для темы
         self.create_theme_dropdown(dropdown_frame)
+
+        # Раздел Pony Scale
+        scale_section = tk.LabelFrame(main_frame, text=" Pony Scale ", font=('Arial', 11, 'bold'),
+                                      fg=self.current_text_color, bg=self.current_bg, bd=1, relief='solid')
+        scale_section.pack(fill='x', pady=(0, 15))
+
+        # Фрейм для ползунка масштаба
+        scale_slider_frame = tk.Frame(scale_section, bg=self.current_bg)
+        scale_slider_frame.pack(fill='x', pady=15, padx=10)
+
+        # Создаем кастомный ползунок для масштаба
+        self.create_scale_slider(scale_slider_frame)
+
+        # Кнопка применения масштаба к запущенным пони
+        apply_scale_btn = tk.Button(
+            main_frame,
+            text="Apply Scale to Running Ponies",
+            command=self.apply_scale_to_running_ponies,
+            font=('Arial', 10),
+            bg=self.current_card_bg,
+            fg=self.current_text_color,
+            padx=15,
+            pady=8,
+            relief='flat',
+            bd=0,
+            highlightthickness=0
+        )
+        apply_scale_btn.pack(fill='x', pady=(10, 0))
 
     def create_theme_dropdown(self, parent):
         """Создает кастомный выпадающий список для темы"""
@@ -642,7 +677,126 @@ class DynamicPonySelector:
         selected_label.bind('<Button-1>', toggle_dropdown)
         self.arrow_label.bind('<Button-1>', toggle_dropdown)
 
-    def select_theme(self, bg_color, card_color, text_color, theme_name):
+    def create_scale_slider(self, parent):
+        """Создает ползунок для масштаба пони с процентами"""
+        # Цвета в зависимости от темы
+        if self.current_theme_name == "white":
+            bg_color = '#f0f0f0'
+            fg_color = '#000000'
+            trough_color = '#c0c0c0'
+            active_color = '#0078d7'
+            mark_color = '#a0a0a0'
+        elif self.current_theme_name == "gray":
+            bg_color = '#707070'
+            fg_color = '#ffffff'
+            trough_color = '#909090'
+            active_color = '#0078d7'
+            mark_color = '#b0b0b0'
+        else:  # black
+            bg_color = '#444444'
+            fg_color = '#ffffff'
+            trough_color = '#666666'
+            active_color = '#0078d7'
+            mark_color = '#888888'
+
+        # Основной контейнер
+        container = tk.Frame(parent, bg=bg_color)
+        container.pack(fill='x', pady=5)
+
+        # Метка с текущим значением
+        scale_percent = int(self.current_scale * 100)
+        self.scale_label = tk.Label(
+            container,
+            text=f"Scale: {scale_percent}%",
+            font=('Arial', 10, 'bold'),
+            fg=fg_color,
+            bg=bg_color
+        )
+        self.scale_label.pack(pady=(0, 5))
+
+        # Слайдер
+        slider_frame = tk.Frame(container, bg=bg_color)
+        slider_frame.pack(fill='x', pady=5)
+
+        # Находим индекс текущего значения
+        current_index = 0
+        if self.current_scale in self.scale_options:
+            current_index = self.scale_options.index(self.current_scale)
+        else:
+            # Находим ближайшее значение
+            closest_val = min(self.scale_options, key=lambda x: abs(x - self.current_scale))
+            current_index = self.scale_options.index(closest_val)
+            self.current_scale = closest_val
+
+        # Создаем ползунок
+        self.scale_slider = tk.Scale(
+            slider_frame,
+            from_=0,
+            to=len(self.scale_options) - 1,
+            orient='horizontal',
+            length=250,
+            showvalue=0,
+            bg=bg_color,
+            fg=fg_color,
+            troughcolor=trough_color,
+            activebackground=active_color,
+            highlightthickness=0,
+            sliderrelief='flat',
+            resolution=1
+        )
+        self.scale_slider.set(current_index)
+        self.scale_slider.pack(fill='x', padx=5)
+
+        # Обработчик движения ползунка
+        def on_slider_move(val):
+            try:
+                index = int(float(val))
+                if 0 <= index < len(self.scale_options):
+                    self.current_scale = self.scale_options[index]
+                    scale_percent = int(self.current_scale * 100)
+                    self.scale_label.config(text=f"Scale: {scale_percent}%")
+            except Exception as e:
+                print(f"Ошибка движения ползунка: {e}")
+
+        self.scale_slider.config(command=on_slider_move)
+
+        # Метки под слайдером
+        marks_frame = tk.Frame(container, bg=bg_color)
+        marks_frame.pack(fill='x', pady=(5, 0))
+
+        # Показываем ключевые значения в процентах
+        key_values = [0.25, 0.5, 1.0, 1.5, 2.0]  # Меньше значений для лучшей читаемости
+
+        for value in key_values:
+            if value in self.scale_options:
+                index = self.scale_options.index(value)
+                total = len(self.scale_options) - 1
+                position = (index / total) * 100 if total > 0 else 0
+
+                # Преобразуем в проценты
+                percent_value = int(value * 100)
+
+                label = tk.Label(
+                    marks_frame,
+                    text=f"{percent_value}%",
+                    font=('Arial', 8),
+                    fg=mark_color,
+                    bg=bg_color
+                )
+                # Используем place с относительным позиционированием
+                label.place(relx=position / 100, x=-10, anchor='n')
+
+        # Автоматическое сохранение при отпускании
+        def save_on_release(event):
+            self.save_theme()
+            scale_percent = int(self.current_scale * 100)
+            print(f"✅ Масштаб сохранен: {scale_percent}%")
+
+        self.scale_slider.bind('<ButtonRelease-1>', save_on_release)
+
+        return self.scale_slider
+
+    def select_theme(self, bg_color, card_color, text_color, theme_name=None):
         """Выбирает тему из dropdown"""
         self.selected_color_var.set(theme_name)
 
@@ -685,6 +839,28 @@ class DynamicPonySelector:
                     print(f"✅ Обновлены цвета меню для {pony_name}")
             except Exception as e:
                 print(f"❌ Ошибка обновления цветов меню для {pony_name}: {e}")
+
+    def apply_scale_to_running_ponies(self):
+        """Применяет текущий масштаб ко всем запущенным пони"""
+        scale_percent = int(self.current_scale * 100)
+        print(f"📏 Применение масштаба {scale_percent}% к запущенным пони...")
+
+        # Обновляем масштаб для окон, запущенных напрямую
+        for pony_name, window_info in self.running_windows.items():
+            try:
+                if hasattr(window_info["app"], 'change_scale'):
+                    window_info["app"].change_scale(self.current_scale)
+                    print(f"✅ Масштаб обновлен для {pony_name}")
+                else:
+                    print(f"⚠️ Пони {pony_name} не поддерживает изменение масштаба")
+            except Exception as e:
+                print(f"❌ Ошибка обновления масштаба для {pony_name}: {e}")
+
+        print("✅ Масштаб применен к запущенным пони")
+
+        # Закрываем окно опций
+        if self.options_window and self.options_window.winfo_exists():
+            self.options_window.destroy()
 
     def change_theme(self, bg_color, card_color, text_color, theme_name=None):
         """Меняет цветовую схему приложения"""
@@ -787,9 +963,9 @@ class DynamicPonySelector:
             pony_window.overrideredirect(False)
             pony_window.resizable(True, True)
 
-            # Запускаем пони в этом окне
+            # Запускаем пони в этом окне с текущим масштабом
             pony_class = PONY_CLASSES[pony["name"]]
-            pony_app = pony_class(pony_window)
+            pony_app = pony_class(pony_window, self.current_scale)  # Передаем масштаб
 
             # СОЗДАЕМ ФУНКЦИЮ ДЛЯ ВОЗВРАТА К ГЛАВНОМУ ОКНУ
             def return_to_main_callback():
