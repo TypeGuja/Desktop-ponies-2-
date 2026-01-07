@@ -21,11 +21,11 @@ class Colors:
         'CARD_BG': '#151522',  # Фон карточек/кнопок
         'TEXT_MAIN': '#ffffff',  # Основной текст (белый)
         'ACCENT': '#00d4ff',  # Акцентный цвет (голубой)
-        'BTN_CLIENT': ['#00ff88', '#00cc66'],  # Зеленый
-        'BTN_SERVER': ['#00d4ff', '#0099cc'],  # Голубой
-        'BTN_ALL': ['#ff6b9d', '#ff4757'],  # Розовый/красный
-        'BTN_CLIENT_OFFLINE': ['#8888aa', '#666688'],  # Серо-синий
-        'BTN_SETTINGS': ['#9d4edd', '#7a36b3'],  # Фиолетовый
+        'BTN_CLIENT': '#00ff88',  # Зеленый
+        'BTN_SERVER': '#00d4ff',  # Голубой
+        'BTN_ALL': '#ff6b9d',  # Розовый/красный
+        'BTN_CLIENT_OFFLINE': '#8888aa',  # Серо-синий
+        'BTN_SETTINGS': '#9d4edd',  # Фиолетовый
         'WINDOW_BG': '#0a0a14',  # Фон окна
         'TITLE_BAR': '#05050a',  # Фон заголовка
         'TITLE_TEXT': '#ffffff',  # Текст заголовка
@@ -41,11 +41,11 @@ class Colors:
         'CARD_BG': '#2d2d2d',  # Фон карточек/кнопок
         'TEXT_MAIN': '#e6e6e6',  # Основной текст (светло-серый)
         'ACCENT': '#4d4d4d',  # Акцентный цвет (серый)
-        'BTN_CLIENT': ['#2ecc71', '#27ae60'],  # Зеленый (яркий)
-        'BTN_SERVER': ['#3498db', '#2980b9'],  # Синий
-        'BTN_ALL': ['#e74c3c', '#c0392b'],  # Красный
-        'BTN_CLIENT_OFFLINE': ['#95a5a6', '#7f8c8d'],  # Серый (светлый)
-        'BTN_SETTINGS': ['#9b59b6', '#8e44ad'],  # Фиолетовый
+        'BTN_CLIENT': '#2ecc71',  # Зеленый (яркий)
+        'BTN_SERVER': '#3498db',  # Синий
+        'BTN_ALL': '#e74c3c',  # Красный
+        'BTN_CLIENT_OFFLINE': '#95a5a6',  # Серый (светлый)
+        'BTN_SETTINGS': '#9b59b6',  # Фиолетовый
         'WINDOW_BG': '#1a1a1a',  # Фон окна
         'TITLE_BAR': '#0d0d0d',  # Фон заголовка
         'TITLE_TEXT': '#e6e6e6',  # Текст заголовка
@@ -61,11 +61,11 @@ class Colors:
         'CARD_BG': '#ffffff',  # Фон карточек/кнопок (белый)
         'TEXT_MAIN': '#333333',  # Основной текст (темно-серый)
         'ACCENT': '#007acc',  # Акцентный цвет (синий)
-        'BTN_CLIENT': ['#28a745', '#218838'],  # Зеленый
-        'BTN_SERVER': ['#17a2b8', '#138496'],  # Голубой
-        'BTN_ALL': ['#dc3545', '#c82333'],  # Красный
-        'BTN_CLIENT_OFFLINE': ['#6c757d', '#5a6268'],  # Серый
-        'BTN_SETTINGS': ['#6f42c1', '#5a32a3'],  # Фиолетовый
+        'BTN_CLIENT': '#28a745',  # Зеленый
+        'BTN_SERVER': '#17a2b8',  # Голубой
+        'BTN_ALL': '#dc3545',  # Красный
+        'BTN_CLIENT_OFFLINE': '#6c757d',  # Серый
+        'BTN_SETTINGS': '#6f42c1',  # Фиолетовый
         'WINDOW_BG': '#f0f0f0',  # Фон окна
         'TITLE_BAR': '#e0e0e0',  # Фон заголовка
         'TITLE_TEXT': '#333333',  # Текст заголовка
@@ -102,8 +102,84 @@ SERVER_FILE = r".\DPP2serverUDP\Server\main.py"  # ИЗМЕНИ НА СВОЙ П
 
 # ========== КОНЕЦ НАСТРОЙКИ ПУТЕЙ ==========
 
+class TransparentButton:
+    """Кнопка с прозрачным фоном"""
+
+    def __init__(self, parent, text, color, command, width=250, height=40):
+        """
+        parent - родительский виджет
+        text - текст кнопки
+        color - цвет текста из цветовой схемы
+        command - функция при клике
+        """
+        self.parent = parent
+        self.text = text
+        self.color = color
+        self.command = command
+        self.width = width
+        self.height = height
+        self.parent_bg = parent.cget('bg')
+
+        # Создаем Label вместо Button для прозрачного фона
+        self.label = tk.Label(
+            parent,
+            text=text,
+            font=('Arial', 11, 'bold'),
+            bg=self.parent_bg,  # Прозрачный фон (такой же как у родителя)
+            fg=color,  # Цвет текста
+            cursor='hand2',
+            padx=20,
+            pady=10
+        )
+
+        # Биндим события
+        self.label.bind('<Button-1>', self.on_click)
+        self.label.bind('<Enter>', self.on_enter)
+        self.label.bind('<Leave>', self.on_leave)
+
+    def on_click(self, event):
+        """При клике"""
+        if self.command:
+            self.command()
+
+    def on_enter(self, event):
+        """При наведении мыши"""
+        # Делаем текст светлее
+        if self.color.startswith('#'):
+            try:
+                r = int(self.color[1:3], 16)
+                g = int(self.color[3:5], 16)
+                b = int(self.color[5:7], 16)
+                r = min(255, r + 50)
+                g = min(255, g + 50)
+                b = min(255, b + 50)
+                self.label.config(fg=f'#{r:02x}{g:02x}{b:02x}')
+            except:
+                # Добавляем подчеркивание
+                self.label.config(font=('Arial', 11, 'bold', 'underline'))
+
+    def on_leave(self, event):
+        """При уходе мыши"""
+        # Возвращаем исходный цвет
+        self.label.config(fg=self.color, font=('Arial', 11, 'bold'))
+
+    def update_color(self, new_color, parent_bg):
+        """Обновление цвета кнопки"""
+        self.color = new_color
+        self.parent_bg = parent_bg
+        self.label.config(bg=parent_bg, fg=new_color)
+
+    def pack(self, **kwargs):
+        """Упаковка кнопки"""
+        return self.label.pack(**kwargs)
+
+    def pack_forget(self):
+        """Скрытие кнопки"""
+        return self.label.pack_forget()
+
+
 class ThemeDropdownMenu:
-    """Выпадающее меню для выбора темы с анимированной стрелочкой"""
+    """Выпадающее меню для выбора темы"""
 
     def __init__(self, parent, colors, current_theme, on_theme_change):
         self.parent = parent
@@ -111,48 +187,29 @@ class ThemeDropdownMenu:
         self.current_theme = current_theme
         self.on_theme_change = on_theme_change
         self.is_open = False
+        self.parent_bg = colors['WINDOW_BG']
 
-        # Создаем основной фрейм с увеличенной зоной клика
-        self.main_frame = tk.Frame(parent, bg=colors['WINDOW_BG'])
+        # Создаем основной фрейм
+        self.main_frame = tk.Frame(parent, bg=self.parent_bg)
 
-        # Фрейм для увеличения зоны клика
-        self.click_area = tk.Frame(self.main_frame, bg=colors['WINDOW_BG'], cursor='hand2')
-        self.click_area.pack(fill='x', pady=(0, 5))
-        self.click_area.bind('<Button-1>', self.toggle_menu)
-
-        # Кнопка для открытия/закрытия меню (увеличена)
-        self.dropdown_button = tk.Frame(self.click_area, bg=colors['CARD_BG'], relief='flat',
-                                        highlightthickness=1, highlightbackground=colors['BORDER'],
-                                        cursor='hand2')
-        self.dropdown_button.pack(fill='x', padx=2)
-        self.dropdown_button.bind('<Button-1>', self.toggle_menu)
-
-        # Внутренний фрейм для кнопки (увеличил паддинг)
-        inner_btn = tk.Frame(self.dropdown_button, bg=colors['CARD_BG'], cursor='hand2')
-        inner_btn.pack(fill='x', padx=15, pady=12)  # Увеличил паддинг
-        inner_btn.bind('<Button-1>', self.toggle_menu)
-
-        # Текст с текущей темой
-        self.theme_text = tk.Label(inner_btn,
-                                   text=f"Theme: {current_theme}",
-                                   font=('Arial', 11, 'bold'),  # Увеличил шрифт
-                                   bg=colors['CARD_BG'],
-                                   fg=colors['TEXT_MAIN'],
-                                   cursor='hand2')
-        self.theme_text.pack(side='left')
-        self.theme_text.bind('<Button-1>', self.toggle_menu)
-
-        # Стрелочка (увеличил размер)
-        self.arrow_canvas = tk.Canvas(inner_btn, width=20, height=20,
-                                      bg=colors['CARD_BG'], highlightthickness=0,
-                                      cursor='hand2')
-        self.arrow_canvas.pack(side='right')
-        self.arrow_canvas.bind('<Button-1>', self.toggle_menu)
-        self.draw_arrow_down()  # Начальная позиция - вниз
+        # Кнопка для открытия/закрытия меню (Label для прозрачности)
+        self.dropdown_label = tk.Label(
+            self.main_frame,
+            text=f"Theme: {current_theme} ▼",
+            font=('Arial', 11, 'bold'),
+            bg=self.parent_bg,
+            fg=colors['TEXT_MAIN'],
+            cursor='hand2',
+            padx=15,
+            pady=8,
+            relief='solid',
+            bd=1
+        )
+        self.dropdown_label.pack(fill='x')
+        self.dropdown_label.bind('<Button-1>', self.toggle_menu)
 
         # Выпадающее меню (изначально скрыто)
-        self.menu_frame = tk.Frame(self.main_frame, bg=colors['CARD_BG'], relief='flat',
-                                   highlightthickness=1, highlightbackground=colors['BORDER'])
+        self.menu_frame = tk.Frame(self.main_frame, bg=self.parent_bg, relief='solid', bd=1)
 
         # Опции тем
         self.theme_options = [
@@ -163,61 +220,40 @@ class ThemeDropdownMenu:
 
         self.create_menu_items()
 
-    def draw_arrow_down(self):
-        """Рисует стрелочку вниз"""
-        self.arrow_canvas.delete("all")
-        self.arrow_canvas.create_polygon(5, 7, 15, 7, 10, 13,
-                                         fill=self.colors['TEXT_MAIN'],
-                                         outline='')
-
-    def draw_arrow_up(self):
-        """Рисует стрелочку вверх"""
-        self.arrow_canvas.delete("all")
-        self.arrow_canvas.create_polygon(5, 13, 15, 13, 10, 7,
-                                         fill=self.colors['TEXT_MAIN'],
-                                         outline='')
-
     def create_menu_items(self):
         """Создает элементы меню"""
         for theme_name, theme_key in self.theme_options:
-            item_frame = tk.Frame(self.menu_frame, bg=self.colors['CARD_BG'], cursor='hand2')
-            item_frame.pack(fill='x', padx=2, pady=1)
-            item_frame.bind('<Button-1>', lambda e, t=theme_key: self.select_theme(t))
-
-            # Создаем элемент меню (увеличил паддинг)
-            item = tk.Label(item_frame,
-                            text=theme_name,
-                            font=('Arial', 11),  # Увеличил шрифт
-                            bg=self.colors['CARD_BG'],
-                            fg=self.colors['TEXT_MAIN'],
-                            anchor='w',
-                            padx=15,  # Увеличил паддинг
-                            pady=8,  # Увеличил паддинг
-                            cursor='hand2')
-            item.pack(fill='x')
+            item_label = tk.Label(
+                self.menu_frame,
+                text=theme_name,
+                font=('Arial', 11),
+                bg=self.parent_bg,
+                fg=self.colors['TEXT_MAIN'],
+                cursor='hand2',
+                padx=15,
+                pady=6,
+                anchor='w'
+            )
+            item_label.pack(fill='x')
+            item_label.bind('<Button-1>', lambda e, t=theme_key: self.select_theme(t))
 
             # Подсвечиваем текущую тему
             if theme_key == self.current_theme:
-                item.config(bg=self.colors['ACCENT'], fg='white')
+                item_label.config(fg=self.colors['ACCENT'])
 
-            # Бинд клика
-            item.bind('<Button-1>', lambda e, t=theme_key: self.select_theme(t))
-
-            # Эффекты наведения - используем правильные цвета
-            def on_enter(e, lbl=item, key=theme_key):
+            # Эффекты наведения
+            def on_enter(e, lbl=item_label, key=theme_key):
                 if key != self.current_theme:
                     lbl.config(bg=self.colors['ACCENT_LIGHT'])
 
-            def on_leave(e, lbl=item, key=theme_key):
+            def on_leave(e, lbl=item_label, key=theme_key):
                 if key == self.current_theme:
-                    lbl.config(bg=self.colors['ACCENT'], fg='white')
+                    lbl.config(bg=self.parent_bg, fg=self.colors['ACCENT'])
                 else:
-                    lbl.config(bg=self.colors['CARD_BG'], fg=self.colors['TEXT_MAIN'])
+                    lbl.config(bg=self.parent_bg, fg=self.colors['TEXT_MAIN'])
 
-            item.bind('<Enter>', on_enter)
-            item.bind('<Leave>', on_leave)
-            item_frame.bind('<Enter>', on_enter)
-            item_frame.bind('<Leave>', on_leave)
+            item_label.bind('<Enter>', on_enter)
+            item_label.bind('<Leave>', on_leave)
 
     def toggle_menu(self, event=None):
         """Открывает/закрывает меню"""
@@ -229,19 +265,19 @@ class ThemeDropdownMenu:
     def open_menu(self):
         """Открывает меню"""
         self.is_open = True
-        self.draw_arrow_up()
-        self.menu_frame.pack(fill='x', padx=2, pady=(0, 2))
+        self.dropdown_label.config(text=f"Theme: {self.current_theme} ▲")
+        self.menu_frame.pack(fill='x', pady=(2, 0))
 
     def close_menu(self):
         """Закрывает меню"""
         self.is_open = False
-        self.draw_arrow_down()
+        self.dropdown_label.config(text=f"Theme: {self.current_theme} ▼")
         self.menu_frame.pack_forget()
 
     def select_theme(self, theme_key):
         """Выбор темы"""
         self.current_theme = theme_key
-        self.theme_text.config(text=f"Theme: {theme_key}")
+        self.dropdown_label.config(text=f"Theme: {theme_key} ▼")
         self.close_menu()
 
         # Пересоздаем элементы меню для обновления подсветки
@@ -252,6 +288,14 @@ class ThemeDropdownMenu:
         # Вызываем callback
         if self.on_theme_change:
             self.on_theme_change(theme_key)
+
+    def update_colors(self, colors, parent_bg):
+        """Обновление цветов меню"""
+        self.colors = colors
+        self.parent_bg = parent_bg
+        self.main_frame.config(bg=parent_bg)
+        self.dropdown_label.config(bg=parent_bg, fg=colors['TEXT_MAIN'])
+        self.menu_frame.config(bg=parent_bg)
 
     def pack(self, **kwargs):
         """Упаковка виджета"""
@@ -395,124 +439,98 @@ class UltraModernLauncher:
     def create_left_button_panel(self):
         """Создание панели кнопок в левом нижнем углу"""
         # Контейнер для кнопок в левом нижнем углу
-        left_container = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
-        left_container.place(x=40, rely=1.0, anchor='sw', y=-40)
+        self.left_container = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
+        self.left_container.place(x=40, rely=1.0, anchor='sw', y=-40)
 
-        # Простые кнопки без анимации
-        self.client_btn = tk.Button(left_container,
-                                    text="Client",
-                                    font=('Arial', 12, 'bold'),
-                                    bg=self.current_colors['BTN_CLIENT'][0],
-                                    fg='white',
-                                    activebackground=self.current_colors['BTN_CLIENT'][1],
-                                    activeforeground='white',
-                                    borderwidth=0,
-                                    cursor='hand2',
-                                    width=20,
-                                    height=2,
-                                    command=self.launch_client)
+        # Создаем кнопки с прозрачным фоном
+        self.client_btn = TransparentButton(
+            self.left_container,
+            "Client",
+            self.current_colors['BTN_CLIENT'],
+            self.launch_client
+        )
         self.client_btn.pack(pady=8)
 
-        self.client_offline_btn = tk.Button(left_container,
-                                            text="Client Offline",
-                                            font=('Arial', 12, 'bold'),
-                                            bg=self.current_colors['BTN_CLIENT_OFFLINE'][0],
-                                            fg='white',
-                                            activebackground=self.current_colors['BTN_CLIENT_OFFLINE'][1],
-                                            activeforeground='white',
-                                            borderwidth=0,
-                                            cursor='hand2',
-                                            width=20,
-                                            height=2,
-                                            command=self.launch_client_offline)
+        self.client_offline_btn = TransparentButton(
+            self.left_container,
+            "Client Offline",
+            self.current_colors['BTN_CLIENT_OFFLINE'],
+            self.launch_client_offline
+        )
         self.client_offline_btn.pack(pady=8)
 
         # Кнопки для разработчика
-        self.server_btn = tk.Button(left_container,
-                                    text="Server",
-                                    font=('Arial', 12, 'bold'),
-                                    bg=self.current_colors['BTN_SERVER'][0],
-                                    fg='white',
-                                    activebackground=self.current_colors['BTN_SERVER'][1],
-                                    activeforeground='white',
-                                    borderwidth=0,
-                                    cursor='hand2',
-                                    width=20,
-                                    height=2,
-                                    command=self.launch_server)
+        self.server_btn = TransparentButton(
+            self.left_container,
+            "Server",
+            self.current_colors['BTN_SERVER'],
+            self.launch_server
+        )
 
-        self.all_btn = tk.Button(left_container,
-                                 text="Start All (Server+Client)",
-                                 font=('Arial', 12, 'bold'),
-                                 bg=self.current_colors['BTN_ALL'][0],
-                                 fg='white',
-                                 activebackground=self.current_colors['BTN_ALL'][1],
-                                 activeforeground='white',
-                                 borderwidth=0,
-                                 cursor='hand2',
-                                 width=20,
-                                 height=2,
-                                 command=self.launch_all)
+        self.all_btn = TransparentButton(
+            self.left_container,
+            "Start All (Server+Client)",
+            self.current_colors['BTN_ALL'],
+            self.launch_all
+        )
 
         # Обновляем видимость кнопок
         self.update_hidden_buttons_visibility()
 
     def create_settings_button(self):
         """Создание кнопки настроек в правом нижнем углу"""
-        settings_frame = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
-        settings_frame.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-20)
+        self.settings_frame = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
+        self.settings_frame.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-20)
 
-        settings_btn = tk.Button(settings_frame,
-                                 text="⚙️ Settings",
-                                 font=self.fonts['body_bold'],
-                                 bg=self.current_colors['BTN_SETTINGS'][0],
-                                 fg='white',
-                                 activebackground=self.current_colors['BTN_SETTINGS'][1],
-                                 activeforeground='white',
-                                 borderwidth=0,
-                                 cursor='hand2',
-                                 padx=20,
-                                 pady=10,
-                                 command=self.open_settings)
-        settings_btn.pack()
-        settings_btn.config(cursor='hand2')
+        self.settings_btn = tk.Label(
+            self.settings_frame,
+            text="⚙️ Settings",
+            font=self.fonts['body_bold'],
+            bg=self.current_colors['WINDOW_BG'],  # Прозрачный фон
+            fg=self.current_colors['BTN_SETTINGS'],  # Цвет текста
+            cursor='hand2',
+            padx=20,
+            pady=10
+        )
+        self.settings_btn.pack()
+        self.settings_btn.bind('<Button-1>', lambda e: self.open_settings())
 
     def open_settings(self):
         """Открытие окна настроек"""
         try:
             # Создаем окно настроек
-            settings_window = tk.Toplevel(self.root)
-            settings_window.title("Settings")
-            settings_window.geometry("450x400")  # Увеличил размер
-            settings_window.configure(bg=self.current_colors['WINDOW_BG'])
-            settings_window.resizable(False, False)
-            settings_window.transient(self.root)
-            settings_window.grab_set()
+            self.settings_window = tk.Toplevel(self.root)
+            self.settings_window.title("Settings")
+            self.settings_window.geometry("450x400")
+            self.settings_window.configure(bg=self.current_colors['WINDOW_BG'])
+            self.settings_window.resizable(False, False)
+            self.settings_window.transient(self.root)
+            self.settings_window.grab_set()
 
             # Центрируем окно настроек
-            settings_window.update_idletasks()
-            x = self.root.winfo_x() + (self.root.winfo_width() - settings_window.winfo_width()) // 2
-            y = self.root.winfo_y() + (self.root.winfo_height() - settings_window.winfo_height()) // 2
-            settings_window.geometry(f"+{x}+{y}")
+            self.settings_window.update_idletasks()
+            x = self.root.winfo_x() + (self.root.winfo_width() - self.settings_window.winfo_width()) // 2
+            y = self.root.winfo_y() + (self.root.winfo_height() - self.settings_window.winfo_height()) // 2
+            self.settings_window.geometry(f"+{x}+{y}")
 
-            # Основное содержание с увеличенными отступами
-            content = tk.Frame(settings_window, bg=self.current_colors['WINDOW_BG'])
+            # Основное содержание
+            content = tk.Frame(self.settings_window, bg=self.current_colors['WINDOW_BG'])
             content.pack(fill='both', expand=True, padx=25, pady=25)
 
             # Режим разработчика
             dev_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            dev_frame.pack(fill='x', pady=(0, 20))  # Увеличил отступ
+            dev_frame.pack(fill='x', pady=(0, 20))
 
-            dev_var = tk.BooleanVar(value=self.settings['developer_mode'])
+            self.dev_var = tk.BooleanVar(value=self.settings['developer_mode'])
             dev_check = tk.Checkbutton(dev_frame,
                                        text="Developer Mode",
-                                       font=('Arial', 11, 'bold'),  # Увеличил шрифт
+                                       font=('Arial', 11, 'bold'),
                                        bg=self.current_colors['WINDOW_BG'],
                                        fg=self.current_colors['TEXT_MAIN'],
                                        selectcolor=self.current_colors['CARD_BG'],
                                        activebackground=self.current_colors['WINDOW_BG'],
                                        activeforeground=self.current_colors['TEXT_MAIN'],
-                                       variable=dev_var,
+                                       variable=self.dev_var,
                                        cursor='hand2')
             dev_check.pack(anchor='w')
 
@@ -522,13 +540,13 @@ class UltraModernLauncher:
                      bg=self.current_colors['WINDOW_BG'],
                      fg=self.current_colors['TEXT_MAIN']).pack(anchor='w', padx=25, pady=(0, 5))
 
-            # Цветовые темы - ВЫПАДАЮЩЕЕ МЕНЮ
+            # Цветовые темы
             theme_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            theme_frame.pack(fill='x', pady=(0, 20))  # Увеличил отступ
+            theme_frame.pack(fill='x', pady=(0, 20))
 
             tk.Label(theme_frame,
                      text="Color Theme:",
-                     font=('Arial', 11, 'bold'),  # Увеличил шрифт
+                     font=('Arial', 11, 'bold'),
                      bg=self.current_colors['WINDOW_BG'],
                      fg=self.current_colors['TEXT_MAIN']).pack(anchor='w', pady=(0, 10))
 
@@ -537,17 +555,17 @@ class UltraModernLauncher:
                 theme_frame,
                 self.current_colors,
                 self.colors.current_theme,
-                lambda theme: self.on_theme_changed(theme, dev_var, settings_window)
+                lambda theme: self.on_theme_changed(theme)
             )
             self.theme_dropdown.pack(fill='x', pady=(0, 5))
 
             # Кнопка сохранения
             btn_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            btn_frame.pack(fill='x', pady=(30, 0))  # Увеличил отступ
+            btn_frame.pack(fill='x', pady=(30, 0))
 
             def apply_and_close():
                 # Сохраняем настройки
-                self.settings['developer_mode'] = dev_var.get()
+                self.settings['developer_mode'] = self.dev_var.get()
                 self.settings['theme'] = self.colors.current_theme
                 self.save_settings()
 
@@ -555,85 +573,85 @@ class UltraModernLauncher:
                 self.apply_settings_changes()
 
                 # Закрываем окно
-                settings_window.destroy()
+                self.settings_window.destroy()
 
-            save_btn = tk.Button(btn_frame,
-                                 text="Apply & Save",
-                                 font=self.fonts['body_bold'],
-                                 bg=self.current_colors['BTN_CLIENT'][0],
-                                 fg='white',
-                                 activebackground=self.current_colors['BTN_CLIENT'][1],
-                                 activeforeground='white',
-                                 borderwidth=0,
-                                 cursor='hand2',
-                                 command=apply_and_close)
+            # Кнопка Apply & Save (Label для прозрачности)
+            save_btn = tk.Label(
+                btn_frame,
+                text="Apply & Save",
+                font=self.fonts['body_bold'],
+                bg=self.current_colors['WINDOW_BG'],
+                fg=self.current_colors['BTN_CLIENT'],
+                cursor='hand2',
+                padx=20,
+                pady=10,
+                relief='solid',
+                bd=1
+            )
             save_btn.pack(fill='x', pady=8)
+            save_btn.bind('<Button-1>', lambda e: apply_and_close())
 
-            cancel_btn = tk.Button(btn_frame,
-                                   text="Cancel",
-                                   font=self.fonts['body_bold'],
-                                   bg=self.current_colors['BTN_CLIENT_OFFLINE'][0],
-                                   fg='white',
-                                   activebackground=self.current_colors['BTN_CLIENT_OFFLINE'][1],
-                                   activeforeground='white',
-                                   borderwidth=0,
-                                   cursor='hand2',
-                                   command=settings_window.destroy)
+            # Кнопка Cancel (Label для прозрачности)
+            cancel_btn = tk.Label(
+                btn_frame,
+                text="Cancel",
+                font=self.fonts['body_bold'],
+                bg=self.current_colors['WINDOW_BG'],
+                fg=self.current_colors['BTN_CLIENT_OFFLINE'],
+                cursor='hand2',
+                padx=20,
+                pady=10,
+                relief='solid',
+                bd=1
+            )
             cancel_btn.pack(fill='x')
+            cancel_btn.bind('<Button-1>', lambda e: self.settings_window.destroy())
 
             # Фокус на окне
-            settings_window.focus_set()
+            self.settings_window.focus_set()
 
         except Exception as e:
             print(f"Ошибка открытия настроек: {e}")
             messagebox.showerror("Error", f"Failed to open settings: {e}")
 
-    def on_theme_changed(self, theme_name, dev_var, settings_window):
+    def on_theme_changed(self, theme_name):
         """Обработка смены темы в выпадающем меню"""
         # Меняем тему в объекте Colors
         self.colors.set_theme(theme_name)
 
-        # Обновляем текущие цвета
-        self.current_colors = self.colors.get_current()
+    def update_button_colors(self):
+        """Обновление цветов всех кнопок"""
+        # Обновляем цвета кнопок
+        parent_bg = self.current_colors['WINDOW_BG']
 
-        # Обновляем цвета окна настроек
-        settings_window.configure(bg=self.current_colors['WINDOW_BG'])
-        for widget in settings_window.winfo_children():
-            if isinstance(widget, tk.Frame):
-                widget.configure(bg=self.current_colors['WINDOW_BG'])
-                self.update_widget_colors(widget)
+        if hasattr(self, 'client_btn'):
+            self.client_btn.update_color(self.current_colors['BTN_CLIENT'], parent_bg)
+        if hasattr(self, 'client_offline_btn'):
+            self.client_offline_btn.update_color(self.current_colors['BTN_CLIENT_OFFLINE'], parent_bg)
+        if hasattr(self, 'server_btn'):
+            self.server_btn.update_color(self.current_colors['BTN_SERVER'], parent_bg)
+        if hasattr(self, 'all_btn'):
+            self.all_btn.update_color(self.current_colors['BTN_ALL'], parent_bg)
 
-    def update_widget_colors(self, parent):
-        """Рекурсивно обновляет цвета виджетов"""
-        for widget in parent.winfo_children():
-            try:
-                if isinstance(widget, (tk.Frame, tk.LabelFrame)):
-                    widget.configure(bg=self.current_colors['WINDOW_BG'])
-                    self.update_widget_colors(widget)
-                elif isinstance(widget, tk.Label):
-                    widget.configure(bg=self.current_colors['WINDOW_BG'],
-                                     fg=self.current_colors['TEXT_MAIN'])
-                elif isinstance(widget, tk.Checkbutton):
-                    widget.configure(bg=self.current_colors['WINDOW_BG'],
-                                     fg=self.current_colors['TEXT_MAIN'],
-                                     selectcolor=self.current_colors['CARD_BG'],
-                                     activebackground=self.current_colors['WINDOW_BG'],
-                                     activeforeground=self.current_colors['TEXT_MAIN'])
-                elif isinstance(widget, tk.Button):
-                    # Для кнопок Apply & Save и Cancel оставляем свои цвета
-                    if widget.cget('text') not in ["Apply & Save", "Cancel"]:
-                        widget.configure(bg=self.current_colors['CARD_BG'],
-                                         fg=self.current_colors['TEXT_MAIN'])
-            except:
-                pass
+        # Обновляем кнопку настроек
+        if hasattr(self, 'settings_btn'):
+            self.settings_btn.config(
+                bg=parent_bg,
+                fg=self.current_colors['BTN_SETTINGS']
+            )
+
+        # Обновляем выпадающее меню
+        if hasattr(self, 'theme_dropdown'):
+            self.theme_dropdown.update_colors(self.current_colors, parent_bg)
 
     def update_hidden_buttons_visibility(self):
         """Обновление видимости скрытых кнопок"""
         if self.settings['developer_mode']:
-            self.server_btn.pack(pady=8)
-            self.all_btn.pack(pady=8)
+            if hasattr(self, 'server_btn'):
+                self.server_btn.pack(pady=8)
+            if hasattr(self, 'all_btn'):
+                self.all_btn.pack(pady=8)
         else:
-            # Проверяем, что кнопки были созданы перед скрытием
             if hasattr(self, 'server_btn'):
                 self.server_btn.pack_forget()
             if hasattr(self, 'all_btn'):
@@ -644,14 +662,30 @@ class UltraModernLauncher:
         # Сохраняем настройки в файл
         self.save_settings()
 
-        # Меняем тему
-        self.colors.set_theme(self.settings['theme'])
+        # Обновляем текущие цвета
         self.current_colors = self.colors.get_current()
 
-        # Перезагружаем интерфейс
-        self.main_container.destroy()
+        # Обновляем фон главного окна
         self.root.configure(bg=self.current_colors['WINDOW_BG'])
-        self.create_interface()
+        self.main_container.configure(bg=self.current_colors['WINDOW_BG'])
+        self.left_container.configure(bg=self.current_colors['WINDOW_BG'])
+        self.settings_frame.configure(bg=self.current_colors['WINDOW_BG'])
+
+        # Обновляем цвета кнопок
+        self.update_button_colors()
+
+        # Обновляем видимость кнопок разработчика
+        self.update_hidden_buttons_visibility()
+
+        # Обновляем цвета заголовка
+        for widget in self.main_container.winfo_children():
+            if isinstance(widget, tk.Frame):
+                for child in widget.winfo_children():
+                    if isinstance(child, tk.Label):
+                        child.config(
+                            bg=self.current_colors['WINDOW_BG'],
+                            fg=self.current_colors['TEXT_MAIN']
+                        )
 
     def hide_window(self):
         """Скрыть окно лаунчера"""
@@ -682,14 +716,12 @@ class UltraModernLauncher:
             # Для Windows
             if os.name == 'nt':
                 # Запускаем в новом процессе
-                # Используем pythonw.exe для запуска без консоли
                 pythonw_exe = sys.executable.replace('python.exe', 'pythonw.exe')
                 if not os.path.exists(pythonw_exe):
                     pythonw_exe = sys.executable
 
                 cmd = f'"{pythonw_exe}" "{script_path}"'
 
-                # Запускаем процесс
                 process = subprocess.Popen(
                     cmd,
                     shell=True,
@@ -731,33 +763,26 @@ class UltraModernLauncher:
 
         def monitor():
             try:
-                # Ждем завершения процесса
                 process.wait()
                 print(f"✅ Процесс {process_name} завершен")
             except:
                 print(f"⚠️ Процесс {process_name} завершился с ошибкой")
 
-            # Уменьшаем счетчик запущенных приложений
             self.running_apps -= 1
             print(f"📊 Осталось запущенных приложений: {self.running_apps}")
 
-            # Если все приложения закрыты - показываем лаунчер
             if self.running_apps == 0:
                 self.root.after(0, self.show_window)
 
-        # Запускаем мониторинг в отдельном потоке
         threading.Thread(target=monitor, daemon=True).start()
 
     def launch_client(self):
         """Запуск клиента"""
-        # Скрываем окно сразу
         self.hide_window()
 
-        # Запускаем в отдельном потоке
         def launch():
             success = self.run_python_script_simple(self.client_path, "Client")
             if not success:
-                # Если не удалось, показываем окно снова
                 self.root.after(0, self.show_window)
 
         threading.Thread(target=launch, daemon=True).start()
@@ -789,15 +814,11 @@ class UltraModernLauncher:
         self.hide_window()
 
         def launch():
-            # Сначала сервер
             server_success = self.run_python_script_simple(self.server_path, "Server")
             if server_success:
-                # Ждем 3 секунды
                 time.sleep(3)
-                # Затем клиент
                 self.run_python_script_simple(self.client_path, "Client")
             else:
-                # Если сервер не запустился, показываем лаунчер
                 self.root.after(0, self.show_window)
 
         threading.Thread(target=launch, daemon=True).start()
