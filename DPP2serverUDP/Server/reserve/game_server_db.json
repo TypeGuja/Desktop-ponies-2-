@@ -1,0 +1,1472 @@
+{
+  "players": {
+    "669bed70-1f4f-4ee0-be1d-2c42c23118f6": {
+      "id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "username": "1",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "1@example.com",
+      "registration_date": "2025-12-21T20:30:39.636724",
+      "last_login": "2025-12-21T20:30:39.636729",
+      "characters": [
+        "cb83999a-a36c-46fb-b1a2-478404caf794",
+        "5aed3ce2-c31a-438e-abee-81061e93839c",
+        "f7ab1199-6682-49e4-9922-b49432860d16",
+        "60d9002e-5cb7-4734-acb7-c9a65c9388fc",
+        "5d4292e0-c622-47e2-9730-d9bfef4d45c6",
+        "99c2c69e-8f22-4e26-a8f9-32ea4d72e768",
+        "e8a31e98-f7be-45ea-b44d-1d2b0f3b1c2a",
+        "89bb3c8e-ef70-433c-92d2-af30fc5cb66c",
+        "0eb881a1-be22-44dc-a694-d3bc29ea6326",
+        "005310f5-a36e-4fc8-a2a2-3d50fe1b3dae",
+        "4a504bc6-c83d-4313-9866-2e3ad42ea68b",
+        "9ac9e788-458c-4ff6-809b-2dd7a2ef09e4",
+        "1c435b11-234b-432f-bcfb-49c56a8f1541",
+        "2b5318d0-a85b-4796-b595-800eba79a884"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 14,
+        "last_character_id": "2b5318d0-a85b-4796-b595-800eba79a884"
+      }
+    },
+    "204768a7-0536-45b7-bcfe-a9417dc31219": {
+      "id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "username": "2",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "2@example.com",
+      "registration_date": "2025-12-21T20:31:41.314906",
+      "last_login": "2025-12-21T20:31:41.314911",
+      "characters": [
+        "7f350ee3-1759-4643-ab88-cdf42cb773b7",
+        "b0e0b30a-c9f5-4f75-8af1-a87d29199ebf",
+        "78e5dae1-9314-44fc-b098-3aa31b0a0526",
+        "f5265430-46ab-4190-8b81-8ecd57bc4ffd",
+        "ba936d96-483e-4f51-9e8c-97e7c9d0e148",
+        "6246f1e5-be92-4b91-9e7b-5e298e988a7b",
+        "d6d073ad-470f-45e5-a47a-0836e798c8ce",
+        "a4150077-8d93-4adf-9b83-2265860621b4",
+        "9a721c08-7d7b-46e4-b79a-d66c963633e4"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 9,
+        "last_character_id": "9a721c08-7d7b-46e4-b79a-d66c963633e4"
+      }
+    }
+  },
+  "characters": {
+    "cb83999a-a36c-46fb-b1a2-478404caf794": {
+      "id": "cb83999a-a36c-46fb-b1a2-478404caf794",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_character",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.696199417114258,
+        "y": -1.430757999420166,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-21T20:30:39.905803",
+      "last_played": "2025-12-21T20:32:17.626175",
+      "last_activity": "2025-12-21T20:32:17.626177",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "5aed3ce2-c31a-438e-abee-81061e93839c": {
+      "id": "5aed3ce2-c31a-438e-abee-81061e93839c",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_character",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.077392101287842,
+        "y": -1.430757999420166,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-21T20:31:38.323884",
+      "last_played": "2025-12-21T20:31:40.356813",
+      "last_activity": "2025-12-21T20:31:40.356806",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "7f350ee3-1759-4643-ab88-cdf42cb773b7": {
+      "id": "7f350ee3-1759-4643-ab88-cdf42cb773b7",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_character",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.5144734382629395,
+        "y": -0.815305233001709,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-21T20:31:41.718297",
+      "last_played": "2025-12-21T20:32:20.790893",
+      "last_activity": "2025-12-21T20:32:20.790895",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "f7ab1199-6682-49e4-9922-b49432860d16": {
+      "id": "f7ab1199-6682-49e4-9922-b49432860d16",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:11:43.132449",
+      "last_played": "2026-01-01T21:11:43.132454",
+      "last_activity": "2026-01-01T21:11:43.132455",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "60d9002e-5cb7-4734-acb7-c9a65c9388fc": {
+      "id": "60d9002e-5cb7-4734-acb7-c9a65c9388fc",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.10082483291625977,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:11:43.703243",
+      "last_played": "2026-01-01T21:11:59.873630",
+      "last_activity": "2026-01-01T21:11:59.873632",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "b0e0b30a-c9f5-4f75-8af1-a87d29199ebf": {
+      "id": "b0e0b30a-c9f5-4f75-8af1-a87d29199ebf",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:12:51.068710",
+      "last_played": "2026-01-01T21:12:51.068717",
+      "last_activity": "2026-01-01T21:12:51.068718",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "78e5dae1-9314-44fc-b098-3aa31b0a0526": {
+      "id": "78e5dae1-9314-44fc-b098-3aa31b0a0526",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.4839191436767578,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:12:51.623155",
+      "last_played": "2026-01-01T21:13:36.415651",
+      "last_activity": "2026-01-01T21:13:36.415653",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "5d4292e0-c622-47e2-9730-d9bfef4d45c6": {
+      "id": "5d4292e0-c622-47e2-9730-d9bfef4d45c6",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Luna",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:12:56.143722",
+      "last_played": "2026-01-01T21:12:56.143728",
+      "last_activity": "2026-01-01T21:12:56.143730",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "99c2c69e-8f22-4e26-a8f9-32ea4d72e768": {
+      "id": "99c2c69e-8f22-4e26-a8f9-32ea4d72e768",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Luna",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.29060840606689453,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T21:12:56.766892",
+      "last_played": "2026-01-01T21:13:37.425769",
+      "last_activity": "2026-01-01T21:13:37.425770",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "e8a31e98-f7be-45ea-b44d-1d2b0f3b1c2a": {
+      "id": "e8a31e98-f7be-45ea-b44d-1d2b0f3b1c2a",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T22:13:27.645014",
+      "last_played": "2026-01-01T22:13:27.645020",
+      "last_activity": "2026-01-01T22:13:27.645021",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "89bb3c8e-ef70-433c-92d2-af30fc5cb66c": {
+      "id": "89bb3c8e-ef70-433c-92d2-af30fc5cb66c",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T22:13:28.301408",
+      "last_played": "2026-01-01T22:32:02.064960",
+      "last_activity": "2026-01-01T22:32:02.064949",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": true
+    },
+    "f5265430-46ab-4190-8b81-8ecd57bc4ffd": {
+      "id": "f5265430-46ab-4190-8b81-8ecd57bc4ffd",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Luna",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T22:13:49.108484",
+      "last_played": "2026-01-01T22:13:49.108491",
+      "last_activity": "2026-01-01T22:13:49.108492",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "ba936d96-483e-4f51-9e8c-97e7c9d0e148": {
+      "id": "ba936d96-483e-4f51-9e8c-97e7c9d0e148",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Luna",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.0475964546203613,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-01T22:13:50.149452",
+      "last_played": "2026-01-01T22:32:02.066391",
+      "last_activity": "2026-01-01T22:32:02.066380",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": true
+    },
+    "0eb881a1-be22-44dc-a694-d3bc29ea6326": {
+      "id": "0eb881a1-be22-44dc-a694-d3bc29ea6326",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T11:15:44.540219",
+      "last_played": "2026-01-02T11:15:44.540226",
+      "last_activity": "2026-01-02T11:15:44.540227",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "005310f5-a36e-4fc8-a2a2-3d50fe1b3dae": {
+      "id": "005310f5-a36e-4fc8-a2a2-3d50fe1b3dae",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T11:15:45.263619",
+      "last_played": "2026-01-02T11:15:53.340445",
+      "last_activity": "2026-01-02T11:15:53.340447",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "4a504bc6-c83d-4313-9866-2e3ad42ea68b": {
+      "id": "4a504bc6-c83d-4313-9866-2e3ad42ea68b",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T11:18:47.669827",
+      "last_played": "2026-01-02T11:18:47.669833",
+      "last_activity": "2026-01-02T11:18:47.669834",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "9ac9e788-458c-4ff6-809b-2dd7a2ef09e4": {
+      "id": "9ac9e788-458c-4ff6-809b-2dd7a2ef09e4",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 5.038332939147949,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T11:18:48.107920",
+      "last_played": "2026-01-02T11:18:58.955715",
+      "last_activity": "2026-01-02T11:18:58.955717",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "1c435b11-234b-432f-bcfb-49c56a8f1541": {
+      "id": "1c435b11-234b-432f-bcfb-49c56a8f1541",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:03:50.543841",
+      "last_played": "2026-01-02T12:03:50.543847",
+      "last_activity": "2026-01-02T12:03:50.543848",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "2b5318d0-a85b-4796-b595-800eba79a884": {
+      "id": "2b5318d0-a85b-4796-b595-800eba79a884",
+      "player_id": "669bed70-1f4f-4ee0-be1d-2c42c23118f6",
+      "name": "1_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0.1765608787536621,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:04:02.634062",
+      "last_played": "2026-01-02T12:06:38.298318",
+      "last_activity": "2026-01-02T12:06:38.298320",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "6246f1e5-be92-4b91-9e7b-5e298e988a7b": {
+      "id": "6246f1e5-be92-4b91-9e7b-5e298e988a7b",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Luna",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:04:32.101102",
+      "last_played": "2026-01-02T12:04:32.101108",
+      "last_activity": "2026-01-02T12:04:32.101109",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "d6d073ad-470f-45e5-a47a-0836e798c8ce": {
+      "id": "d6d073ad-470f-45e5-a47a-0836e798c8ce",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Luna",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.8530764579772949,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:04:32.690012",
+      "last_played": "2026-01-02T12:06:32.210218",
+      "last_activity": "2026-01-02T12:06:32.210219",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "a4150077-8d93-4adf-9b83-2265860621b4": {
+      "id": "a4150077-8d93-4adf-9b83-2265860621b4",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Celestia",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:37:53.581627",
+      "last_played": "2026-01-02T12:37:53.581634",
+      "last_activity": "2026-01-02T12:37:53.581635",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "9a721c08-7d7b-46e4-b79a-d66c963633e4": {
+      "id": "9a721c08-7d7b-46e4-b79a-d66c963633e4",
+      "player_id": "204768a7-0536-45b7-bcfe-a9417dc31219",
+      "name": "2_Celestia",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.049904823303222656,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:37:54.826515",
+      "last_played": "2026-01-02T12:38:23.586427",
+      "last_activity": "2026-01-02T12:38:23.586428",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    },
+    "77c05d87-a8eb-4cc7-9712-766f975cbc31": {
+      "id": "77c05d87-a8eb-4cc7-9712-766f975cbc31",
+      "player_id": "player_3",
+      "name": "1_Luna",
+      "race": "human",
+      "class": "warrior",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.3643770217895508,
+        "y": 0,
+        "z": 0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2026-01-02T12:38:04.299711",
+      "last_played": "2026-01-02T12:38:24.831980",
+      "last_activity": "2026-01-02T12:38:24.831981",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      },
+      "in_world": false
+    }
+  },
+  "world_data": {
+    "name": "Эквестрия",
+    "time": "13:46",
+    "weather": "облачно",
+    "day": 1,
+    "online_players": 12,
+    "protocol": "udp",
+    "udp_port": 5555
+  },
+  "gifct_settings": {
+    "gifct_enabled": {
+      "Gifct1": true,
+      "Gifct2": true
+    },
+    "gifct_configs": {
+      "Gifct1": "Основная способность",
+      "Gifct2": "Вторичная способность"
+    }
+  },
+  "server_stats": {
+    "total_players": 2,
+    "total_characters": 24,
+    "total_playtime": 0,
+    "start_time": "2025-12-21T20:30:16.590611",
+    "protocol": "udp"
+  }
+}
