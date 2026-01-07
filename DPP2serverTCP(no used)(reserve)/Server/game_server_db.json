@@ -1,0 +1,1646 @@
+{
+  "players": {
+    "86a0900b-721f-4f25-b91a-02db13c8a87a": {
+      "id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "username": "test_1",
+      "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "email": "test1@example.com",
+      "registration_date": "2025-12-07T16:54:32.428788",
+      "last_login": "2025-12-07T16:54:32.428794",
+      "characters": [
+        "ace15dc7-93a8-41b6-96c6-7928d9c66192",
+        "7dbd71c4-fd5f-4aa0-b109-b0a948f92833",
+        "b0b73c70-ae03-4d11-9e9c-d7dbf7007372",
+        "3918f8cd-02b2-496b-a26a-9e11ad4a0d16",
+        "4ec84e91-daf2-459b-8ed1-c71d157d0348",
+        "d6418e54-5d98-48ae-94b0-3ec63958ef70",
+        "0147b1b0-6d70-4c95-be07-7cc76b8bb907"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 7,
+        "last_character_id": "0147b1b0-6d70-4c95-be07-7cc76b8bb907"
+      }
+    },
+    "9b7f3de9-0e9d-446b-af84-d2d2cbdd134f": {
+      "id": "9b7f3de9-0e9d-446b-af84-d2d2cbdd134f",
+      "username": "test_2",
+      "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "email": "test2@example.com",
+      "registration_date": "2025-12-07T16:59:05.369203",
+      "last_login": "2025-12-07T16:59:05.369212",
+      "characters": [
+        "71fd8e92-486f-4623-9abb-716823bf2b09"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 1,
+        "last_character_id": "71fd8e92-486f-4623-9abb-716823bf2b09"
+      }
+    },
+    "73f4b659-5bf8-4ad2-9154-84d601af0111": {
+      "id": "73f4b659-5bf8-4ad2-9154-84d601af0111",
+      "username": "test_3",
+      "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "email": "test3@example.com",
+      "registration_date": "2025-12-07T17:19:26.595864",
+      "last_login": "2025-12-07T17:19:26.595870",
+      "characters": [
+        "e293c719-dbe6-43d9-a135-3bf504f1c757"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 1,
+        "last_character_id": "e293c719-dbe6-43d9-a135-3bf504f1c757"
+      }
+    },
+    "b0659977-e85d-4552-ab75-59b087ffb6db": {
+      "id": "b0659977-e85d-4552-ab75-59b087ffb6db",
+      "username": "test_4",
+      "password_hash": "ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f",
+      "email": "test4@example.com",
+      "registration_date": "2025-12-07T17:23:04.490892",
+      "last_login": "2025-12-07T17:23:04.490897",
+      "characters": [
+        "0e180621-ac24-4cde-b32b-562dcbde971b"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 1,
+        "last_character_id": "0e180621-ac24-4cde-b32b-562dcbde971b"
+      }
+    },
+    "0c8e6b90-cbcd-4c70-8f81-4b5cb23b0e51": {
+      "id": "0c8e6b90-cbcd-4c70-8f81-4b5cb23b0e51",
+      "username": "guja",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "guja@example.com",
+      "registration_date": "2025-12-07T18:48:08.295350",
+      "last_login": "2025-12-07T18:48:08.295357",
+      "characters": [
+        "de17576e-70e9-4d2f-8554-0042dc8a00bb"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 1,
+        "last_character_id": "de17576e-70e9-4d2f-8554-0042dc8a00bb"
+      }
+    },
+    "fbbe186e-96ba-4263-8211-41cb78bc2ab0": {
+      "id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "username": "1",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "1@example.com",
+      "registration_date": "2025-12-07T18:50:10.719896",
+      "last_login": "2025-12-07T18:50:10.719903",
+      "characters": [
+        "e933e644-db52-46d8-bd95-c707fea09387",
+        "a641e689-461f-4f90-991c-2f9b99270d21",
+        "10a9672a-7f32-4f9e-a61f-dc35c7b2570f",
+        "3088c5b0-bc82-4593-bb4a-b8a5107894f4",
+        "7bf24295-b05e-4bd8-ba32-0598a782a0df",
+        "3a722e11-750c-47ad-915b-631a3338743c",
+        "ba1128f7-56ad-4b29-bebd-78f3d29950b4",
+        "d28b80c6-0c1e-48ef-ae5f-6bfc6d39130a"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 8,
+        "last_character_id": "d28b80c6-0c1e-48ef-ae5f-6bfc6d39130a"
+      }
+    },
+    "191a2113-9b3a-45ac-8a89-fe2eb3fb008a": {
+      "id": "191a2113-9b3a-45ac-8a89-fe2eb3fb008a",
+      "username": "pups",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "pups@example.com",
+      "registration_date": "2025-12-07T18:54:33.696141",
+      "last_login": "2025-12-07T18:54:33.696147",
+      "characters": [
+        "5c9caaf7-bda1-43c5-a0e6-79440b0dd12b"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 1,
+        "last_character_id": "5c9caaf7-bda1-43c5-a0e6-79440b0dd12b"
+      }
+    },
+    "6d97ab80-aa7f-4f31-92a4-059f6c24158e": {
+      "id": "6d97ab80-aa7f-4f31-92a4-059f6c24158e",
+      "username": "2",
+      "password_hash": "a7c3fce0af38fcb83c2f6adfa53ab220e9b1d739e2208a665ffa54267bbc8781",
+      "email": "2@example.com",
+      "registration_date": "2025-12-07T19:03:18.220699",
+      "last_login": "2025-12-07T19:03:18.220708",
+      "characters": [
+        "84753fae-8c08-481c-9356-e6a768f9fd6c",
+        "12ec187e-dd72-44d3-95f4-59845f75a70d",
+        "8a0d5879-9ba1-4e1e-ba35-e69d58aeb463",
+        "7637f2be-db21-4542-926c-27ea429de9f7"
+      ],
+      "friends": [],
+      "settings": {
+        "theme": "default",
+        "language": "ru"
+      },
+      "stats": {
+        "playtime": 0,
+        "characters_created": 4,
+        "last_character_id": "7637f2be-db21-4542-926c-27ea429de9f7"
+      }
+    }
+  },
+  "characters": {
+    "2dbb2f62-2fe2-4103-a042-866ecb29aa3b": {
+      "id": "2dbb2f62-2fe2-4103-a042-866ecb29aa3b",
+      "player_id": "test_player_1",
+      "name": "Тестовый_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T16:45:04.298392",
+      "last_played": "2025-12-07T16:45:35.988990",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "ace15dc7-93a8-41b6-96c6-7928d9c66192": {
+      "id": "ace15dc7-93a8-41b6-96c6-7928d9c66192",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Удар",
+        "Gifct2": "Защита"
+      },
+      "creation_time": "2025-12-07T16:54:38.855253",
+      "last_played": "2025-12-07T16:55:08.857262",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "71fd8e92-486f-4623-9abb-716823bf2b09": {
+      "id": "71fd8e92-486f-4623-9abb-716823bf2b09",
+      "player_id": "9b7f3de9-0e9d-446b-af84-d2d2cbdd134f",
+      "name": "Игрок_2",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Удар",
+        "Gifct2": "Защита"
+      },
+      "creation_time": "2025-12-07T16:59:06.209808",
+      "last_played": "2025-12-07T17:14:20.093417",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "e293c719-dbe6-43d9-a135-3bf504f1c757": {
+      "id": "e293c719-dbe6-43d9-a135-3bf504f1c757",
+      "player_id": "73f4b659-5bf8-4ad2-9154-84d601af0111",
+      "name": "Игрок_3",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Удар",
+        "Gifct2": "Защита"
+      },
+      "creation_time": "2025-12-07T17:19:27.606414",
+      "last_played": "2025-12-07T17:19:57.609900",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "0e180621-ac24-4cde-b32b-562dcbde971b": {
+      "id": "0e180621-ac24-4cde-b32b-562dcbde971b",
+      "player_id": "b0659977-e85d-4552-ab75-59b087ffb6db",
+      "name": "Игрок_4",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Удар",
+        "Gifct2": "Защита"
+      },
+      "creation_time": "2025-12-07T17:23:05.500201",
+      "last_played": "2025-12-07T17:23:35.511958",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "7dbd71c4-fd5f-4aa0-b109-b0a948f92833": {
+      "id": "7dbd71c4-fd5f-4aa0-b109-b0a948f92833",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:27:49.213494",
+      "last_played": "2025-12-07T17:27:49.214209",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "b0b73c70-ae03-4d11-9e9c-d7dbf7007372": {
+      "id": "b0b73c70-ae03-4d11-9e9c-d7dbf7007372",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:32:03.722343",
+      "last_played": "2025-12-07T17:32:28.913968",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "3918f8cd-02b2-496b-a26a-9e11ad4a0d16": {
+      "id": "3918f8cd-02b2-496b-a26a-9e11ad4a0d16",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:35:02.159761",
+      "last_played": "2025-12-07T17:35:02.160568",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "4ec84e91-daf2-459b-8ed1-c71d157d0348": {
+      "id": "4ec84e91-daf2-459b-8ed1-c71d157d0348",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:35:28.873491",
+      "last_played": "2025-12-07T17:35:28.874334",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "d6418e54-5d98-48ae-94b0-3ec63958ef70": {
+      "id": "d6418e54-5d98-48ae-94b0-3ec63958ef70",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:35:29.058254",
+      "last_played": "2025-12-07T17:39:09.543250",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "0147b1b0-6d70-4c95-be07-7cc76b8bb907": {
+      "id": "0147b1b0-6d70-4c95-be07-7cc76b8bb907",
+      "player_id": "86a0900b-721f-4f25-b91a-02db13c8a87a",
+      "name": "Игрок_1",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T17:43:57.448509",
+      "last_played": "2025-12-07T17:43:57.449497",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "de17576e-70e9-4d2f-8554-0042dc8a00bb": {
+      "id": "de17576e-70e9-4d2f-8554-0042dc8a00bb",
+      "player_id": "0c8e6b90-cbcd-4c70-8f81-4b5cb23b0e51",
+      "name": "guja_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T18:48:09.388541",
+      "last_played": "2025-12-07T18:48:13.494531",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "e933e644-db52-46d8-bd95-c707fea09387": {
+      "id": "e933e644-db52-46d8-bd95-c707fea09387",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.1993346214294434,
+        "y": -0.15346956253051758,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T18:50:11.106464",
+      "last_played": "2025-12-07T18:54:54.258450",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "5c9caaf7-bda1-43c5-a0e6-79440b0dd12b": {
+      "id": "5c9caaf7-bda1-43c5-a0e6-79440b0dd12b",
+      "player_id": "191a2113-9b3a-45ac-8a89-fe2eb3fb008a",
+      "name": "pups_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.3895998001098633,
+        "y": -0.0033888816833496094,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T18:54:34.317886",
+      "last_played": "2025-12-07T18:54:37.865945",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "a641e689-461f-4f90-991c-2f9b99270d21": {
+      "id": "a641e689-461f-4f90-991c-2f9b99270d21",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:01:39.666648",
+      "last_played": "2025-12-07T19:01:39.667833",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "10a9672a-7f32-4f9e-a61f-dc35c7b2570f": {
+      "id": "10a9672a-7f32-4f9e-a61f-dc35c7b2570f",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": 100,
+        "y": 100,
+        "map": "start_city",
+        "zone": "центральная площадь"
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:02:40.633862",
+      "last_played": "2025-12-07T19:02:45.822980",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "3088c5b0-bc82-4593-bb4a-b8a5107894f4": {
+      "id": "3088c5b0-bc82-4593-bb4a-b8a5107894f4",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.617630958557129,
+        "y": -0.15346956253051758,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:03:06.861276",
+      "last_played": "2025-12-07T19:03:43.368541",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "84753fae-8c08-481c-9356-e6a768f9fd6c": {
+      "id": "84753fae-8c08-481c-9356-e6a768f9fd6c",
+      "player_id": "6d97ab80-aa7f-4f31-92a4-059f6c24158e",
+      "name": "2_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.382908821105957,
+        "y": 1.014939308166504,
+        "z": 0.03161907196044922
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:03:19.080116",
+      "last_played": "2025-12-07T19:04:17.196316",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "7bf24295-b05e-4bd8-ba32-0598a782a0df": {
+      "id": "7bf24295-b05e-4bd8-ba32-0598a782a0df",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.246710777282715,
+        "y": -0.15346956253051758,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:05:17.924978",
+      "last_played": "2025-12-07T19:05:22.819478",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "12ec187e-dd72-44d3-95f4-59845f75a70d": {
+      "id": "12ec187e-dd72-44d3-95f4-59845f75a70d",
+      "player_id": "6d97ab80-aa7f-4f31-92a4-059f6c24158e",
+      "name": "2_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.20609188079834,
+        "y": 1.0737104415893555,
+        "z": 0.03161907196044922
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:05:27.561590",
+      "last_played": "2025-12-07T19:09:12.184325",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "3a722e11-750c-47ad-915b-631a3338743c": {
+      "id": "3a722e11-750c-47ad-915b-631a3338743c",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -2.3599815368652344,
+        "y": -0.48249101638793945,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:06:30.479610",
+      "last_played": "2025-12-07T19:09:33.094825",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "ba1128f7-56ad-4b29-bebd-78f3d29950b4": {
+      "id": "ba1128f7-56ad-4b29-bebd-78f3d29950b4",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.4304804801940918,
+        "y": -0.5855107307434082,
+        "z": 0.0
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:10:53.266832",
+      "last_played": "2025-12-07T19:18:35.554180",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "8a0d5879-9ba1-4e1e-ba35-e69d58aeb463": {
+      "id": "8a0d5879-9ba1-4e1e-ba35-e69d58aeb463",
+      "player_id": "6d97ab80-aa7f-4f31-92a4-059f6c24158e",
+      "name": "2_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.5354928970336914,
+        "y": 1.1570196151733398,
+        "z": 0.03161907196044922
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:11:12.648815",
+      "last_played": "2025-12-07T19:18:31.373982",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "d28b80c6-0c1e-48ef-ae5f-6bfc6d39130a": {
+      "id": "d28b80c6-0c1e-48ef-ae5f-6bfc6d39130a",
+      "player_id": "fbbe186e-96ba-4263-8211-41cb78bc2ab0",
+      "name": "1_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -0.7597641944885254,
+        "y": -0.803929328918457,
+        "z": -1.8646998405456543
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:34:07.054174",
+      "last_played": "2025-12-07T19:36:00.993905",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    },
+    "7637f2be-db21-4542-926c-27ea429de9f7": {
+      "id": "7637f2be-db21-4542-926c-27ea429de9f7",
+      "player_id": "6d97ab80-aa7f-4f31-92a4-059f6c24158e",
+      "name": "2_персонаж",
+      "race": "человек",
+      "class": "воин",
+      "level": 1,
+      "experience": 0,
+      "health": 100,
+      "max_health": 100,
+      "mana": 50,
+      "max_mana": 50,
+      "stamina": 100,
+      "gold": 100,
+      "position": {
+        "x": -1.0308260917663574,
+        "y": 1.123807430267334,
+        "z": 0.03161907196044922
+      },
+      "stats": {
+        "strength": 10,
+        "agility": 10,
+        "intelligence": 10,
+        "vitality": 10,
+        "luck": 5
+      },
+      "skills": [],
+      "inventory": [],
+      "equipment": {
+        "weapon": null,
+        "armor": null,
+        "helmet": null,
+        "gloves": null,
+        "boots": null,
+        "accessory1": null,
+        "accessory2": null
+      },
+      "appearance": {
+        "hair_color": "#8B4513",
+        "eye_color": "#0000FF",
+        "skin_tone": "#FFD700",
+        "height": 180,
+        "body_type": "average"
+      },
+      "gifct": {
+        "Gifct1": "Основная способность",
+        "Gifct2": "Вторичная способность"
+      },
+      "creation_time": "2025-12-07T19:34:46.850222",
+      "last_played": "2025-12-07T19:34:56.061730",
+      "playtime": 0,
+      "achievements": [],
+      "quests": {
+        "active": [],
+        "completed": []
+      }
+    }
+  },
+  "world_data": {
+    "name": "Эквестрия",
+    "time": "04:44",
+    "weather": "туман",
+    "day": 12,
+    "online_players": 3
+  },
+  "gifct_settings": {
+    "Gifct1": "Основная способность",
+    "Gifct2": "Вторичная способность"
+  },
+  "server_stats": {
+    "total_players": 8,
+    "total_characters": 25,
+    "total_playtime": 0,
+    "start_time": "2025-12-07T13:49:46.887569"
+  }
+}
