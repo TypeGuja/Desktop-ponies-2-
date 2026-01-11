@@ -2,114 +2,16 @@ import tkinter as tk
 from tkinter import ttk
 import os
 import subprocess
-import importlib.util
 import threading
 import time
 import json
 from PIL import Image, ImageTk
 
-# Пути к GIF-файлам для каждого пони
-PONY_GIFS = {
-    "Twilight Sparkle": "twilight.gif",  # для поняшек надо добавить возможность менять размер в настройках
-    "Rainbow Dash": "rainbow.gif",  # а так же перерисовать на них каталоги
-    "Pinkie Pie": "pinkie.gif", # идея от @agonistwarp. добавить возможность их кормимть (неизвестно чем), временные выноски (при нажатии на поняшку), облака напоминалки
-    "Apple Jack": "applejack.gif",
-    "Fluttershy": "fluttershy.gif",
-    "Rarity": "rarity.gif",
-    "Cadance": "cadance.gif",
-    "Celestia": "celestia.gif",
-    "Luna": "luna.gif"
-}
-
-
-# Динамический импорт всех пони из папок
-def import_pony_class(pony_name):
-    """Динамически импортирует класс пони по имени"""
-    try:
-        # Формируем имя файла и папки на основе имени пони
-        if pony_name == "Apple Jack":
-            folder_name = "./DPP2serverUDP/Client/characters/AppleJack"
-            script_name = "AppleJack.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Twilight Sparkle":
-            folder_name = "./DPP2serverUDP/Client/characters/TwilightSparkle"
-            script_name = "TwilightSparkle.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Rainbow Dash":
-            folder_name = "./DPP2serverUDP/Client/characters/RainbowDash"
-            script_name = "RainbowDash.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Fluttershy":
-            folder_name = "./DPP2serverUDP/Client/characters/Fluttershy"
-            script_name = "Fluttershy.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Rarity":
-            folder_name = "./DPP2serverUDP/Client/characters/Rarity"
-            script_name = "Rarity.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Pinkie Pie":
-            folder_name = "./DPP2serverUDP/Client/characters/PinkiePie"
-            script_name = "PinkiePie.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Luna":
-            folder_name = "./DPP2serverUDP/Client/characters/Luna"
-            script_name = "Luna.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Celestia":
-            folder_name = "./DPP2serverUDP/Client/characters/Celestia"
-            script_name = "Celestia.py"
-            class_name = "GIFPlayer"
-        elif pony_name == "Cadance":
-            folder_name = "./DPP2serverUDP/Client/characters/Cadance"
-            script_name = "Cadance.py"
-            class_name = "GIFPlayer"
-        else:
-            print(f"❌ Неизвестный пони: {pony_name}")
-            return None
-
-        # Путь к файлу скрипта (правильное формирование пути)
-        script_path = os.path.join(os.path.dirname(__file__), folder_name, script_name)
-
-        if os.path.exists(script_path):
-            print(f"✅ Найден файл: {script_path}")
-
-            # Динамически импортируем модуль
-            module_name = f"{folder_name}_module"
-            spec = importlib.util.spec_from_file_location(module_name, script_path)
-            pony_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(pony_module)
-
-            # Возвращаем класс из модуля
-            return getattr(pony_module, class_name)
-        else:
-            print(f"❌ Файл не найден: {script_path}")
-            return None
-
-    except Exception as e:
-        print(f"❌ Ошибка импорта {pony_name}: {e}")
-        return None
-
-
-# Импортируем всех пони
-PONY_CLASSES = {}
-pony_names = [
-    "Twilight Sparkle", "Rainbow Dash", "Pinkie Pie", "Apple Jack",
-    "Fluttershy", "Rarity", "Cadance", "Celestia", "Luna"
-]
-
-for pony_name in pony_names:
-    pony_class = import_pony_class(pony_name)
-    if pony_class:
-        PONY_CLASSES[pony_name] = pony_class
-        print(f"✅ Успешно импортирован: {pony_name}")
-    else:
-        print(f"❌ Не удалось импортировать: {pony_name}")
-
 
 class DynamicPonySelector:
     def __init__(self, root):
         self.root = root
-        self.root.title("DPP2")
+        self.root.title("DPP2 - Pony Selector")
         self.root.geometry("520x500")
         self.root.minsize(300, 400)
 
@@ -129,38 +31,41 @@ class DynamicPonySelector:
         self.current_theme_name = saved_theme.get('theme_name', 'black')
 
         # Настройки масштаба пони
-        self.current_scale = saved_theme.get('pony_scale', 0.95)  # масштаб по умолчанию 0.95
+        self.current_scale = saved_theme.get('pony_scale', 0.95)
         self.scale_options = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0,
                               1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8,
                               1.85, 1.9, 1.95, 2.0]
 
-        # Настройки цвета контекстного меню - загружаем из сохраненной темы
+        # Настройки цвета контекстного меню
         self.menu_bg_color = saved_theme.get('menu_bg_color', '#2d2d2d')
         self.menu_fg_color = saved_theme.get('menu_fg_color', '#ffffff')
         self.menu_active_bg = saved_theme.get('menu_active_bg', '#0078d7')
         self.menu_active_fg = saved_theme.get('menu_active_fg', '#ffffff')
 
-        # Список персонажей (теперь используем PONY_GIFS для имен файлов)
-        self.ponies = [
-            {"name": "Twilight Sparkle", "gif": PONY_GIFS["Twilight Sparkle"], "script": "Twilight Sparkle.py",
-             "folder": "Twilight Sparkle"},
-            {"name": "Rainbow Dash", "gif": PONY_GIFS["Rainbow Dash"], "script": "Rainbow Dash.py",
-             "folder": "Rainbow Dash"},
-            {"name": "Pinkie Pie", "gif": PONY_GIFS["Pinkie Pie"], "script": "Pinkie.py", "folder": "Pinkie Pie"},
-            {"name": "Apple Jack", "gif": PONY_GIFS["Apple Jack"], "script": "AppleJack.py", "folder": "AppleJack"},
-            {"name": "Fluttershy", "gif": PONY_GIFS["Fluttershy"], "script": "Fluttershy.py", "folder": "Fluttershy"},
-            {"name": "Rarity", "gif": PONY_GIFS["Rarity"], "script": "Rarity.py", "folder": "rarity"},
-            {"name": "Cadance", "gif": PONY_GIFS["Cadance"], "script": "MCadance.py", "folder": "MCadance"},
-            {"name": "Celestia", "gif": PONY_GIFS["Celestia"], "script": "Celestia.py", "folder": "Celestia"},
-            {"name": "Luna", "gif": PONY_GIFS["Luna"], "script": "Luna.py", "folder": "Luna"},
+        # Список персонажей (имена пони)
+        self.pony_names = [
+            "Twilight Sparkle", "Rainbow Dash", "Pinkie Pie", "Apple Jack",
+            "Fluttershy", "Rarity", "Cadance", "Celestia", "Luna"
         ]
+
+        # Карточки с GIF превью
+        self.pony_gifs = {
+            "Twilight Sparkle": "twilight.gif",
+            "Rainbow Dash": "rainbow.gif",
+            "Pinkie Pie": "pinkie.gif",
+            "Apple Jack": "applejack.gif",
+            "Fluttershy": "fluttershy.gif",
+            "Rarity": "rarity.gif",
+            "Cadance": "cadance.gif",
+            "Celestia": "celestia.gif",
+            "Luna": "luna.gif"
+        }
 
         self.check_vars = {}
         self.card_width = 150
         self.card_height = 120
         self.padding = 5
         self.running_processes = {}
-        self.running_windows = {}
 
         # Словарь для хранения анимаций гифок
         self.gif_labels = {}
@@ -387,9 +292,9 @@ class DynamicPonySelector:
         """Обновляет расположение карточек"""
         # Сохраняем текущие состояния чекбоксов
         saved_states = {}
-        for pony in self.ponies:
-            if pony["name"] in self.check_vars:
-                saved_states[pony["name"]] = self.check_vars[pony["name"]].get()
+        for pony_name in self.pony_names:
+            if pony_name in self.check_vars:
+                saved_states[pony_name] = self.check_vars[pony_name].get()
 
         # Очищаем старые виджеты и анимации
         for widget in self.scrollable_frame.winfo_children():
@@ -399,10 +304,10 @@ class DynamicPonySelector:
 
         columns = self.calculate_columns()
 
-        for i, pony in enumerate(self.ponies):
+        for i, pony_name in enumerate(self.pony_names):
             row = i // columns
             col = i % columns
-            self.create_pony_card(self.scrollable_frame, pony, row, col)
+            self.create_pony_card(self.scrollable_frame, pony_name, row, col)
 
         # Восстанавливаем состояния чекбоксов
         for pony_name, state in saved_states.items():
@@ -411,8 +316,8 @@ class DynamicPonySelector:
 
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def create_pony_card(self, parent, pony, row, col):
-        """Создает карточку персонажа с реальной GIF-анимацией"""
+    def create_pony_card(self, parent, pony_name, row, col):
+        """Создает карточку персонажа с GIF-анимацией"""
         card_frame = tk.Frame(
             parent,
             bg=self.current_card_bg,
@@ -433,7 +338,8 @@ class DynamicPonySelector:
         gif_frame.pack_propagate(False)
 
         # Пытаемся загрузить и показать GIF
-        gif_path = os.path.join(pony["folder"], pony["gif"])
+        gif_filename = self.pony_gifs.get(pony_name, "placeholder.gif")
+        gif_path = os.path.join("pony_previews", gif_filename)  # Папка с превью
 
         # Загружаем кадры GIF
         frames = self.load_gif_frames(gif_path)
@@ -448,11 +354,11 @@ class DynamicPonySelector:
             gif_label.pack(expand=True)
 
             # Сохраняем ссылки на метку и кадры
-            self.gif_labels[pony["name"]] = gif_label
-            self.gif_frames[pony["name"]] = frames
+            self.gif_labels[pony_name] = gif_label
+            self.gif_frames[pony_name] = frames
 
             # Запускаем анимацию
-            self.animate_gif(pony["name"], gif_label, frames)
+            self.animate_gif(pony_name, gif_label, frames)
         else:
             # Fallback: показываем placeholder если GIF не найден
             if self.current_theme_name == "white":
@@ -479,7 +385,7 @@ class DynamicPonySelector:
         # Имя персонажа
         name_label = tk.Label(
             name_check_frame,
-            text=pony["name"],
+            text=pony_name,
             font=('Arial', 8, 'bold'),
             fg=self.current_text_color,
             bg=self.current_card_bg,
@@ -488,12 +394,12 @@ class DynamicPonySelector:
         name_label.pack(side='left', fill='x', expand=True)
 
         # Чекбокс в правом углу
-        if pony["name"] not in self.check_vars:
-            self.check_vars[pony["name"]] = tk.BooleanVar()
+        if pony_name not in self.check_vars:
+            self.check_vars[pony_name] = tk.BooleanVar()
 
         check = tk.Checkbutton(
             name_check_frame,
-            variable=self.check_vars[pony["name"]],
+            variable=self.check_vars[pony_name],
             bg=self.current_card_bg,
             fg=self.current_text_color,
             selectcolor=self.current_card_bg,
@@ -765,7 +671,7 @@ class DynamicPonySelector:
         marks_frame.pack(fill='x', pady=(5, 0))
 
         # Показываем ключевые значения в процентах
-        key_values = [0.25, 0.5, 1.0, 1.5, 2.0]  # Меньше значений для лучшей читаемости
+        key_values = [0.25, 0.5, 1.0, 1.5, 2.0]
 
         for value in key_values:
             if value in self.scale_options:
@@ -783,7 +689,6 @@ class DynamicPonySelector:
                     fg=mark_color,
                     bg=bg_color
                 )
-                # Используем place с относительным позиционированием
                 label.place(relx=position / 100, x=-10, anchor='n')
 
         # Автоматическое сохранение при отпускании
@@ -825,36 +730,25 @@ class DynamicPonySelector:
         # Сохраняем выбранную тему
         self.save_theme()
 
-        self.apply_menu_colors_to_running_ponies()
-
-    def apply_menu_colors_to_running_ponies(self):
-        """Применяет новые цвета меню к уже запущенных пони"""
-        for pony_name, window_info in self.running_windows.items():
-            try:
-                if hasattr(window_info["app"], 'menu_bg_color'):
-                    window_info["app"].menu_bg_color = self.menu_bg_color
-                    window_info["app"].menu_fg_color = self.menu_fg_color
-                    window_info["app"].menu_active_bg = self.menu_active_bg
-                    window_info["app"].menu_active_fg = self.menu_active_fg
-                    print(f"✅ Обновлены цвета меню для {pony_name}")
-            except Exception as e:
-                print(f"❌ Ошибка обновления цветов меню для {pony_name}: {e}")
-
     def apply_scale_to_running_ponies(self):
         """Применяет текущий масштаб ко всем запущенным пони"""
         scale_percent = int(self.current_scale * 100)
         print(f"📏 Применение масштаба {scale_percent}% к запущенным пони...")
 
-        # Обновляем масштаб для окон, запущенных напрямую
-        for pony_name, window_info in self.running_windows.items():
-            try:
-                if hasattr(window_info["app"], 'change_scale'):
-                    window_info["app"].change_scale(self.current_scale)
-                    print(f"✅ Масштаб обновлен для {pony_name}")
-                else:
-                    print(f"⚠️ Пони {pony_name} не поддерживает изменение масштаба")
-            except Exception as e:
-                print(f"❌ Ошибка обновления масштаба для {pony_name}: {e}")
+        # Заново запускаем все пони с новым масштабом
+        running_ponies = list(self.running_processes.keys())
+
+        # Останавливаем всех
+        for pony_name in running_ponies:
+            if pony_name in self.running_processes:
+                try:
+                    self.running_processes[pony_name].terminate()
+                except:
+                    pass
+
+        # Запускаем заново с новым масштабом
+        for pony_name in running_ponies:
+            self._start_via_subprocess(pony_name)
 
         print("✅ Масштаб применен к запущенным пони")
 
@@ -896,14 +790,14 @@ class DynamicPonySelector:
             print(f"⚠️ Ошибка при смене темы: {e}")
 
     def launch_selected(self):
-        """Запускает выбранных персонажей и ЗАКРЫВАЕТ главное окно"""
+        """Запускает выбранных персонажей"""
         selected_ponies = []
 
-        for pony in self.ponies:
-            if self.check_vars[pony["name"]].get():
-                selected_ponies.append(pony["name"])
+        for pony_name in self.pony_names:
+            if self.check_vars[pony_name].get():
+                selected_ponies.append(pony_name)
 
-        # ИЗМЕНЕНИЕ: Закрываем главное окно сразу
+        # Закрываем главное окно сразу
         if selected_ponies:
             print(f"✅ Запуск пони: {', '.join(selected_ponies)}")
             print("📱 Главное окно скрыто")
@@ -911,7 +805,7 @@ class DynamicPonySelector:
             self.root.withdraw()
             self.main_window_hidden = True
 
-            # Запускаем пони параллельно без задержек
+            # Запускаем пони параллельно
             self._launch_ponies_parallel(selected_ponies)
         else:
             print("⚠️ Не выбрано ни одного пони")
@@ -921,174 +815,151 @@ class DynamicPonySelector:
         threads = []
 
         for pony_name in selected_ponies:
-            pony = next(p for p in self.ponies if p["name"] == pony_name)
-
             # Создаем отдельный поток для каждого пони
             thread = threading.Thread(
                 target=self._launch_single_pony,
-                args=(pony,),
+                args=(pony_name,),
                 daemon=True
             )
             threads.append(thread)
             thread.start()
 
-        # Не ждем завершения всех потоков - они работают независимо
+        # Не ждем завершения всех потоков
         print(f"🚀 Запущено {len(threads)} потоков для пони")
 
-    def _launch_single_pony(self, pony):
+    def _launch_single_pony(self, pony_name):
         """Запускает одного пони в отдельном потоке"""
         try:
-            # Пытаемся запустить напрямую через импорт
-            if pony["name"] in PONY_CLASSES and PONY_CLASSES[pony["name"]] is not None:
-                self._start_pony_directly(pony)
-            else:
-                # Fallback: запуск через subprocess
-                self._start_via_subprocess(pony)
+            # Запускаем через subprocess
+            self._start_via_subprocess(pony_name)
         except Exception as e:
-            print(f"❌ Ошибка запуска {pony['name']} в потоке: {e}")
+            print(f"❌ Ошибка запуска {pony_name} в потоке: {e}")
 
-    def _start_pony_directly(self, pony):
-        """Запускает пони напрямую через импорт"""
+    def _start_via_subprocess(self, pony_name):
+        """Запускает пони через subprocess с фиксом кодировки"""
         try:
-            # Увеличиваем счетчик активных пони
             self.active_ponies_count += 1
-            print(f"📊 Запуск {pony['name']}... Активных пони: {self.active_ponies_count}")
 
-            # Создаем новое окно для пони
-            pony_window = tk.Toplevel()
-            pony_window.title(pony["name"])
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            pony_script = "./DPP2serverUDP/Client/characters/pony.py"
 
-            # Оптимизация для быстрого запуска
-            pony_window.withdraw()  # Сначала скрываем
-            pony_window.overrideredirect(False)
-            pony_window.resizable(True, True)
+            if not os.path.exists(pony_script):
+                print(f"❌ Файл не найден: {pony_script}")
+                return
 
-            # Запускаем пони в этом окне с текущим масштабом
-            pony_class = PONY_CLASSES[pony["name"]]
-            pony_app = pony_class(pony_window, self.current_scale)  # Передаем масштаб
+            # КОМАНДА С ПРАВИЛЬНОЙ КОДИРОВКОЙ
+            cmd = f'python "{pony_script}" "{pony_name}" {self.current_scale}'
 
-            # СОЗДАЕМ ФУНКЦИЮ ДЛЯ ВОЗВРАТА К ГЛАВНОМУ ОКНУ
-            def return_to_main_callback():
-                """Колбэк для возврата к главному окну"""
-                print(f"🔄 {pony['name']} возвращается к главному окну")
-                # Уменьшаем счетчик активных пони
-                self.active_ponies_count -= 1
-                print(f"📊 Активных пони: {self.active_ponies_count}")
+            print(f"🔄 Команда: {cmd}")
 
-                # Удаляем из running_windows
-                if pony["name"] in self.running_windows:
-                    del self.running_windows[pony["name"]]
-                # Закрываем окно пони
-                pony_window.destroy()
-                # Показываем главное окно только если все пони закрыты
-                self._check_and_show_main_window()
+            # Запуск с UTF-8 кодировкой
+            if os.name == 'nt':  # Windows
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
-            # ПЕРЕДАЕМ КОЛБЭК В ПРИЛОЖЕНИЕ ПОНИ
-            pony_app.return_to_main_callback = return_to_main_callback
+                # Важно: создаем с правильными настройками кодировки
+                process = subprocess.Popen(
+                    cmd,
+                    shell=True,
+                    startupinfo=startupinfo,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
+                    text=True,  # Используем текстовый режим
+                    encoding='utf-8',  # Указываем UTF-8
+                    errors='ignore',  # Игнорируем ошибки декодирования
+                    cwd=current_dir
+                )
+            else:  # Linux/Mac
+                process = subprocess.Popen(
+                    cmd,
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
+                    text=True,
+                    encoding='utf-8',
+                    errors='ignore',
+                    cwd=current_dir
+                )
 
-            # Передаем настройки цвета меню
-            if hasattr(pony_app, 'menu_bg_color'):
-                pony_app.menu_bg_color = self.menu_bg_color
-                pony_app.menu_fg_color = self.menu_fg_color
-                pony_app.menu_active_bg = self.menu_active_bg
-                pony_app.menu_active_fg = self.menu_active_fg
+            self.running_processes[pony_name] = process
+            print(f"✅ {pony_name} запущен (PID: {process.pid})")
 
-            # Устанавливаем обработчик закрытия окна
-            def on_window_close():
-                """Обработчик закрытия окна"""
-                print(f"🔄 Окно {pony['name']} закрывается")
-                if hasattr(pony_app, '_stop_all_threads'):
-                    pony_app._stop_all_threads()
-
-                # Уменьшаем счетчик активных пони
-                self.active_ponies_count -= 1
-                print(f"📊 Активных пони: {self.active_ponies_count}")
-
-                # Удаляем из running_windows
-                if pony["name"] in self.running_windows:
-                    del self.running_windows[pony["name"]]
-                # Показываем главное окно только если все пони закрыты
-                self._check_and_show_main_window()
-                pony_window.destroy()
-
-            pony_window.protocol("WM_DELETE_WINDOW", on_window_close)
-
-            # Сохраняем ссылку на окно
-            self.running_windows[pony["name"]] = {
-                "window": pony_window,
-                "app": pony_app
-            }
-
-            # Показываем окно сразу после создания
-            pony_window.deiconify()
-            print(f"✅ {pony['name']} запущен напрямую")
+            # Запускаем поток для чтения вывода
+            threading.Thread(
+                target=self._safe_read_output,
+                args=(process, pony_name),
+                daemon=True
+            ).start()
 
         except Exception as e:
-            print(f"❌ Ошибка прямого запуска {pony['name']}: {e}")
-            # Уменьшаем счетчик если произошла ошибка
-            self.active_ponies_count -= 1
-            self._start_via_subprocess(pony)
-
-    def _start_via_subprocess(self, pony):
-        """Запускает пони через subprocess"""
-        try:
-            # Увеличиваем счетчик активных пони
-            self.active_ponies_count += 1
-            print(f"📊 Запуск {pony['name']} через subprocess... Активных пони: {self.active_ponies_count}")
-
-            if pony["name"] == "Apple Jack":
-                script_path = os.path.join('AppleJack', pony["script"])
-            else:
-                script_path = os.path.join(pony["folder"], pony["script"])
-
-            if os.path.exists(script_path):
-                # Оптимизированные настройки для быстрого запуска
-                if os.name == 'nt':  # Windows
-                    startupinfo = subprocess.STARTUPINFO()
-                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                    startupinfo.wShowWindow = 1  # Показать окно нормально
-
-                    process = subprocess.Popen(
-                        ['python', script_path],
-                        startupinfo=startupinfo,
-                        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:  # Linux/Mac
-                    process = subprocess.Popen(
-                        ['python', script_path],
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-
-                self.running_processes[pony["name"]] = process
-                print(f"✅ {pony['name']} запущен через subprocess (PID: {process.pid})")
-            else:
-                print(f"❌ Скрипт не найден: {script_path}")
-                # Уменьшаем счетчик если не удалось запустить
-                self.active_ponies_count -= 1
-        except Exception as e:
-            print(f"❌ Ошибка запуска {pony['name']}: {e}")
-            # Уменьшаем счетчик если не удалось запустить
+            print(f"❌ Ошибка запуска {pony_name}: {e}")
             self.active_ponies_count -= 1
 
-    def _check_and_show_main_window(self):
-        """Проверяет условия и показывает главное окно только если все пони закрыты"""
-        # Проверяем, что все пони закрыты И главное окно сейчас скрыто
-        if (self.active_ponies_count == 0 and
-                not self.running_processes and
-                not self.running_windows and
-                self.main_window_hidden):
+    def _safe_read_output(self, process, pony_name):
+        """Безопасное чтение вывода с обработкой кодировок"""
+        try:
+            # Читаем stdout
+            stdout_thread = threading.Thread(
+                target=self._read_stream,
+                args=(process.stdout, f"[{pony_name} STDOUT]"),
+                daemon=True
+            )
 
-            self.root.after(0, self._show_main_window)
-        else:
-            if self.active_ponies_count > 0:
-                print(f"📊 Ожидание закрытия всех пони... Активных: {self.active_ponies_count}")
+            # Читаем stderr
+            stderr_thread = threading.Thread(
+                target=self._read_stream,
+                args=(process.stderr, f"[{pony_name} STDERR]"),
+                daemon=True
+            )
+
+            stdout_thread.start()
+            stderr_thread.start()
+
+            stdout_thread.join(timeout=1)
+            stderr_thread.join(timeout=1)
+
+        except Exception as e:
+            # Игнорируем ошибки чтения
+            pass
+
+    def _read_stream(self, stream, prefix):
+        """Читает поток с обработкой кодировки"""
+        try:
+            for line in iter(stream.readline, ''):
+                if line:
+                    line = line.strip()
+                    if line:
+                        # Пытаемся декодировать разными способами
+                        try:
+                            print(f"{prefix}: {line}")
+                        except:
+                            # Если не получается - просто выводим как есть
+                            try:
+                                print(f"{prefix}: [бинарные данные]")
+                            except:
+                                pass
+        except Exception as e:
+            # Игнорируем все ошибки при чтении
+            pass
+
+    def _read_process_output(self, process, pony_name):
+        """Читает вывод процесса для отладки"""
+        try:
+            stdout, stderr = process.communicate(timeout=5)
+            if stdout:
+                print(f"[{pony_name} STDOUT]: {stdout}")
+            if stderr:
+                print(f"[{pony_name} STDERR]: {stderr}")
+        except subprocess.TimeoutExpired:
+            # Процесс все еще работает
+            pass
+        except Exception as e:
+            print(f"❌ Ошибка чтения вывода {pony_name}: {e}")
 
     def _show_main_window(self):
         """Показывает главное окно"""
-        # Проверяем, что окно действительно скрыто, чтобы избежать повторных вызовов
         if self.main_window_hidden:
             self.root.deiconify()
             self.root.focus_force()
@@ -1116,46 +987,15 @@ class DynamicPonySelector:
 
             self.running_processes = active_processes
 
-            # Проверяем окна
-            active_windows = {}
-            for pony_name, window_info in self.running_windows.items():
-                try:
-                    if window_info["window"].winfo_exists():
-                        active_windows[pony_name] = window_info
-                    else:
-                        print(f"📱 {pony_name} окно закрыто")
-                        # Уменьшаем счетчик активных пони
-                        self.active_ponies_count = max(0, self.active_ponies_count - 1)
-                        print(f"📊 Активных пони: {self.active_ponies_count}")
-                except:
-                    pass
-
-            self.running_windows = active_windows
-
-            # Проверяем, можно ли показать главное окно (только если оно скрыто)
+            # Проверяем, можно ли показать главное окно
             if (self.active_ponies_count == 0 and
                     not self.running_processes and
-                    not self.running_windows and
                     self.main_window_hidden):
                 self.root.after(0, self._show_main_window)
 
     def stop_all(self):
         """Останавливает всех запущенных пони"""
         print("🛑 Остановка всех пони...")
-
-        # Останавливаем окна
-        for pony_name, window_info in list(self.running_windows.items()):
-            try:
-                if hasattr(window_info["app"], 'return_to_main_callback'):
-                    # Используем колбэк для возврата
-                    window_info["app"].return_to_main_callback()
-                else:
-                    window_info["window"].destroy()
-                print(f"🛑 Остановлен: {pony_name}")
-            except Exception as e:
-                print(f"❌ Ошибка остановки {pony_name}: {e}")
-
-        self.running_windows.clear()
 
         # Останавливаем процессы
         for pony_name, process in list(self.running_processes.items()):
