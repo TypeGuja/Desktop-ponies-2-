@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "cadance_stand_left.gif",
+    "right_file": "cadance_stand_right.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "cadance-trot-left.gif",
+    "right_file": "cadance-trot-right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}

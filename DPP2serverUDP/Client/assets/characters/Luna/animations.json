@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "Luna_idle_left.gif",
+    "right_file": "Luna_idle_right.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "Luna_walk_left.gif",
+    "right_file": "Luna_walk_right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}

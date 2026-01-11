@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "stand_ts_left.gif",
+    "right_file": "stand_ts_right.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "trotcycle_ts_left.gif",
+    "right_file": "trotcycle_ts_right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}
