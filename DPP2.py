@@ -96,7 +96,7 @@ class DynamicPonySelector:
         """Загружает кадры GIF-файла"""
         try:
             if not os.path.exists(gif_path):
-                print(f"❌ GIF файл не найден: {gif_path}")
+                print(f"[ERROR] GIF файл не найден: {gif_path}")
                 return None
 
             gif = Image.open(gif_path)
@@ -114,7 +114,7 @@ class DynamicPonySelector:
 
             return frames
         except Exception as e:
-            print(f"❌ Ошибка загрузки GIF {gif_path}: {e}")
+            print(f"[ERROR] Ошибка загрузки GIF {gif_path}: {e}")
             return None
 
     def animate_gif(self, pony_name, label, frames, frame_index=0):
@@ -138,12 +138,12 @@ class DynamicPonySelector:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                    print(f"✅ Загружена сохраненная тема: {config.get('theme_name', 'default')}")
+                    print(f"[INFO] Загружена сохраненная тема: {config.get('theme_name', 'default')}")
                     return config
             else:
-                print("ℹ️ Файл конфигурации не найден, используются значения по умолчанию")
+                print("[INFO] Файл конфигурации не найден, используются значения по умолчанию")
         except Exception as e:
-            print(f"❌ Ошибка загрузки темы: {e}")
+            print(f"[ERROR] Ошибка загрузки темы: {e}")
 
         # Возвращаем значения по умолчанию для черной темы
         return {
@@ -176,9 +176,9 @@ class DynamicPonySelector:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
-            print(f"✅ Тема '{self.current_theme_name}' сохранена в конфигурацию")
+            print(f"[SUCCESS] Тема '{self.current_theme_name}' сохранена в конфигурацию")
         except Exception as e:
-            print(f"❌ Ошибка сохранения темы: {e}")
+            print(f"[ERROR] Ошибка сохранения темы: {e}")
 
     def setup_ui(self):
         # Главный заголовок
@@ -269,7 +269,7 @@ class DynamicPonySelector:
 
     def exit_app(self):
         """Завершает программу полностью"""
-        print("🛑 Завершение программы...")
+        print("[EXIT] Завершение программы...")
         self.should_exit = True
         self.stop_all()  # Сначала останавливаем всех пони
         # Очищаем GIF анимации
@@ -662,7 +662,7 @@ class DynamicPonySelector:
                     scale_percent = int(self.current_scale * 100)
                     self.scale_label.config(text=f"Scale: {scale_percent}%")
             except Exception as e:
-                print(f"Ошибка движения ползунка: {e}")
+                print(f"[ERROR] Ошибка движения ползунка: {e}")
 
         self.scale_slider.config(command=on_slider_move)
 
@@ -695,7 +695,7 @@ class DynamicPonySelector:
         def save_on_release(event):
             self.save_theme()
             scale_percent = int(self.current_scale * 100)
-            print(f"✅ Масштаб сохранен: {scale_percent}%")
+            print(f"[SUCCESS] Масштаб сохранен: {scale_percent}%")
 
         self.scale_slider.bind('<ButtonRelease-1>', save_on_release)
 
@@ -733,7 +733,7 @@ class DynamicPonySelector:
     def apply_scale_to_running_ponies(self):
         """Применяет текущий масштаб ко всем запущенным пони"""
         scale_percent = int(self.current_scale * 100)
-        print(f"📏 Применение масштаба {scale_percent}% к запущенным пони...")
+        print(f"[SCALE] Применение масштаба {scale_percent}% к запущенным пони...")
 
         # Заново запускаем все пони с новым масштабом
         running_ponies = list(self.running_processes.keys())
@@ -750,7 +750,7 @@ class DynamicPonySelector:
         for pony_name in running_ponies:
             self._start_via_subprocess(pony_name)
 
-        print("✅ Масштаб применен к запущенным пони")
+        print("[SUCCESS] Масштаб применен к запущенным пони")
 
         # Закрываем окно опций
         if self.options_window and self.options_window.winfo_exists():
@@ -787,7 +787,7 @@ class DynamicPonySelector:
                 self.show_options()
 
         except Exception as e:
-            print(f"⚠️ Ошибка при смене темы: {e}")
+            print(f"[WARNING] Ошибка при смене темы: {e}")
 
     def launch_selected(self):
         """Запускает выбранных персонажей"""
@@ -799,8 +799,8 @@ class DynamicPonySelector:
 
         # Закрываем главное окно сразу
         if selected_ponies:
-            print(f"✅ Запуск пони: {', '.join(selected_ponies)}")
-            print("📱 Главное окно скрыто")
+            print(f"[SUCCESS] Запуск пони: {', '.join(selected_ponies)}")
+            print("[INFO] Главное окно скрыто")
             # Скрываем главное окно сразу
             self.root.withdraw()
             self.main_window_hidden = True
@@ -808,7 +808,7 @@ class DynamicPonySelector:
             # Запускаем пони параллельно
             self._launch_ponies_parallel(selected_ponies)
         else:
-            print("⚠️ Не выбрано ни одного пони")
+            print("[WARNING] Не выбрано ни одного пони")
 
     def _launch_ponies_parallel(self, selected_ponies):
         """Запускает пони параллельно в отдельных потоках"""
@@ -825,7 +825,7 @@ class DynamicPonySelector:
             thread.start()
 
         # Не ждем завершения всех потоков
-        print(f"🚀 Запущено {len(threads)} потоков для пони")
+        print(f"[START] Запущено {len(threads)} потоков для пони")
 
     def _launch_single_pony(self, pony_name):
         """Запускает одного пони в отдельном потоке"""
@@ -833,7 +833,7 @@ class DynamicPonySelector:
             # Запускаем через subprocess
             self._start_via_subprocess(pony_name)
         except Exception as e:
-            print(f"❌ Ошибка запуска {pony_name} в потоке: {e}")
+            print(f"[ERROR] Ошибка запуска {pony_name} в потоке: {e}")
 
     def _start_via_subprocess(self, pony_name):
         """Запускает пони через subprocess с фиксом кодировки"""
@@ -844,13 +844,13 @@ class DynamicPonySelector:
             pony_script = "./DPP2serverUDP/Client/characters/pony.py"
 
             if not os.path.exists(pony_script):
-                print(f"❌ Файл не найден: {pony_script}")
+                print(f"[ERROR] Файл не найден: {pony_script}")
                 return
 
             # КОМАНДА С ПРАВИЛЬНОЙ КОДИРОВКОЙ
             cmd = f'python "{pony_script}" "{pony_name}" {self.current_scale}'
 
-            print(f"🔄 Команда: {cmd}")
+            print(f"[PROCESS] Команда: {cmd}")
 
             # Запуск с UTF-8 кодировкой
             if os.name == 'nt':  # Windows
@@ -884,7 +884,7 @@ class DynamicPonySelector:
                 )
 
             self.running_processes[pony_name] = process
-            print(f"✅ {pony_name} запущен (PID: {process.pid})")
+            print(f"[SUCCESS] {pony_name} запущен (PID: {process.pid})")
 
             # Запускаем поток для чтения вывода
             threading.Thread(
@@ -894,7 +894,7 @@ class DynamicPonySelector:
             ).start()
 
         except Exception as e:
-            print(f"❌ Ошибка запуска {pony_name}: {e}")
+            print(f"[ERROR] Ошибка запуска {pony_name}: {e}")
             self.active_ponies_count -= 1
 
     def _safe_read_output(self, process, pony_name):
@@ -956,7 +956,7 @@ class DynamicPonySelector:
             # Процесс все еще работает
             pass
         except Exception as e:
-            print(f"❌ Ошибка чтения вывода {pony_name}: {e}")
+            print(f"[ERROR] Ошибка чтения вывода {pony_name}: {e}")
 
     def _show_main_window(self):
         """Показывает главное окно"""
@@ -964,7 +964,7 @@ class DynamicPonySelector:
             self.root.deiconify()
             self.root.focus_force()
             self.main_window_hidden = False
-            print("📱 Все пони закрыты, главное окно развернуто")
+            print("[INFO] Все пони закрыты, главное окно развернуто")
 
     def _monitor_processes(self):
         """Мониторит запущенные процессы"""
@@ -978,10 +978,10 @@ class DynamicPonySelector:
                     if process.poll() is None:
                         active_processes[pony_name] = process
                     else:
-                        print(f"📱 {pony_name} завершил работу")
+                        print(f"[INFO] {pony_name} завершил работу")
                         # Уменьшаем счетчик активных пони
                         self.active_ponies_count = max(0, self.active_ponies_count - 1)
-                        print(f"📊 Активных пони: {self.active_ponies_count}")
+                        print(f"[STATUS] Активных пони: {self.active_ponies_count}")
                 except:
                     pass
 
@@ -995,15 +995,15 @@ class DynamicPonySelector:
 
     def stop_all(self):
         """Останавливает всех запущенных пони"""
-        print("🛑 Остановка всех пони...")
+        print("[STOP] Остановка всех пони...")
 
         # Останавливаем процессы
         for pony_name, process in list(self.running_processes.items()):
             try:
                 process.terminate()
-                print(f"🛑 Остановлен: {pony_name}")
+                print(f"[STOP] Остановлен: {pony_name}")
             except Exception as e:
-                print(f"❌ Ошибка остановки {pony_name}: {e}")
+                print(f"[ERROR] Ошибка остановки {pony_name}: {e}")
 
         self.running_processes.clear()
 
@@ -1012,7 +1012,7 @@ class DynamicPonySelector:
 
         # Показываем главное окно
         self._show_main_window()
-        print("🛑 Все пони остановлены")
+        print("[STOP] Все пони остановлены")
 
 
 if __name__ == "__main__":
