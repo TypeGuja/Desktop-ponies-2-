@@ -1,8 +1,8 @@
 {
-    "pony_name": "Apple Jack",
+    "pony_name": "Fluttershy",
     "base_width": 100,
-    "base_height": 160,
-    "base_sleep_width": 100,
+    "base_height": 150,
+    "base_sleep_width": 80,
     "base_sleep_height": 100,
     "min_distance": 200,
     "max_distance": 600,
@@ -18,13 +18,13 @@
     "push_zone_size": 1,
     "push_force": 5,
     "gif_paths": {
-        "stand_right": "./AppleJack_Gifct/stand_aj_right.gif",
-        "stand_left": "./AppleJack_Gifct/stand_aj_left.gif",
-        "move_right": "./AppleJack_Gifct/trotcycle_aj_right.gif",
-        "move_left": "./AppleJack_Gifct/trotcycle_aj_left.gif",
-        "sleep_right": "./AppleJack_Gifct/sleep-aj/sleep_right.gif",
-        "sleep_left": "./AppleJack_Gifct/sleep-aj/sleep_left.gif",
-        "drag": "./AppleJack_Gifct/drag-aj/aj-drag-left.gif"
+        "stand_right": "./Fluttershy_Gifct/stand_fs_right.gif",
+        "stand_left": "./Fluttershy_Gifct/stand_fs_left.gif",
+        "move_right": "./Fluttershy_Gifct/trotcycle_fs_right.gif",
+        "move_left": "./Fluttershy_Gifct/trotcycle_fs_left.gif",
+        "sleep_right": "./Fluttershy_Gifct/sleep-fs/sleeping_fs_right.gif",
+        "sleep_left": "./Fluttershy_Gifct/sleep-fs/sleeping_fs_left.gif",
+        "drag": "./Fluttershy_Gifct/drag-fs/fs_drag_left.gif"
     },
     "sleep_enabled": true,
     "menu_bg_color": "#2d2d2d",
