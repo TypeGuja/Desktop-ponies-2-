@@ -46,7 +46,7 @@ class GIFPlayer:
         # Базовые размеры (без масштаба)
         self.base_width = 100
         self.base_height = 150
-        self.base_sleep_width = 100
+        self.base_sleep_width = 80
         self.base_sleep_height = 100
 
         # Текущий масштаб
