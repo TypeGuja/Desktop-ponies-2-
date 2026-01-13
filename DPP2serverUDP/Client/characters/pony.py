@@ -1346,6 +1346,7 @@ class UniversalPony:
 
     def _pick_target(self):
         """Выбирает новую цель для движения"""
+        global current_x, current_y
         if self._shutdown_flag.is_set():
             return
 
