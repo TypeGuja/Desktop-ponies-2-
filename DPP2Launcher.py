@@ -1,77 +1,188 @@
-import tkinter as tk
-from tkinter import ttk, font, messagebox
-import subprocess
 import sys
+import os
+import subprocess
 import threading
 import time
 import json
+import tempfile
+import urllib.request
+import platform
 from pathlib import Path
 from datetime import datetime
-import os
+
+# ========== ПРОВЕРКА И УСТАНОВКА PYSIDE6 ==========
+try:
+    from PySide6.QtWidgets import *
+    from PySide6.QtCore import *
+    from PySide6.QtGui import *
+
+    QT_AVAILABLE = True
+    QT_LIB = "PySide6"
+    print("✓ PySide6 найден")
+except ImportError:
+    QT_AVAILABLE = False
+    QT_LIB = None
+    print("✗ PySide6 не найден, пробуем PyQt5...")
+
+if not QT_AVAILABLE:
+    try:
+        from PyQt5.QtWidgets import *
+        from PyQt5.QtCore import *
+        from PyQt5.QtGui import *
+
+        QT_AVAILABLE = True
+        QT_LIB = "PyQt5"
+        print("✓ PyQt5 найден")
+    except ImportError:
+        QT_AVAILABLE = False
+        QT_LIB = None
+        print("✗ PyQt5 не найден")
+
+# Если ни одна библиотека не найдена, предлагаем установить
+if not QT_AVAILABLE:
+    print("\n⚠ GUI библиотеки не найдены!")
+    print("Установите одну из библиотек:")
+    print("1. pip install PySide6 (рекомендуется)")
+    print("2. pip install PyQt5")
+
+    # Пробуем автоматически установить PySide6
+    try:
+        print("\nПытаюсь установить PySide6 автоматически...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PySide6"])
+    from PySi~de6.QtWidgets import *
+        from PySide6.QtCore import *
+        from PySide6.QtGui import *
+
+        QT_AVAILABLE = True
+        QT_LIB = "PySide6"
+        print("✓ PySide6 успешно установлен!")
+    except:
+        print("✗ Не удалось установить PySide6 автоматически")
+        input("Нажмите Enter для выхода...")
+        sys.exit(1)
+
+# ========== ОСТАЛЬНЫЕ ИМПОРТЫ ==========
+try:
+    import webbrowser
+
+    WEBBROWSER_AVAILABLE = True
+except ImportError:
+    WEBBROWSER_AVAILABLE = False
+
+
+# ========== НОВЫЙ БЛОК ДЛЯ РАБОТЫ С ПУТЯМИ В EXE ==========
+def get_base_path():
+    """Получить базовый путь в зависимости от режима (скрипт или exe)"""
+    if getattr(sys, 'frozen', False):
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return base_path
+
+
+def find_file_relative(base_path, relative_path):
+    """Найти файл относительно базового пути"""
+    path = os.path.join(base_path, relative_path)
+
+    if os.path.exists(path):
+        return os.path.abspath(path)
+
+    # Пробуем найти в родительских директориях
+    parent_dir = os.path.dirname(base_path)
+    attempts = 0
+    while attempts < 3 and parent_dir:
+        path = os.path.join(parent_dir, relative_path)
+        if os.path.exists(path):
+            return os.path.abspath(path)
+        parent_dir = os.path.dirname(parent_dir)
+        attempts += 1
+
+    # Возвращаем путь даже если файл не существует (для отладки)
+    return os.path.abspath(os.path.join(base_path, relative_path))
+
+
+# Получаем базовый путь
+BASE_PATH = get_base_path()
+
+# Прописываем пути относительно базового пути
+CLIENT_FILE = find_file_relative(BASE_PATH, r"DPP2serverUDP\Client\main.py")
+CLIENT_OFFLINE_FILE = find_file_relative(BASE_PATH, r"DPP2.py")
+SERVER_FILE = find_file_relative(BASE_PATH, r"DPP2serverUDP\Server\main.py")
+
+print(f"Base path: {BASE_PATH}")
+print(f"Client file: {CLIENT_FILE}")
+print(f"Client offline file: {CLIENT_OFFLINE_FILE}")
+print(f"Server file: {SERVER_FILE}")
 
 
 # ========== КОНСТАНТЫ ДИЗАЙНА ==========
 class Colors:
-    """Цветовые схемы - только черная, серая и белая"""
+    """Цветовые схемы"""
 
-    # Черная тема (по умолчанию)
     BLACK = {
-        'DARK_BG': '#0a0a14',  # Темно-синий фон
-        'DARKER_BG': '#05050a',  # Еще темнее фон
-        'CARD_BG': '#151522',  # Фон карточек/кнопок
-        'TEXT_MAIN': '#ffffff',  # Основной текст (белый)
-        'ACCENT': '#00d4ff',  # Акцентный цвет (голубой)
-        'BTN_CLIENT': '#00ff88',  # Зеленый
-        'BTN_SERVER': '#00d4ff',  # Голубой
-        'BTN_ALL': '#ff6b9d',  # Розовый/красный
-        'BTN_CLIENT_OFFLINE': '#8888aa',  # Серо-синий
-        'BTN_SETTINGS': '#9d4edd',  # Фиолетовый
-        'WINDOW_BG': '#0a0a14',  # Фон окна
-        'TITLE_BAR': '#05050a',  # Фон заголовка
-        'TITLE_TEXT': '#ffffff',  # Текст заголовка
-        'ACCENT_HOVER': '#40e0ff',  # Акцент при наведении (светлее)
-        'ACCENT_LIGHT': '#202840',  # Светлый акцент (без альфа-канала)
-        'BORDER': '#303050'  # Цвет границ
+        'DARK_BG': '#0a0a14',
+        'DARKER_BG': '#05050a',
+        'CARD_BG': '#151522',
+        'TEXT_MAIN': '#ffffff',
+        'ACCENT': '#00d4ff',
+        'BTN_CLIENT': '#00ff88',
+        'BTN_SERVER': '#00d4ff',
+        'BTN_ALL': '#ff6b9d',
+        'BTN_CLIENT_OFFLINE': '#8888aa',
+        'BTN_SETTINGS': '#9d4edd',
+        'WINDOW_BG': '#0a0a14',
+        'TITLE_BAR': '#05050a',
+        'TITLE_TEXT': '#ffffff',
+        'ACCENT_HOVER': '#40e0ff',
+        'ACCENT_LIGHT': '#202840',
+        'BORDER': '#303050',
+        'SUCCESS': '#00ff88',
+        'ERROR': '#ff4444',
+        'WARNING': '#ffaa00'
     }
 
-    # Серая тема
     GRAY = {
-        'DARK_BG': '#1a1a1a',  # Темно-серый фон
-        'DARKER_BG': '#0d0d0d',  # Еще темнее серый
-        'CARD_BG': '#2d2d2d',  # Фон карточек/кнопок
-        'TEXT_MAIN': '#e6e6e6',  # Основной текст (светло-серый)
-        'ACCENT': '#4d4d4d',  # Акцентный цвет (серый)
-        'BTN_CLIENT': '#2ecc71',  # Зеленый (яркий)
-        'BTN_SERVER': '#3498db',  # Синий
-        'BTN_ALL': '#e74c3c',  # Красный
-        'BTN_CLIENT_OFFLINE': '#95a5a6',  # Серый (светлый)
-        'BTN_SETTINGS': '#9b59b6',  # Фиолетовый
-        'WINDOW_BG': '#1a1a1a',  # Фон окна
-        'TITLE_BAR': '#0d0d0d',  # Фон заголовка
-        'TITLE_TEXT': '#e6e6e6',  # Текст заголовка
-        'ACCENT_HOVER': '#6d6d6d',  # Акцент при наведении
-        'ACCENT_LIGHT': '#3a3a3a',  # Светлый акцент
-        'BORDER': '#404040'  # Цвет границ
+        'DARK_BG': '#1a1a1a',
+        'DARKER_BG': '#0d0d0d',
+        'CARD_BG': '#2d2d2d',
+        'TEXT_MAIN': '#e6e6e6',
+        'ACCENT': '#4d4d4d',
+        'BTN_CLIENT': '#2ecc71',
+        'BTN_SERVER': '#3498db',
+        'BTN_ALL': '#e74c3c',
+        'BTN_CLIENT_OFFLINE': '#95a5a6',
+        'BTN_SETTINGS': '#9b59b6',
+        'WINDOW_BG': '#1a1a1a',
+        'TITLE_BAR': '#0d0d0d',
+        'TITLE_TEXT': '#e6e6e6',
+        'ACCENT_HOVER': '#6d6d6d',
+        'ACCENT_LIGHT': '#3a3a3a',
+        'BORDER': '#404040',
+        'SUCCESS': '#2ecc71',
+        'ERROR': '#e74c3c',
+        'WARNING': '#f39c12'
     }
 
-    # Белая тема
     WHITE = {
-        'DARK_BG': '#f0f0f0',  # Светло-серый фон
-        'DARKER_BG': '#e0e0e0',  # Немного темнее фон
-        'CARD_BG': '#ffffff',  # Фон карточек/кнопок (белый)
-        'TEXT_MAIN': '#333333',  # Основной текст (темно-серый)
-        'ACCENT': '#007acc',  # Акцентный цвет (синий)
-        'BTN_CLIENT': '#28a745',  # Зеленый
-        'BTN_SERVER': '#17a2b8',  # Голубой
-        'BTN_ALL': '#dc3545',  # Красный
-        'BTN_CLIENT_OFFLINE': '#6c757d',  # Серый
-        'BTN_SETTINGS': '#6f42c1',  # Фиолетовый
-        'WINDOW_BG': '#f0f0f0',  # Фон окна
-        'TITLE_BAR': '#e0e0e0',  # Фон заголовка
-        'TITLE_TEXT': '#333333',  # Текст заголовка
-        'ACCENT_HOVER': '#0099e6',  # Акцент при наведении
-        'ACCENT_LIGHT': '#cce5ff',  # Светлый акцент (без альфа-канала)
-        'BORDER': '#cccccc'  # Цвет границ
+        'DARK_BG': '#f0f0f0',
+        'DARKER_BG': '#e0e0e0',
+        'CARD_BG': '#ffffff',
+        'TEXT_MAIN': '#333333',
+        'ACCENT': '#007acc',
+        'BTN_CLIENT': '#28a745',
+        'BTN_SERVER': '#17a2b8',
+        'BTN_ALL': '#dc3545',
+        'BTN_CLIENT_OFFLINE': '#6c757d',
+        'BTN_SETTINGS': '#6f42c1',
+        'WINDOW_BG': '#f0f0f0',
+        'TITLE_BAR': '#e0e0e0',
+        'TITLE_TEXT': '#333333',
+        'ACCENT_HOVER': '#0099e6',
+        'ACCENT_LIGHT': '#cce5ff',
+        'BORDER': '#cccccc',
+        'SUCCESS': '#28a745',
+        'ERROR': '#dc3545',
+        'WARNING': '#ffc107'
     }
 
     def __init__(self):
@@ -92,222 +203,417 @@ class Colors:
         return False
 
 
-# ========== НАСТРОЙКА ПУТЕЙ К ФАЙЛАМ ==========
-# ========== ИЗМЕНИ ЭТИ СТРОКИ НА СВОИ ПУТИ ==========
+# Список необходимых библиотек (обновленный)
+REQUIRED_LIBRARIES = [
+    'pygame==2.5.2',
+    'numpy==1.24.3',
+    'Pillow==9.5.0',
+    'requests==2.31.0',
+    'cryptography==41.0.7',
+    'PySide6==6.6.0' if QT_LIB == "PySide6" else 'PyQt5==5.15.9',
+]
 
-CLIENT_FILE = r".\DPP2serverUDP\Client\main.py"  # ИЗМЕНИ НА СВОЙ ПУТЬ
-CLIENT_OFFLINE_FILE = r".\DPP2.py"  # ИЗМЕНИ НА СВОЙ ПУТЬ
-SERVER_FILE = r".\DPP2serverUDP\Server\main.py"  # ИЗМЕНИ НА СВОЙ ПУТЬ
 
+class ModernButton(QPushButton):
+    """Современная кнопка с анимацией и эффектами"""
 
-# ========== КОНЕЦ НАСТРОЙКИ ПУТЕЙ ==========
-
-class TransparentButton:
-    """Кнопка с прозрачным фоном"""
-
-    def __init__(self, parent, text, color, command, width=250, height=40):
-        """
-        parent - родительский виджет
-        text - текст кнопки
-        color - цвет текста из цветовой схемы
-        command - функция при клике
-        """
-        self.parent = parent
-        self.text = text
+    def __init__(self, text, color, parent=None):
+        super().__init__(parent)
         self.color = color
-        self.command = command
-        self.width = width
-        self.height = height
-        self.parent_bg = parent.cget('bg')
+        self.hover_color = self._adjust_color(color, 50)
+        self.press_color = self._adjust_color(color, -30)
 
-        # Создаем Label вместо Button для прозрачного фона
-        self.label = tk.Label(
-            parent,
-            text=text,
-            font=('Arial', 11, 'bold'),
-            bg=self.parent_bg,  # Прозрачный фон (такой же как у родителя)
-            fg=color,  # Цвет текста
-            cursor='hand2',
-            padx=20,
-            pady=10
-        )
+        self.setFixedHeight(50)
+        self.setMinimumWidth(250)
 
-        # Биндим события
-        self.label.bind('<Button-1>', self.on_click)
-        self.label.bind('<Enter>', self.on_enter)
-        self.label.bind('<Leave>', self.on_leave)
+        # Создаем внутренний виджет для содержимого
+        self.content_widget = QWidget(self)
+        self.content_layout = QHBoxLayout(self.content_widget)
+        self.content_layout.setContentsMargins(20, 0, 20, 0)
 
-    def on_click(self, event):
-        """При клике"""
-        if self.command:
-            self.command()
+        self.label = QLabel(text)
+        self.arrow = QLabel("→")
 
-    def on_enter(self, event):
-        """При наведении мыши"""
-        # Делаем текст светлее
-        if self.color.startswith('#'):
-            try:
-                r = int(self.color[1:3], 16)
-                g = int(self.color[3:5], 16)
-                b = int(self.color[5:7], 16)
-                r = min(255, r + 50)
-                g = min(255, g + 50)
-                b = min(255, b + 50)
-                self.label.config(fg=f'#{r:02x}{g:02x}{b:02x}')
-            except:
-                # Добавляем подчеркивание
-                self.label.config(font=('Arial', 11, 'bold', 'underline'))
+        self.content_layout.addWidget(self.label)
+        self.content_layout.addStretch()
+        self.content_layout.addWidget(self.arrow)
 
-    def on_leave(self, event):
-        """При уходе мыши"""
-        # Возвращаем исходный цвет
-        self.label.config(fg=self.color, font=('Arial', 11, 'bold'))
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: transparent;
+                color: {color};
+                border: 2px solid {color};
+                border-radius: 8px;
+                padding: 0px;
+                font-size: 14px;
+                font-weight: bold;
+            }}
+            QPushButton:hover {{
+                background-color: {color}20;
+                border-color: {self.hover_color};
+            }}
+            QPushButton:pressed {{
+                background-color: {color}40;
+                border-color: {self.press_color};
+            }}
+        """)
 
-    def update_color(self, new_color, parent_bg):
-        """Обновление цвета кнопки"""
-        self.color = new_color
-        self.parent_bg = parent_bg
-        self.label.config(bg=parent_bg, fg=new_color)
+        # Стили для внутренних элементов
+        self.label.setStyleSheet(f"color: {color}; font-weight: bold; background: transparent;")
+        self.arrow.setStyleSheet(f"color: {color}; font-weight: bold; font-size: 16px; background: transparent;")
+        self.content_widget.setStyleSheet("background: transparent;")
 
-    def pack(self, **kwargs):
-        """Упаковка кнопки"""
-        return self.label.pack(**kwargs)
+        self.setCursor(Qt.CursorShape.PointingHandCursor if QT_LIB == "PySide6" else Qt.PointingHandCursor)
 
-    def pack_forget(self):
-        """Скрытие кнопки"""
-        return self.label.pack_forget()
+    def resizeEvent(self, event):
+        """Переопределяем resizeEvent для позиционирования внутреннего виджета"""
+        super().resizeEvent(event)
+        self.content_widget.setGeometry(0, 0, self.width(), self.height())
+
+    def _adjust_color(self, color, delta):
+        """Корректировка цвета для hover/pressed эффектов"""
+        if color.startswith('#'):
+            r = int(color[1:3], 16) + delta
+            g = int(color[3:5], 16) + delta
+            b = int(color[5:7], 16) + delta
+
+            r = max(0, min(255, r))
+            g = max(0, min(255, g))
+            b = max(0, min(255, b))
+
+            return f'#{r:02x}{g:02x}{b:02x}'
+        return color
 
 
-class ThemeDropdownMenu:
-    """Выпадающее меню для выбора темы"""
+class SettingsDialog(QDialog):
+    """Диалоговое окно настроек"""
 
-    def __init__(self, parent, colors, current_theme, on_theme_change):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.parent = parent
-        self.colors = colors
-        self.current_theme = current_theme
-        self.on_theme_change = on_theme_change
-        self.is_open = False
-        self.parent_bg = colors['WINDOW_BG']
+        self.setup_ui()
 
-        # Создаем основной фрейм
-        self.main_frame = tk.Frame(parent, bg=self.parent_bg)
+    def setup_ui(self):
+        self.setWindowTitle("Settings")
+        self.setFixedSize(500, 500)
+        self.setModal(True)
 
-        # Кнопка для открытия/закрытия меню (Label для прозрачности)
-        self.dropdown_label = tk.Label(
-            self.main_frame,
-            text=f"Theme: {current_theme} ▼",
-            font=('Arial', 11, 'bold'),
-            bg=self.parent_bg,
-            fg=colors['TEXT_MAIN'],
-            cursor='hand2',
-            padx=15,
-            pady=8,
-            relief='solid',
-            bd=1
-        )
-        self.dropdown_label.pack(fill='x')
-        self.dropdown_label.bind('<Button-1>', self.toggle_menu)
+        # Основной layout
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(25, 25, 25, 25)
+        layout.setSpacing(20)
 
-        # Выпадающее меню (изначально скрыто)
-        self.menu_frame = tk.Frame(self.main_frame, bg=self.parent_bg, relief='solid', bd=1)
+        # Раздел: Общие настройки
+        general_group = QGroupBox("General Settings")
+        general_group.setStyleSheet("""
+            QGroupBox {
+                font-weight: bold;
+                border: 1px solid #303050;
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }
+        """)
 
-        # Опции тем
-        self.theme_options = [
-            ("Black", "BLACK"),
-            ("Gray", "GRAY"),
-            ("White", "WHITE")
-        ]
+        general_layout = QVBoxLayout(general_group)
+        general_layout.setSpacing(10)
 
-        self.create_menu_items()
+        # Developer Mode
+        self.dev_checkbox = QCheckBox("Developer Mode")
+        self.dev_checkbox.setChecked(self.parent.settings['developer_mode'])
+        general_layout.addWidget(self.dev_checkbox)
 
-    def create_menu_items(self):
-        """Создает элементы меню"""
-        for theme_name, theme_key in self.theme_options:
-            item_label = tk.Label(
-                self.menu_frame,
-                text=theme_name,
-                font=('Arial', 11),
-                bg=self.parent_bg,
-                fg=self.colors['TEXT_MAIN'],
-                cursor='hand2',
-                padx=15,
-                pady=6,
-                anchor='w'
-            )
-            item_label.pack(fill='x')
-            item_label.bind('<Button-1>', lambda e, t=theme_key: self.select_theme(t))
+        dev_label = QLabel("Shows Server and Start All buttons")
+        dev_label.setStyleSheet("color: #888888; margin-left: 20px;")
+        general_layout.addWidget(dev_label)
 
-            # Подсвечиваем текущую тему
-            if theme_key == self.current_theme:
-                item_label.config(fg=self.colors['ACCENT'])
+        # Auto-check environment
+        self.auto_check_checkbox = QCheckBox("Auto-check environment on startup")
+        self.auto_check_checkbox.setChecked(self.parent.settings.get('auto_check_environment', True))
+        general_layout.addWidget(self.auto_check_checkbox)
 
-            # Эффекты наведения
-            def on_enter(e, lbl=item_label, key=theme_key):
-                if key != self.current_theme:
-                    lbl.config(bg=self.colors['ACCENT_LIGHT'])
+        auto_check_label = QLabel("Automatically check Python and libraries on launch")
+        auto_check_label.setStyleSheet("color: #888888; margin-left: 20px;")
+        general_layout.addWidget(auto_check_label)
 
-            def on_leave(e, lbl=item_label, key=theme_key):
-                if key == self.current_theme:
-                    lbl.config(bg=self.parent_bg, fg=self.colors['ACCENT'])
+        general_layout.addStretch()
+
+        # Раздел: Темы
+        theme_group = QGroupBox("Appearance")
+        theme_group.setStyleSheet(general_group.styleSheet())
+
+        theme_layout = QVBoxLayout(theme_group)
+        theme_layout.setSpacing(10)
+
+        theme_label = QLabel("Color Theme:")
+        theme_label.setStyleSheet("font-weight: bold;")
+        theme_layout.addWidget(theme_label)
+
+        # ComboBox для выбора темы
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Black", "Gray", "White"])
+        current_theme = self.parent.colors.current_theme
+        self.theme_combo.setCurrentText(current_theme.title())
+
+        # Стилизация ComboBox
+        self.theme_combo.setStyleSheet("""
+            QComboBox {
+                border: 1px solid #303050;
+                border-radius: 4px;
+                padding: 5px;
+                background: #151522;
+                color: white;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid white;
+            }
+            QComboBox QAbstractItemView {
+                border: 1px solid #303050;
+                background: #151522;
+                color: white;
+                selection-background-color: #00d4ff;
+            }
+        """)
+
+        theme_layout.addWidget(self.theme_combo)
+        theme_layout.addStretch()
+
+        layout.addWidget(general_group)
+        layout.addWidget(theme_group)
+
+        # Кнопки
+        button_layout = QHBoxLayout()
+
+        save_btn = ModernButton("Apply & Save", "#00ff88")
+        save_btn.clicked.connect(self.apply_settings)
+
+        cancel_btn = ModernButton("Cancel", "#8888aa")
+        cancel_btn.clicked.connect(self.reject)
+
+        button_layout.addStretch()
+        button_layout.addWidget(cancel_btn)
+        button_layout.addWidget(save_btn)
+
+        layout.addLayout(button_layout)
+
+    def apply_settings(self):
+        """Применение настроек"""
+        self.parent.settings['developer_mode'] = self.dev_checkbox.isChecked()
+        self.parent.settings['auto_check_environment'] = self.auto_check_checkbox.isChecked()
+
+        theme_map = {"Black": "BLACK", "Gray": "GRAY", "White": "WHITE"}
+        theme = theme_map[self.theme_combo.currentText()]
+        self.parent.settings['theme'] = theme
+
+        self.parent.save_settings()
+        self.parent.apply_settings_changes()
+        self.accept()
+
+
+class InstallationWizard(QDialog):
+    """Мастер установки Python и библиотек"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.python_installer = PythonInstaller()
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.setWindowTitle("Environment Setup Wizard")
+        self.setFixedSize(600, 500)
+        self.setModal(True)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(20)
+
+        # Заголовок
+        title = QLabel("Environment Setup")
+        title.setStyleSheet("font-size: 20px; font-weight: bold;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter if QT_LIB == "PySide6" else Qt.AlignCenter)
+        layout.addWidget(title)
+
+        # Info frame
+        self.info_frame = QFrame()
+        self.info_frame.setFrameStyle(QFrame.Shape.Box if QT_LIB == "PySide6" else QFrame.Box)
+        layout.addWidget(self.info_frame)
+
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        layout.addWidget(self.progress_bar)
+
+        # Log text
+        self.log_text = QTextEdit()
+        self.log_text.setReadOnly(True)
+        self.log_text.setFont(QFont("Consolas", 9))
+        layout.addWidget(self.log_text)
+
+        # Кнопки
+        button_layout = QHBoxLayout()
+
+        self.check_btn = ModernButton("Check Environment", "#00ff88")
+        self.check_btn.clicked.connect(self.start_check)
+
+        close_btn = ModernButton("Close", "#8888aa")
+        close_btn.clicked.connect(self.close)
+
+        button_layout.addWidget(self.check_btn)
+        button_layout.addStretch()
+        button_layout.addWidget(close_btn)
+
+        layout.addLayout(button_layout)
+
+        # Запуск проверки при открытии
+        QTimer.singleShot(100, self.start_check)
+
+    def log_message(self, message, color=None):
+        """Добавление сообщения в лог"""
+        cursor = self.log_text.textCursor()
+        cursor.movePosition(QTextCursor.MoveOperation.End if QT_LIB == "PySide6" else QTextCursor.End)
+
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        full_message = f"[{timestamp}] {message}\n"
+
+        self.log_text.setTextCursor(cursor)
+        self.log_text.insertPlainText(full_message)
+
+        # Прокрутка вниз
+        cursor.movePosition(QTextCursor.MoveOperation.End if QT_LIB == "PySide6" else QTextCursor.End)
+        self.log_text.setTextCursor(cursor)
+
+    def update_progress(self, value, message=None):
+        """Обновление прогресс бара"""
+        self.progress_bar.setValue(value)
+        if message:
+            self.log_message(message)
+        QApplication.processEvents()
+
+    def start_check(self):
+        """Запуск проверки окружения"""
+        self.check_btn.setEnabled(False)
+        threading.Thread(target=self.perform_check, daemon=True).start()
+
+    def perform_check(self):
+        """Выполнение проверки и установки"""
+        try:
+            self.update_progress(10, "Checking Python installation...")
+            python_installed, python_version = self.python_installer.check_python_installed()
+
+            if not python_installed:
+                self.log_message("Python not found!", "#ff4444")
+                self.update_progress(20, "Python needs to be installed...")
+
+                # Запрашиваем установку
+                reply = QMessageBox.question(
+                    self,
+                    "Python Installation",
+                    "Python is not installed on your computer.\n"
+                    "Do you want to install Python 3.11.5 automatically?\n\n"
+                    "Python is required to run the game.",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if QT_LIB == "PySide6" else QMessageBox.Yes | QMessageBox.No
+                )
+
+                if reply == QMessageBox.StandardButton.Yes if QT_LIB == "PySide6" else reply == QMessageBox.Yes:
+                    self.update_progress(30, "Downloading Python installer...")
+                    installer_path = self.python_installer.download_python_installer()
+
+                    if installer_path:
+                        self.update_progress(50, "Running Python installer...")
+                        self.log_message("Please wait for installation to complete...", "#ffaa00")
+
+                        success = self.python_installer.run_python_installer(installer_path)
+
+                        if success:
+                            self.update_progress(70, "Python successfully installed!")
+                            self.log_message("Python installed successfully!", "#00ff88")
+
+                            time.sleep(2)
+                            self.update_progress(80, "Restarting check...")
+                            python_installed, python_version = self.python_installer.check_python_installed()
+                        else:
+                            self.log_message("Python installation failed!", "#ff4444")
+                            self.update_progress(100)
+                            return
+                    else:
+                        self.log_message("Failed to download Python installer", "#ff4444")
+                        self.log_message("Please install Python manually from python.org", "#ffaa00")
+                        self.update_progress(100)
+                        return
                 else:
-                    lbl.config(bg=self.parent_bg, fg=self.colors['TEXT_MAIN'])
+                    self.log_message("Python installation cancelled", "#ffaa00")
+                    self.log_message("Game cannot run without Python", "#ff4444")
+                    self.update_progress(100)
+                    return
+            else:
+                self.log_message(f"Python found: {python_version}", "#00ff88")
+                self.update_progress(40, "Python installed ✓")
 
-            item_label.bind('<Enter>', on_enter)
-            item_label.bind('<Leave>', on_leave)
+            self.update_progress(50, "Checking required libraries...")
+            installed_libs, missing_libs = self.python_installer.check_libraries()
 
-    def toggle_menu(self, event=None):
-        """Открывает/закрывает меню"""
-        if self.is_open:
-            self.close_menu()
-        else:
-            self.open_menu()
+            if installed_libs:
+                self.log_message(f"Found {len(installed_libs)} libraries", "#00ff88")
 
-    def open_menu(self):
-        """Открывает меню"""
-        self.is_open = True
-        self.dropdown_label.config(text=f"Theme: {self.current_theme} ▲")
-        self.menu_frame.pack(fill='x', pady=(2, 0))
+            if missing_libs:
+                self.log_message(f"Missing {len(missing_libs)} libraries", "#ffaa00")
+                self.update_progress(60, f"Installing {len(missing_libs)} libraries...")
 
-    def close_menu(self):
-        """Закрывает меню"""
-        self.is_open = False
-        self.dropdown_label.config(text=f"Theme: {self.current_theme} ▼")
-        self.menu_frame.pack_forget()
+                def progress_callback(msg, percent):
+                    self.update_progress(60 + int(percent * 0.4), msg)
 
-    def select_theme(self, theme_key):
-        """Выбор темы"""
-        self.current_theme = theme_key
-        self.dropdown_label.config(text=f"Theme: {theme_key} ▼")
-        self.close_menu()
+                success, message = self.python_installer.install_libraries(missing_libs, progress_callback)
 
-        # Пересоздаем элементы меню для обновления подсветки
-        for widget in self.menu_frame.winfo_children():
-            widget.destroy()
-        self.create_menu_items()
+                if success:
+                    self.log_message(message, "#00ff88")
+                    self.update_progress(95, "All libraries installed!")
+                else:
+                    self.log_message(message, "#ff4444")
+                    self.update_progress(100)
+                    return
+            else:
+                self.log_message("All required libraries are installed!", "#00ff88")
+                self.update_progress(90, "Environment configured ✓")
 
-        # Вызываем callback
-        if self.on_theme_change:
-            self.on_theme_change(theme_key)
+            self.update_progress(95, "Final check...")
+            time.sleep(1)
 
-    def update_colors(self, colors, parent_bg):
-        """Обновление цветов меню"""
-        self.colors = colors
-        self.parent_bg = parent_bg
-        self.main_frame.config(bg=parent_bg)
-        self.dropdown_label.config(bg=parent_bg, fg=colors['TEXT_MAIN'])
-        self.menu_frame.config(bg=parent_bg)
+            installed_libs, missing_libs = self.python_installer.check_libraries()
 
-    def pack(self, **kwargs):
-        """Упаковка виджета"""
-        return self.main_frame.pack(**kwargs)
+            if not missing_libs:
+                self.log_message("✓ All checks passed successfully!", "#00ff88")
+                self.log_message("✓ Environment is ready!", "#00ff88")
+                self.update_progress(100, "Done!")
+            else:
+                self.log_message(f"⚠ {len(missing_libs)} issues remain after installation", "#ffaa00")
+                for lib in missing_libs:
+                    self.log_message(f"  - {lib}", "#ff4444")
+                self.update_progress(100)
+
+        except Exception as e:
+            self.log_message(f"Error: {str(e)}", "#ff4444")
+            self.update_progress(100)
+        finally:
+            self.check_btn.setEnabled(True)
 
 
-class UltraModernLauncher:
+class UltraModernLauncher(QMainWindow):
+    """Основной класс лаунчера"""
+
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title("🎮 DPP2 LAUNCHER")
-        self.root.geometry("800x500")
-        self.root.resizable(False, False)
+        super().__init__()
 
         # Инициализация цветов
         self.colors = Colors()
@@ -316,47 +622,215 @@ class UltraModernLauncher:
         # Настройки
         self.settings = {
             'developer_mode': False,
-            'theme': 'BLACK'
+            'theme': 'BLACK',
+            'auto_check_environment': True
         }
         self.load_settings()
 
-        # Применяем цвета к окну
-        self.root.configure(bg=self.current_colors['WINDOW_BG'])
-
         # Переменные для управления
-        self.running_apps = 0  # Счетчик запущенных приложений
-        self.is_hidden = False  # Флаг скрытия окна
+        self.running_apps = []
+        self.is_hidden = False
+        self.python_installer = PythonInstaller()
 
         # Проверяем файлы
         self.check_files()
 
-        # Настройка шрифтов
-        self.setup_fonts()
+        # Настройка интерфейса
+        self.setup_ui()
 
-        # Создание интерфейса
-        self.create_interface()
+        # Проверка окружения при старте
+        if self.settings['auto_check_environment']:
+            QTimer.singleShot(500, self.check_environment_on_startup)
 
-        # Центрирование окна
-        self.center_window()
+    def setup_ui(self):
+        """Настройка пользовательского интерфейса"""
+        self.setWindowTitle("🎮 DPP2 LAUNCHER")
+        self.setFixedSize(800, 500)
 
-        # Обработка закрытия
-        self.root.protocol("WM_DELETE_WINDOW", self.quit_launcher)
+        # Центральный виджет
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+
+        # Основной layout
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # Верхняя панель с заголовком
+        header_widget = QWidget()
+        header_widget.setObjectName("header")
+        header_layout = QVBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 20, 0, 20)
+
+        title = QLabel("🎮 DPP2 LAUNCHER")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter if QT_LIB == "PySide6" else Qt.AlignCenter)
+        title.setStyleSheet("""
+            font-size: 32px;
+            font-weight: bold;
+            padding: 10px;
+        """)
+
+        subtitle = QLabel("Select an option below")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter if QT_LIB == "PySide6" else Qt.AlignCenter)
+        subtitle.setStyleSheet("""
+            font-size: 14px;
+            color: #00d4ff;
+            padding-bottom: 10px;
+        """)
+
+        header_layout.addWidget(title)
+        header_layout.addWidget(subtitle)
+
+        # Кнопка настроек окружения
+        env_btn = QPushButton("🛠️ Setup Environment")
+        env_btn.setCursor(Qt.CursorShape.PointingHandCursor if QT_LIB == "PySide6" else Qt.PointingHandCursor)
+        env_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: #9d4edd;
+                border: 1px solid #9d4edd;
+                border-radius: 4px;
+                padding: 5px 10px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #9d4edd20;
+            }
+        """)
+        env_btn.clicked.connect(self.open_environment_wizard)
+
+        # Размещаем кнопку в правом верхнем углу заголовка
+        header_layout.addWidget(env_btn, 0, Qt.AlignmentFlag.AlignRight if QT_LIB == "PySide6" else Qt.AlignRight)
+
+        main_layout.addWidget(header_widget)
+
+        # Контейнер для кнопок
+        container = QWidget()
+        container_layout = QHBoxLayout(container)
+        container_layout.setContentsMargins(40, 0, 40, 40)
+
+        # Левая панель с кнопками
+        left_panel = QWidget()
+        left_panel.setFixedWidth(300)
+        left_layout = QVBoxLayout(left_panel)
+        left_layout.setSpacing(10)
+
+        # Создаем кнопки
+        self.client_btn = ModernButton("Client", self.current_colors['BTN_CLIENT'])
+        self.client_btn.clicked.connect(self.launch_client)
+
+        self.client_offline_btn = ModernButton("Client Offline", self.current_colors['BTN_CLIENT_OFFLINE'])
+        self.client_offline_btn.clicked.connect(self.launch_client_offline)
+
+        self.server_btn = ModernButton("Server", self.current_colors['BTN_SERVER'])
+        self.server_btn.clicked.connect(self.launch_server)
+
+        self.all_btn = ModernButton("Start All (Server+Client)", self.current_colors['BTN_ALL'])
+        self.all_btn.clicked.connect(self.launch_all)
+
+        left_layout.addWidget(self.client_btn)
+        left_layout.addWidget(self.client_offline_btn)
+        left_layout.addWidget(self.server_btn)
+        left_layout.addWidget(self.all_btn)
+        left_layout.addStretch()
+
+        container_layout.addWidget(left_panel)
+        container_layout.addStretch()
+
+        main_layout.addWidget(container)
+
+        # Кнопка настроек в правом нижнем углу
+        settings_btn = QPushButton("⚙️ Settings")
+        settings_btn.setCursor(Qt.CursorShape.PointingHandCursor if QT_LIB == "PySide6" else Qt.PointingHandCursor)
+        settings_btn.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: #9d4edd;
+                border: none;
+                font-size: 14px;
+                font-weight: bold;
+                padding: 10px 20px;
+            }
+            QPushButton:hover {
+                color: #b97fdd;
+            }
+        """)
+        settings_btn.clicked.connect(self.open_settings)
+
+        # Создаем виджет для правого нижнего угла
+        bottom_right_widget = QWidget()
+        bottom_right_layout = QHBoxLayout(bottom_right_widget)
+        bottom_right_layout.addStretch()
+        bottom_right_layout.addWidget(settings_btn)
+
+        main_layout.addWidget(bottom_right_widget)
+
+        # Применяем стили
+        self.apply_styles()
+
+        # Обновляем видимость кнопок
+        self.update_hidden_buttons_visibility()
+
+    def apply_styles(self):
+        """Применение стилей ко всему окну"""
+        style = f"""
+            QMainWindow {{
+                background-color: {self.current_colors['WINDOW_BG']};
+            }}
+            QWidget#header {{
+                background-color: {self.current_colors['WINDOW_BG']};
+                border-bottom: 1px solid {self.current_colors['BORDER']};
+            }}
+            QLabel {{
+                color: {self.current_colors['TEXT_MAIN']};
+            }}
+            QGroupBox {{
+                color: {self.current_colors['TEXT_MAIN']};
+                border: 1px solid {self.current_colors['BORDER']};
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 10px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+                color: {self.current_colors['TEXT_MAIN']};
+            }}
+            QTextEdit {{
+                background-color: {self.current_colors['DARKER_BG']};
+                color: {self.current_colors['TEXT_MAIN']};
+                border: 1px solid {self.current_colors['BORDER']};
+                border-radius: 4px;
+                font-family: Consolas, Monospace;
+            }}
+            QProgressBar {{
+                border: 1px solid {self.current_colors['BORDER']};
+                border-radius: 4px;
+                text-align: center;
+                background: {self.current_colors['DARKER_BG']};
+            }}
+            QProgressBar::chunk {{
+                background-color: {self.current_colors['ACCENT']};
+                border-radius: 4px;
+            }}
+        """
+        self.setStyleSheet(style)
 
     def check_files(self):
         """Проверка существования файлов"""
         print("\n" + "=" * 50)
-        print("ПРОВЕРКА ФАЙЛОВ:")
+        print("FILE CHECK:")
         print("=" * 50)
 
-        # Преобразуем в абсолютные пути
-        self.client_path = os.path.abspath(CLIENT_FILE)
-        self.client_offline_path = os.path.abspath(CLIENT_OFFLINE_FILE)
-        self.server_path = os.path.abspath(SERVER_FILE)
+        self.client_path = CLIENT_FILE
+        self.client_offline_path = CLIENT_OFFLINE_FILE
+        self.server_path = SERVER_FILE
 
         files = [
-            ("КЛИЕНТ", self.client_path),
-            ("ОФЛАЙН КЛИЕНТ", self.client_offline_path),
-            ("СЕРВЕР", self.server_path)
+            ("CLIENT", self.client_path),
+            ("OFFLINE CLIENT", self.client_offline_path),
+            ("SERVER", self.server_path)
         ]
 
         all_files_exist = True
@@ -364,10 +838,9 @@ class UltraModernLauncher:
             if os.path.exists(path):
                 print(f"✓ {name}: {path}")
             else:
-                print(f"✗ {name}: {path} - НЕ НАЙДЕН!")
+                print(f"✗ {name}: {path} - NOT FOUND!")
                 all_files_exist = False
 
-        print("=" * 50 + "\n")
         return all_files_exist
 
     def load_settings(self):
@@ -379,12 +852,11 @@ class UltraModernLauncher:
                     loaded_settings = json.load(f)
                     self.settings.update(loaded_settings)
 
-                    # Применяем тему
                     if 'theme' in loaded_settings:
                         self.colors.set_theme(loaded_settings['theme'])
                         self.current_colors = self.colors.get_current()
         except Exception as e:
-            print(f"Ошибка загрузки настроек: {e}")
+            print(f"Error loading settings: {e}")
 
     def save_settings(self):
         """Сохранение настроек в файл"""
@@ -393,462 +865,471 @@ class UltraModernLauncher:
             with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(self.settings, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"Ошибка сохранения настроек: {e}")
+            print(f"Error saving settings: {e}")
 
-    def setup_fonts(self):
-        """Настройка шрифтов"""
-        self.fonts = {
-            'body_bold': ('Arial', 12, 'bold'),
-            'small': ('Arial', 9),
-        }
+    def check_environment_on_startup(self):
+        """Проверка окружения при запуске"""
+        try:
+            python_installed, _ = self.python_installer.check_python_installed()
+            if not python_installed:
+                self.show_environment_warning()
+        except:
+            pass
 
-    def create_interface(self):
-        """Создание интерфейса"""
-        # Главный контейнер
-        self.main_container = tk.Frame(self.root, bg=self.current_colors['WINDOW_BG'])
-        self.main_container.pack(fill='both', expand=True)
-
-        # Заголовок вверху
-        self.create_title()
-
-        # Панель кнопок в левом нижнем углу
-        self.create_left_button_panel()
-
-        # Кнопка настроек в правом нижнем углу
-        self.create_settings_button()
-
-    def create_title(self):
-        """Создание заголовка"""
-        title_frame = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
-        title_frame.pack(side='top', fill='x', pady=30)
-
-        title = tk.Label(title_frame,
-                         text="🎮 DPP2 LAUNCHER",
-                         font=('Arial', 32, 'bold'),
-                         bg=self.current_colors['WINDOW_BG'],
-                         fg=self.current_colors['TEXT_MAIN'])
-        title.pack()
-
-        subtitle = tk.Label(title_frame,
-                            text="Select an option below",
-                            font=self.fonts['small'],
-                            bg=self.current_colors['WINDOW_BG'],
-                            fg=self.current_colors['ACCENT'])
-        subtitle.pack(pady=5)
-
-    def create_left_button_panel(self):
-        """Создание панели кнопок в левом нижнем углу"""
-        # Контейнер для кнопок в левом нижнем углу
-        self.left_container = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
-        self.left_container.place(x=40, rely=1.0, anchor='sw', y=-40)
-
-        # Создаем кнопки с прозрачным фоном
-        self.client_btn = TransparentButton(
-            self.left_container,
-            "Client",
-            self.current_colors['BTN_CLIENT'],
-            self.launch_client
+    def show_environment_warning(self):
+        """Показ предупреждения о необходимости настройки окружения"""
+        reply = QMessageBox.question(
+            self,
+            "Environment Setup",
+            "Python and required libraries are needed to run the game.\n"
+            "Do you want to run the environment setup wizard?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if QT_LIB == "PySide6" else QMessageBox.Yes | QMessageBox.No
         )
-        self.client_btn.pack(pady=8)
+        if reply == QMessageBox.StandardButton.Yes if QT_LIB == "PySide6" else reply == QMessageBox.Yes:
+            self.open_environment_wizard()
 
-        self.client_offline_btn = TransparentButton(
-            self.left_container,
-            "Client Offline",
-            self.current_colors['BTN_CLIENT_OFFLINE'],
-            self.launch_client_offline
-        )
-        self.client_offline_btn.pack(pady=8)
-
-        # Кнопки для разработчика
-        self.server_btn = TransparentButton(
-            self.left_container,
-            "Server",
-            self.current_colors['BTN_SERVER'],
-            self.launch_server
-        )
-
-        self.all_btn = TransparentButton(
-            self.left_container,
-            "Start All (Server+Client)",
-            self.current_colors['BTN_ALL'],
-            self.launch_all
-        )
-
-        # Обновляем видимость кнопок
-        self.update_hidden_buttons_visibility()
-
-    def create_settings_button(self):
-        """Создание кнопки настроек в правом нижнем углу"""
-        self.settings_frame = tk.Frame(self.main_container, bg=self.current_colors['WINDOW_BG'])
-        self.settings_frame.place(relx=1.0, rely=1.0, anchor='se', x=-20, y=-20)
-
-        self.settings_btn = tk.Label(
-            self.settings_frame,
-            text="⚙️ Settings",
-            font=self.fonts['body_bold'],
-            bg=self.current_colors['WINDOW_BG'],  # Прозрачный фон
-            fg=self.current_colors['BTN_SETTINGS'],  # Цвет текста
-            cursor='hand2',
-            padx=20,
-            pady=10
-        )
-        self.settings_btn.pack()
-        self.settings_btn.bind('<Button-1>', lambda e: self.open_settings())
+    def open_environment_wizard(self):
+        """Открытие мастера настройки окружения"""
+        wizard = InstallationWizard(self)
+        wizard.exec()
 
     def open_settings(self):
         """Открытие окна настроек"""
-        try:
-            # Создаем окно настроек
-            self.settings_window = tk.Toplevel(self.root)
-            self.settings_window.title("Settings")
-            self.settings_window.geometry("450x400")
-            self.settings_window.configure(bg=self.current_colors['WINDOW_BG'])
-            self.settings_window.resizable(False, False)
-            self.settings_window.transient(self.root)
-            self.settings_window.grab_set()
+        settings_dialog = SettingsDialog(self)
+        settings_dialog.exec()
 
-            # Центрируем окно настроек
-            self.settings_window.update_idletasks()
-            x = self.root.winfo_x() + (self.root.winfo_width() - self.settings_window.winfo_width()) // 2
-            y = self.root.winfo_y() + (self.root.winfo_height() - self.settings_window.winfo_height()) // 2
-            self.settings_window.geometry(f"+{x}+{y}")
-
-            # Основное содержание
-            content = tk.Frame(self.settings_window, bg=self.current_colors['WINDOW_BG'])
-            content.pack(fill='both', expand=True, padx=25, pady=25)
-
-            # Режим разработчика
-            dev_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            dev_frame.pack(fill='x', pady=(0, 20))
-
-            self.dev_var = tk.BooleanVar(value=self.settings['developer_mode'])
-            dev_check = tk.Checkbutton(dev_frame,
-                                       text="Developer Mode",
-                                       font=('Arial', 11, 'bold'),
-                                       bg=self.current_colors['WINDOW_BG'],
-                                       fg=self.current_colors['TEXT_MAIN'],
-                                       selectcolor=self.current_colors['CARD_BG'],
-                                       activebackground=self.current_colors['WINDOW_BG'],
-                                       activeforeground=self.current_colors['TEXT_MAIN'],
-                                       variable=self.dev_var,
-                                       cursor='hand2')
-            dev_check.pack(anchor='w')
-
-            tk.Label(dev_frame,
-                     text="Shows Server and Start All buttons",
-                     font=('Arial', 9),
-                     bg=self.current_colors['WINDOW_BG'],
-                     fg=self.current_colors['TEXT_MAIN']).pack(anchor='w', padx=25, pady=(0, 5))
-
-            # Цветовые темы
-            theme_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            theme_frame.pack(fill='x', pady=(0, 20))
-
-            tk.Label(theme_frame,
-                     text="Color Theme:",
-                     font=('Arial', 11, 'bold'),
-                     bg=self.current_colors['WINDOW_BG'],
-                     fg=self.current_colors['TEXT_MAIN']).pack(anchor='w', pady=(0, 10))
-
-            # Создаем выпадающее меню для тем
-            self.theme_dropdown = ThemeDropdownMenu(
-                theme_frame,
-                self.current_colors,
-                self.colors.current_theme,
-                lambda theme: self.on_theme_changed(theme)
-            )
-            self.theme_dropdown.pack(fill='x', pady=(0, 5))
-
-            # Кнопка сохранения
-            btn_frame = tk.Frame(content, bg=self.current_colors['WINDOW_BG'])
-            btn_frame.pack(fill='x', pady=(30, 0))
-
-            def apply_and_close():
-                # Сохраняем настройки
-                self.settings['developer_mode'] = self.dev_var.get()
-                self.settings['theme'] = self.colors.current_theme
-                self.save_settings()
-
-                # Применяем изменения
-                self.apply_settings_changes()
-
-                # Закрываем окно
-                self.settings_window.destroy()
-
-            # Кнопка Apply & Save (Label для прозрачности)
-            save_btn = tk.Label(
-                btn_frame,
-                text="Apply & Save",
-                font=self.fonts['body_bold'],
-                bg=self.current_colors['WINDOW_BG'],
-                fg=self.current_colors['BTN_CLIENT'],
-                cursor='hand2',
-                padx=20,
-                pady=10,
-                relief='solid',
-                bd=1
-            )
-            save_btn.pack(fill='x', pady=8)
-            save_btn.bind('<Button-1>', lambda e: apply_and_close())
-
-            # Кнопка Cancel (Label для прозрачности)
-            cancel_btn = tk.Label(
-                btn_frame,
-                text="Cancel",
-                font=self.fonts['body_bold'],
-                bg=self.current_colors['WINDOW_BG'],
-                fg=self.current_colors['BTN_CLIENT_OFFLINE'],
-                cursor='hand2',
-                padx=20,
-                pady=10,
-                relief='solid',
-                bd=1
-            )
-            cancel_btn.pack(fill='x')
-            cancel_btn.bind('<Button-1>', lambda e: self.settings_window.destroy())
-
-            # Фокус на окне
-            self.settings_window.focus_set()
-
-        except Exception as e:
-            print(f"Ошибка открытия настроек: {e}")
-            messagebox.showerror("Error", f"Failed to open settings: {e}")
-
-    def on_theme_changed(self, theme_name):
-        """Обработка смены темы в выпадающем меню"""
-        # Меняем тему в объекте Colors
-        self.colors.set_theme(theme_name)
+    def apply_settings_changes(self):
+        """Применение изменений настроек"""
+        self.save_settings()
+        self.current_colors = self.colors.get_current()
+        self.apply_styles()
+        self.update_button_colors()
+        self.update_hidden_buttons_visibility()
 
     def update_button_colors(self):
         """Обновление цветов всех кнопок"""
-        # Обновляем цвета кнопок
-        parent_bg = self.current_colors['WINDOW_BG']
-
         if hasattr(self, 'client_btn'):
-            self.client_btn.update_color(self.current_colors['BTN_CLIENT'], parent_bg)
+            self.client_btn.color = self.current_colors['BTN_CLIENT']
+            self.client_btn.setStyleSheet(self.client_btn.styleSheet())
+
         if hasattr(self, 'client_offline_btn'):
-            self.client_offline_btn.update_color(self.current_colors['BTN_CLIENT_OFFLINE'], parent_bg)
+            self.client_offline_btn.color = self.current_colors['BTN_CLIENT_OFFLINE']
+            self.client_offline_btn.setStyleSheet(self.client_offline_btn.styleSheet())
+
         if hasattr(self, 'server_btn'):
-            self.server_btn.update_color(self.current_colors['BTN_SERVER'], parent_bg)
+            self.server_btn.color = self.current_colors['BTN_SERVER']
+            self.server_btn.setStyleSheet(self.server_btn.styleSheet())
+
         if hasattr(self, 'all_btn'):
-            self.all_btn.update_color(self.current_colors['BTN_ALL'], parent_bg)
-
-        # Обновляем кнопку настроек
-        if hasattr(self, 'settings_btn'):
-            self.settings_btn.config(
-                bg=parent_bg,
-                fg=self.current_colors['BTN_SETTINGS']
-            )
-
-        # Обновляем выпадающее меню
-        if hasattr(self, 'theme_dropdown'):
-            self.theme_dropdown.update_colors(self.current_colors, parent_bg)
+            self.all_btn.color = self.current_colors['BTN_ALL']
+            self.all_btn.setStyleSheet(self.all_btn.styleSheet())
 
     def update_hidden_buttons_visibility(self):
         """Обновление видимости скрытых кнопок"""
         if self.settings['developer_mode']:
-            if hasattr(self, 'server_btn'):
-                self.server_btn.pack(pady=8)
-            if hasattr(self, 'all_btn'):
-                self.all_btn.pack(pady=8)
+            self.server_btn.show()
+            self.all_btn.show()
         else:
-            if hasattr(self, 'server_btn'):
-                self.server_btn.pack_forget()
-            if hasattr(self, 'all_btn'):
-                self.all_btn.pack_forget()
-
-    def apply_settings_changes(self):
-        """Применение изменений настроек"""
-        # Сохраняем настройки в файл
-        self.save_settings()
-
-        # Обновляем текущие цвета
-        self.current_colors = self.colors.get_current()
-
-        # Обновляем фон главного окна
-        self.root.configure(bg=self.current_colors['WINDOW_BG'])
-        self.main_container.configure(bg=self.current_colors['WINDOW_BG'])
-        self.left_container.configure(bg=self.current_colors['WINDOW_BG'])
-        self.settings_frame.configure(bg=self.current_colors['WINDOW_BG'])
-
-        # Обновляем цвета кнопок
-        self.update_button_colors()
-
-        # Обновляем видимость кнопок разработчика
-        self.update_hidden_buttons_visibility()
-
-        # Обновляем цвета заголовка
-        for widget in self.main_container.winfo_children():
-            if isinstance(widget, tk.Frame):
-                for child in widget.winfo_children():
-                    if isinstance(child, tk.Label):
-                        child.config(
-                            bg=self.current_colors['WINDOW_BG'],
-                            fg=self.current_colors['TEXT_MAIN']
-                        )
-
-    def hide_window(self):
-        """Скрыть окно лаунчера"""
-        if not self.is_hidden:
-            self.root.withdraw()
-            self.is_hidden = True
-
-    def show_window(self):
-        """Показать окно лаунчера"""
-        if self.is_hidden:
-            self.root.deiconify()
-            self.is_hidden = False
+            self.server_btn.hide()
+            self.all_btn.hide()
 
     def run_python_script_simple(self, script_path, script_name):
-        """Простой запуск Python скрипта в отдельном процессе"""
+        """Запуск Python скрипта"""
         try:
             if not os.path.exists(script_path):
-                self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Файл не найден:\n{script_path}"))
-                return False
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"File {script_name} not found!\n\nPath: {script_path}"
+                )
+                return None
 
-            # Получаем директорию
+            # Проверяем Python
+            python_installed, _ = self.python_installer.check_python_installed()
+            if not python_installed:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    "Python is not installed!\n"
+                    "Click 'Setup Environment' button to install."
+                )
+                return None
+
             work_dir = os.path.dirname(script_path)
 
-            print(f"\n🚀 Запуск {script_name}:")
-            print(f"📁 Файл: {script_path}")
-            print(f"📂 Директория: {work_dir}")
+            print(f"\n🚀 Launching {script_name}:")
+            print(f"📁 File: {script_path}")
+            print(f"📂 Directory: {work_dir}")
 
-            # Для Windows
-            if os.name == 'nt':
-                # Запускаем в новом процессе
-                pythonw_exe = sys.executable.replace('python.exe', 'pythonw.exe')
-                if not os.path.exists(pythonw_exe):
-                    pythonw_exe = sys.executable
+            try:
+                # Определяем команду в зависимости от ОС
+                if os.name == 'nt':  # Windows
+                    python_cmd = 'python'
+                else:  # Linux/Mac
+                    python_cmd = 'python3'
 
-                cmd = f'"{pythonw_exe}" "{script_path}"'
+                cmd = [python_cmd, script_path]
+                print(f"Command: {' '.join(cmd)}")
 
+                # Запускаем процесс
                 process = subprocess.Popen(
                     cmd,
-                    shell=True,
                     cwd=work_dir,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NO_WINDOW
-                )
-            else:
-                # Для Linux/Mac
-                process = subprocess.Popen(
-                    [sys.executable, script_path],
-                    cwd=work_dir,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    start_new_session=True
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    stdin=subprocess.PIPE,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
                 )
 
-            print(f"✅ {script_name} запущен (PID: {process.pid})")
+                print(f"✅ {script_name} launched (PID: {process.pid})")
+                self.running_apps.append({
+                    'process': process,
+                    'name': script_name,
+                    'pid': process.pid
+                })
 
-            # Увеличиваем счетчик запущенных приложений
-            self.running_apps += 1
-            print(f"📊 Запущенных приложений: {self.running_apps}")
+                print(f"Running apps count: {len(self.running_apps)}")
 
-            # Запускаем мониторинг этого процесса
-            self.monitor_process(process, script_name)
+                # Мониторинг процесса
+                threading.Thread(
+                    target=self.monitor_process,
+                    args=(process, script_name),
+                    daemon=True
+                ).start()
 
-            return True
+                return process
+
+            except Exception as e:
+                print(f"❌ Error launching {script_name}: {e}")
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to launch {script_name}:\n{str(e)}"
+                )
+                return None
 
         except Exception as e:
-            print(f"❌ Ошибка запуска {script_name}: {e}")
-            self.root.after(0, lambda: messagebox.showerror("Ошибка", f"Не удалось запустить {script_name}:\n{str(e)}"))
-            return False
+            print(f"❌ General error launching {script_name}: {e}")
+            QMessageBox.critical(
+                self,
+                "Error",
+                f"Failed to launch {script_name}:\n{str(e)}"
+            )
+            return None
 
     def monitor_process(self, process, process_name):
         """Мониторинг процесса"""
+        try:
+            stdout, stderr = process.communicate()
 
-        def monitor():
-            try:
-                process.wait()
-                print(f"✅ Процесс {process_name} завершен")
-            except:
-                print(f"⚠️ Процесс {process_name} завершился с ошибкой")
+            if stdout:
+                output = stdout.decode('utf-8', errors='ignore')
+                if output.strip():
+                    print(f"[{process_name} stdout]: {output[:500]}")
+            if stderr:
+                error = stderr.decode('utf-8', errors='ignore')
+                if error.strip():
+                    print(f"[{process_name} stderr]: {error[:500]}")
 
-            self.running_apps -= 1
-            print(f"📊 Осталось запущенных приложений: {self.running_apps}")
+            print(f"✅ Process {process_name} completed with code {process.returncode}")
 
-            if self.running_apps == 0:
-                self.root.after(0, self.show_window)
+        except Exception as e:
+            print(f"❌ Error monitoring {process_name}: {e}")
+        finally:
+            # Удаляем процесс из списка запущенных
+            self.running_apps = [app for app in self.running_apps if app['process'] != process]
 
-        threading.Thread(target=monitor, daemon=True).start()
+            print(f"Remaining apps: {len(self.running_apps)}")
+
+            # Если все процессы завершены и окно скрыто - показываем лаунчер
+            if not self.running_apps and self.is_hidden:
+                print("All applications closed, showing launcher...")
+                # Используем QTimer для безопасного вызова в главном потоке
+                QTimer.singleShot(500, self.show_launcher)
+
+    def show_launcher(self):
+        """Показать лаунчер (вызывается в главном потоке)"""
+        if not self.running_apps and self.is_hidden:
+            print("Restoring launcher window...")
+            self.show()
+            self.is_hidden = False
+            # Поднимаем окно на передний план
+            self.raise_()
+            self.activateWindow()
+            print("Launcher restored and activated")
+
+    def show_and_reset(self):
+        """Показать окно и сбросить состояние"""
+        self.show()
+        self.is_hidden = False
+        print("Launcher restored")
 
     def launch_client(self):
         """Запуск клиента"""
-        self.hide_window()
-
-        def launch():
-            success = self.run_python_script_simple(self.client_path, "Client")
-            if not success:
-                self.root.after(0, self.show_window)
-
-        threading.Thread(target=launch, daemon=True).start()
+        print("Launching Client...")
+        self.hide()
+        self.is_hidden = True
+        process = self.run_python_script_simple(self.client_path, "Client")
+        if not process:
+            # Если не удалось запустить, показываем лаунчер снова
+            self.show_launcher()
 
     def launch_client_offline(self):
         """Запуск офлайн клиента"""
-        self.hide_window()
-
-        def launch():
-            success = self.run_python_script_simple(self.client_offline_path, "Client Offline")
-            if not success:
-                self.root.after(0, self.show_window)
-
-        threading.Thread(target=launch, daemon=True).start()
+        print("Launching Client Offline...")
+        self.hide()
+        self.is_hidden = True
+        process = self.run_python_script_simple(self.client_offline_path, "Client Offline")
+        if not process:
+            # Если не удалось запустить, показываем лаунчер снова
+            self.show_launcher()
 
     def launch_server(self):
         """Запуск сервера"""
-        self.hide_window()
-
-        def launch():
-            success = self.run_python_script_simple(self.server_path, "Server")
-            if not success:
-                self.root.after(0, self.show_window)
-
-        threading.Thread(target=launch, daemon=True).start()
+        print("Launching Server...")
+        self.hide()
+        self.is_hidden = True
+        process = self.run_python_script_simple(self.server_path, "Server")
+        if not process:
+            # Если не удалось запустить, показываем лаунчер снова
+            self.show_launcher()
 
     def launch_all(self):
         """Запуск всего (Server+Client)"""
-        self.hide_window()
+        print("Launching All (Server + Client)...")
+        self.hide()
+        self.is_hidden = True
 
         def launch():
-            server_success = self.run_python_script_simple(self.server_path, "Server")
-            if server_success:
+            server_process = self.run_python_script_simple(self.server_path, "Server")
+            if server_process:
                 time.sleep(3)
-                self.run_python_script_simple(self.client_path, "Client")
+                client_process = self.run_python_script_simple(self.client_path, "Client")
+                if not client_process:
+                    print("Failed to launch Client")
             else:
-                self.root.after(0, self.show_window)
+                print("Failed to launch Server")
+                # Если не удалось запустить сервер, показываем лаунчер
+                QTimer.singleShot(1000, self.show_launcher)
 
         threading.Thread(target=launch, daemon=True).start()
 
-    def center_window(self):
-        """Центрирование окна"""
-        self.root.update_idletasks()
-        width = 800
-        height = 500
-        x = (self.root.winfo_screenwidth() - width) // 2
-        y = (self.root.winfo_screenheight() - height) // 2
-        self.root.geometry(f"{width}x{height}+{x}+{y}")
 
-    def quit_launcher(self):
-        """Выход из лаунчера"""
-        self.root.destroy()
-        sys.exit(0)
+class PythonInstaller:
+    """Класс для установки Python и библиотек"""
 
-    def run(self):
-        """Запуск лаунчера"""
-        self.root.mainloop()
+    @staticmethod
+    def check_python_installed():
+        """Проверка установлен ли Python"""
+        try:
+            # Пробуем python
+            result = subprocess.run(['python', '--version'],
+                                    capture_output=True,
+                                    text=True,
+                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                print(f"✓ Python found: {version}")
+                return True, version
+
+            # Пробуем python3
+            result = subprocess.run(['python3', '--version'],
+                                    capture_output=True,
+                                    text=True,
+                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                print(f"✓ Python3 found: {version}")
+                return True, version
+
+        except Exception as e:
+            print(f"✗ Python not found: {e}")
+
+        return False, None
+
+    @staticmethod
+    def check_libraries():
+        """Проверка установленных библиотек"""
+        missing_libs = []
+        installed_libs = []
+
+        for lib in REQUIRED_LIBRARIES:
+            lib_name = lib.split('==')[0]
+            try:
+                # Проверяем доступность pip
+                subprocess.run(['pip', '--version'],
+                               capture_output=True,
+                               check=True,
+                               creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+                # Проверяем наличие библиотеки
+                result = subprocess.run(['python', '-c', f'import {lib_name}'],
+                                        capture_output=True,
+                                        text=True,
+                                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+                if result.returncode == 0:
+                    installed_libs.append(lib)
+                    print(f"✓ Library installed: {lib_name}")
+                else:
+                    missing_libs.append(lib)
+                    print(f"✗ Library missing: {lib_name}")
+
+            except subprocess.CalledProcessError:
+                missing_libs.append(lib)
+                print(f"✗ Error checking library: {lib_name}")
+            except Exception as e:
+                missing_libs.append(lib)
+                print(f"✗ Exception checking {lib_name}: {e}")
+
+        return installed_libs, missing_libs
+
+    @staticmethod
+    def install_libraries(missing_libs, progress_callback=None):
+        """Установка недостающих библиотек"""
+        if not missing_libs:
+            return True, "All libraries are already installed"
+
+        try:
+            total = len(missing_libs)
+            installed_count = 0
+
+            for i, lib in enumerate(missing_libs):
+                if progress_callback:
+                    progress_callback(f"Installing {lib}...", int((i / total) * 100))
+
+                print(f"Installing library: {lib}")
+
+                try:
+                    # Используем pip install с таймаутом
+                    result = subprocess.run(['pip', 'install', lib, '--timeout', '30'],
+                                            capture_output=True,
+                                            text=True,
+                                            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+                    if result.returncode == 0:
+                        installed_count += 1
+                        print(f"✓ Successfully installed: {lib}")
+                    else:
+                        print(f"✗ Installation error {lib}: {result.stderr[:200]}")
+
+                        # Пробуем установить без версии
+                        lib_name = lib.split('==')[0]
+                        result = subprocess.run(['pip', 'install', lib_name],
+                                                capture_output=True,
+                                                text=True,
+                                                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+
+                        if result.returncode == 0:
+                            installed_count += 1
+                            print(f"✓ Installed latest version: {lib_name}")
+                        else:
+                            return False, f"Failed to install {lib}"
+
+                except Exception as e:
+                    print(f"✗ Exception installing {lib}: {e}")
+
+            if progress_callback:
+                progress_callback("Installation complete!", 100)
+
+            return True, f"Successfully installed {installed_count} of {len(missing_libs)} libraries"
+
+        except Exception as e:
+            error_msg = f"Error installing libraries: {str(e)}"
+            print(error_msg)
+            return False, error_msg
+
+    @staticmethod
+    def download_python_installer():
+        """Скачивание установщика Python"""
+        python_url = "https://www.python.org/ftp/python/3.11.5/python-3.11.5-amd64.exe"
+        temp_dir = tempfile.gettempdir()
+        installer_path = os.path.join(temp_dir, "python_installer.exe")
+
+        try:
+            print(f"Downloading Python installer to {installer_path}...")
+            urllib.request.urlretrieve(python_url, installer_path)
+            print("Download complete")
+            return installer_path
+        except Exception as e:
+            print(f"Download error: {e}")
+            return None
+
+    @staticmethod
+    def run_python_installer(installer_path):
+        """Запуск установщика Python"""
+        try:
+            print(f"Running installer: {installer_path}")
+
+            if not os.path.exists(installer_path):
+                print(f"Installer file not found: {installer_path}")
+                return False
+
+            # Параметры для автоматической установки
+            args = [installer_path, '/quiet', 'InstallAllUsers=1', 'PrependPath=1', 'Include_launcher=0']
+
+            process = subprocess.run(args,
+                                     creationflags=subprocess.CREATE_NO_WINDOW,
+                                     timeout=300)  # 5 минут таймаут
+
+            if process.returncode == 0:
+                print("Python installation completed successfully")
+
+                # Обновляем переменные окружения
+                os.environ['PATH'] = os.environ['PATH'] + ';' + os.path.join(
+                    os.environ.get('SystemRoot', 'C:\\Windows'), 'System32')
+
+                return True
+            else:
+                print(f"Python installation error: code {process.returncode}")
+                return False
+
+        except subprocess.TimeoutExpired:
+            print("Python installation timed out")
+            return False
+        except Exception as e:
+            print(f"Error running installer: {e}")
+            return False
 
 
 # ========== ЗАПУСК ЛАУНЧЕРА ==========
 if __name__ == "__main__":
-    print("=" * 50)
-    print("DPP2 LAUNCHER - Запуск...")
-    print("=" * 50)
-    print(f"Текущая директория: {os.getcwd()}")
-    print(f"Python версия: {sys.version}")
+    try:
+        print("=" * 50)
+        print("DPP2 LAUNCHER - Starting...")
+        print("=" * 50)
+        print(f"Current directory: {os.getcwd()}")
+        print(f"Python version: {sys.version}")
+        print(f"Operating system: {platform.system()} {platform.release()}")
+        print(f"Base path (BASE_PATH): {BASE_PATH}")
+        print(f"EXE mode: {getattr(sys, 'frozen', False)}")
+        print(f"GUI library: {QT_LIB}")
 
-    launcher = UltraModernLauncher()
-    launcher.run()
+        if not QT_AVAILABLE:
+            print("\n❌ GUI libraries not available!")
+            print("Try to install manually:")
+            print("pip install PySide6")
+            input("Press Enter to exit...")
+            sys.exit(1)
+
+        app = QApplication(sys.argv)
+        app.setStyle('Fusion')  # Современный стиль
+
+        # Установка шрифта
+        font = QFont("Arial", 10)
+        app.setFont(font)
+
+        launcher = UltraModernLauncher()
+        launcher.show()
+
+        sys.exit(app.exec())
+
+    except Exception as e:
+        print(f"CRITICAL ERROR: {type(e).__name__}: {e}")
+        import traceback
+
+        traceback.print_exc()
+
+        input("Press Enter to exit...")
