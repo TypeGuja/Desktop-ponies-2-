@@ -49,7 +49,7 @@ if not QT_AVAILABLE:
     try:
         print("\nПытаюсь установить PySide6 автоматически...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "PySide6"])
-    from PySi~de6.QtWidgets import *
+        from PySide6.QtWidgets import *
         from PySide6.QtCore import *
         from PySide6.QtGui import *
 
