@@ -7,6 +7,7 @@
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2Launcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2Launcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/launcher_settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/launcher_settings.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +68,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\PinkiePie" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.DPP2Launcher">
     <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
@@ -202,8 +203,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.DPP2Launcher" />
+        <item itemvalue="Python.main" />
         <item itemvalue="Python.DPP2" />
         <item itemvalue="Python.pony1" />
         <item itemvalue="Python.pony.1py" />
