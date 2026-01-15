@@ -609,6 +609,63 @@ class InstallationWizard(QDialog):
             self.check_btn.setEnabled(True)
 
 
+class ProcessManager:
+    """Менеджер процессов для отслеживания запущенных приложений"""
+
+    def __init__(self):
+        self.processes = {}
+        self.active_checkers = {}
+
+    def add_process(self, name, process):
+        """Добавить процесс для отслеживания"""
+        self.processes[name] = process
+
+        # Запустить проверку процесса
+        checker = ProcessChecker(name, process, self)
+        self.active_checkers[name] = checker
+        checker.start()
+
+    def remove_process(self, name):
+        """Удалить процесс из отслеживания"""
+        if name in self.processes:
+            del self.processes[name]
+        if name in self.active_checkers:
+            del self.active_checkers[name]
+
+    def get_active_count(self):
+        """Получить количество активных процессов"""
+        return len(self.processes)
+
+
+class ProcessChecker(threading.Thread):
+    """Поток для проверки статуса процесса"""
+
+    def __init__(self, name, process, manager):
+        super().__init__(daemon=True)
+        self.name = name
+        self.process = process
+        self.manager = manager
+        self.running = True
+
+    def run(self):
+        """Запуск проверки"""
+        print(f"[ProcessChecker] Начало отслеживания процесса {self.name} (PID: {self.process.pid})")
+
+        while self.running:
+            # Проверяем статус процесса
+            if self.process.poll() is not None:
+                print(f"[ProcessChecker] Процесс {self.name} завершен с кодом {self.process.returncode}")
+                self.manager.remove_process(self.name)
+                self.running = False
+                break
+
+            time.sleep(1)  # Проверяем каждую секунду
+
+    def stop(self):
+        """Остановить проверку"""
+        self.running = False
+
+
 class UltraModernLauncher(QMainWindow):
     """Основной класс лаунчера"""
 
@@ -631,6 +688,12 @@ class UltraModernLauncher(QMainWindow):
         self.running_apps = []
         self.is_hidden = False
         self.python_installer = PythonInstaller()
+        self.process_manager = ProcessManager()
+
+        # Таймер для проверки процессов
+        self.check_timer = QTimer()
+        self.check_timer.timeout.connect(self.check_running_processes)
+        self.check_timer.start(1000)  # Проверяем каждую секунду
 
         # Проверяем файлы
         self.check_files()
@@ -933,6 +996,12 @@ class UltraModernLauncher(QMainWindow):
             self.server_btn.hide()
             self.all_btn.hide()
 
+    def check_running_processes(self):
+        """Проверка запущенных процессов"""
+        if self.is_hidden and self.process_manager.get_active_count() == 0:
+            print("📊 Все приложения закрыты, возвращаю лаунчер...")
+            self.restore_launcher()
+
     def run_python_script_simple(self, script_path, script_name):
         """Запуск Python скрипта"""
         try:
@@ -975,27 +1044,13 @@ class UltraModernLauncher(QMainWindow):
                 process = subprocess.Popen(
                     cmd,
                     cwd=work_dir,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    stdin=subprocess.PIPE,
                     creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
                 )
 
                 print(f"✅ {script_name} launched (PID: {process.pid})")
-                self.running_apps.append({
-                    'process': process,
-                    'name': script_name,
-                    'pid': process.pid
-                })
 
-                print(f"Running apps count: {len(self.running_apps)}")
-
-                # Мониторинг процесса
-                threading.Thread(
-                    target=self.monitor_process,
-                    args=(process, script_name),
-                    daemon=True
-                ).start()
+                # Добавляем в менеджер процессов
+                self.process_manager.add_process(script_name, process)
 
                 return process
 
@@ -1017,100 +1072,70 @@ class UltraModernLauncher(QMainWindow):
             )
             return None
 
-    def monitor_process(self, process, process_name):
-        """Мониторинг процесса"""
-        try:
-            stdout, stderr = process.communicate()
-
-            if stdout:
-                output = stdout.decode('utf-8', errors='ignore')
-                if output.strip():
-                    print(f"[{process_name} stdout]: {output[:500]}")
-            if stderr:
-                error = stderr.decode('utf-8', errors='ignore')
-                if error.strip():
-                    print(f"[{process_name} stderr]: {error[:500]}")
-
-            print(f"✅ Process {process_name} completed with code {process.returncode}")
-
-        except Exception as e:
-            print(f"❌ Error monitoring {process_name}: {e}")
-        finally:
-            # Удаляем процесс из списка запущенных
-            self.running_apps = [app for app in self.running_apps if app['process'] != process]
-
-            print(f"Remaining apps: {len(self.running_apps)}")
-
-            # Если все процессы завершены и окно скрыто - показываем лаунчер
-            if not self.running_apps and self.is_hidden:
-                print("All applications closed, showing launcher...")
-                # Используем QTimer для безопасного вызова в главном потоке
-                QTimer.singleShot(500, self.show_launcher)
-
-    def show_launcher(self):
-        """Показать лаунчер (вызывается в главном потоке)"""
-        if not self.running_apps and self.is_hidden:
-            print("Restoring launcher window...")
+    def restore_launcher(self):
+        """Восстановление лаунчера (вызывается в главном потоке)"""
+        if self.is_hidden:
+            print("🏠 Восстанавливаю окно лаунчера...")
             self.show()
             self.is_hidden = False
             # Поднимаем окно на передний план
             self.raise_()
             self.activateWindow()
-            print("Launcher restored and activated")
-
-    def show_and_reset(self):
-        """Показать окно и сбросить состояние"""
-        self.show()
-        self.is_hidden = False
-        print("Launcher restored")
+            print("✅ Лаунчер восстановлен и активирован")
 
     def launch_client(self):
         """Запуск клиента"""
-        print("Launching Client...")
+        print("\n🎮 Launching Client...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.client_path, "Client")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            self.show_launcher()
+            print("⚠ Client failed to launch, restoring launcher")
+            QTimer.singleShot(100, self.restore_launcher)
 
     def launch_client_offline(self):
         """Запуск офлайн клиента"""
-        print("Launching Client Offline...")
+        print("\n🎮 Launching Client Offline...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.client_offline_path, "Client Offline")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            self.show_launcher()
+            print("⚠ Client Offline failed to launch, restoring launcher")
+            QTimer.singleShot(100, self.restore_launcher)
 
     def launch_server(self):
         """Запуск сервера"""
-        print("Launching Server...")
+        print("\n🖥️ Launching Server...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.server_path, "Server")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            self.show_launcher()
+            print("⚠ Server failed to launch, restoring launcher")
+            QTimer.singleShot(100, self.restore_launcher)
 
     def launch_all(self):
         """Запуск всего (Server+Client)"""
-        print("Launching All (Server + Client)...")
+        print("\n🚀 Launching All (Server + Client)...")
         self.hide()
         self.is_hidden = True
 
         def launch():
+            print("Starting Server...")
             server_process = self.run_python_script_simple(self.server_path, "Server")
             if server_process:
+                print("Waiting 3 seconds for Server to start...")
                 time.sleep(3)
+                print("Starting Client...")
                 client_process = self.run_python_script_simple(self.client_path, "Client")
                 if not client_process:
-                    print("Failed to launch Client")
+                    print("⚠ Failed to launch Client")
             else:
-                print("Failed to launch Server")
+                print("❌ Failed to launch Server")
                 # Если не удалось запустить сервер, показываем лаунчер
-                QTimer.singleShot(1000, self.show_launcher)
+                QTimer.singleShot(1000, self.restore_launcher)
 
         threading.Thread(target=launch, daemon=True).start()
 
