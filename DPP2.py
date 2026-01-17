@@ -45,7 +45,8 @@ class DynamicPonySelector:
         # Список персонажей (имена пони)
         self.pony_names = [
             "Twilight Sparkle", "Rainbow Dash", "Pinkie Pie", "Apple Jack",
-            "Fluttershy", "Rarity", "Trixie", "Cadance", "Celestia", "Luna"
+            "Fluttershy", "Rarity", "Trixie", "Starlight", "Sunset",
+            "Cadance","Celestia", "Luna"
         ]
 
         # Карточки с GIF превью
