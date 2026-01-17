@@ -11,7 +11,7 @@ from PIL import Image, ImageTk
 class DynamicPonySelector:
     def __init__(self, root):
         self.root = root
-        self.root.title("DPP2 - Pony Selector")
+        self.root.title("DPP2 - Pony Selector") # здесь надо будет доделать интерфейс + сделать возможность листать страницу колёсиком мыши
         self.root.geometry("520x500")
         self.root.minsize(300, 400)
 
@@ -45,7 +45,7 @@ class DynamicPonySelector:
         # Список персонажей (имена пони)
         self.pony_names = [
             "Twilight Sparkle", "Rainbow Dash", "Pinkie Pie", "Apple Jack",
-            "Fluttershy", "Rarity", "Cadance", "Celestia", "Luna"
+            "Fluttershy", "Rarity", "Trixie", "Cadance", "Celestia", "Luna"
         ]
 
         # Карточки с GIF превью
