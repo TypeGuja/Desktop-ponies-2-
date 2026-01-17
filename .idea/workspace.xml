@@ -37,38 +37,42 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2Launcher.executor&quot;: &quot;Run&quot;,
-    &quot;Python.Fluttershy.executor&quot;: &quot;Run&quot;,
-    &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony2.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/characters&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.Cadance.executor": "Run",
+    "Python.DPP2.executor": "Run",
+    "Python.DPP2Launcher.executor": "Run",
+    "Python.Fluttershy.executor": "Run",
+    "Python.RainbowDash.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.pony (1).executor": "Run",
+    "Python.pony.executor": "Run",
+    "Python.pony1 (1).executor": "Run",
+    "Python.pony2.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "dungeon",
+    "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/characters/StarlightGlimmer",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer" />
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\Trixie" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\TwilightSparkle" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\Rarity" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\RainbowDash" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\PinkiePie" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.DPP2Launcher">
+  <component name="RunManager" selected="Python.DPP2">
     <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
@@ -82,6 +86,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -104,6 +109,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2Launcher.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -126,6 +132,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Server/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
@@ -135,7 +142,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="pony" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="pony (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -148,7 +155,8 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\pony.py" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -170,29 +178,8 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="RUN_TOOL" value="" />
       <option name="SCRIPT_NAME" value="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\pony1.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pony.1py" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Desktop-ponies-2-" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/DPP2serverUDP/Client/characters" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\pony.1py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -203,18 +190,18 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.DPP2" />
+        <item itemvalue="Python.pony (1)" />
         <item itemvalue="Python.DPP2Launcher" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.DPP2" />
         <item itemvalue="Python.pony1" />
-        <item itemvalue="Python.pony.1py" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-4e2b1448bda8-9a97661f3031-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.27397.106" />
+        <option value="bundled-python-sdk-ca5e2b39c7df-6e1f45a539f7-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.29346.308" />
       </set>
     </attachedChunks>
   </component>
