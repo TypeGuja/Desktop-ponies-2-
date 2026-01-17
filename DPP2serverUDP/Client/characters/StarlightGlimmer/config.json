@@ -1,5 +1,5 @@
 {
-    "pony_name": "TwilightSparkle",
+    "pony_name": "Starlight",
     "base_width": 100,
     "base_height": 120,
     "base_sleep_width": 130,
@@ -18,10 +18,10 @@
     "push_zone_size": 1,
     "push_force": 5,
     "gif_paths": {
-        "stand_right": "./Twilight Sparkle_Gifct/stand_ts_right.gif",
-        "stand_left": "./Twilight Sparkle_Gifct/stand_ts_left.gif",
-        "move_right": "./Twilight Sparkle_Gifct/trotcycle_ts_right.gif",
-        "move_left": "./Twilight Sparkle_Gifct/trotcycle_ts_left.gif",
+        "stand_right": "./Starlight_Gifct/starlightglimmer-idle-right.gif",
+        "stand_left": "./Starlight_Gifct/stand_ts_left.gif",
+        "move_right": "./Starlight_Gifct/trotcycle_ts_right.gif",
+        "move_left": "./Starlight_Gifct/trotcycle_ts_left.gif",
         "sleep_right": "none",
         "sleep_left": "./Twilight Sparkle_Gifct/sleep-ts/read.gif",
         "drag": "./Twilight Sparkle_Gifct/drag-ts/ts_drag_left.gif"
