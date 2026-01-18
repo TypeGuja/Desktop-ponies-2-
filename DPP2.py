@@ -1,55 +1,317 @@
-import tkinter as tk
-from tkinter import ttk
+import sys
 import os
+import json
 import subprocess
 import threading
 import time
-import json
-from PIL import Image, ImageTk
+import signal
+
+# ========== ПРОВЕРКА QT БИБЛИОТЕК ==========
+QT_LIB = None
+
+# Сначала пробуем PySide6
+try:
+    import PySide6
+
+    QT_LIB = "PySide6"
+    print("✓ PySide6 найден")
+except ImportError:
+    print("✗ PySide6 не найден")
+
+# Если PySide6 не найден, пробуем PyQt5
+if QT_LIB is None:
+    try:
+        import PyQt5
+
+        QT_LIB = "PyQt5"
+        print("✓ PyQt5 найден")
+    except ImportError:
+        print("✗ PyQt5 не найден")
+        print("\nУстановите одну из библиотек:")
+        print("pip install PySide6")
+        print("ИЛИ")
+        print("pip install PyQt5")
+        sys.exit(1)
+
+# ИМПОРТЫ НА УРОВНЕ МОДУЛЯ
+if QT_LIB == "PySide6":
+    from PySide6.QtWidgets import *
+    from PySide6.QtCore import *
+    from PySide6.QtGui import *
+
+    Signal = Signal
+    Slot = Slot
+    CHECKED_STATE = Qt.Checked
+else:  # PyQt5
+    from PyQt5.QtWidgets import *
+    from PyQt5.QtCore import *
+    from PyQt5.QtGui import *
+    from PyQt5.QtCore import pyqtSignal as Signal
+    from PyQt5.QtCore import pyqtSlot as Slot
+
+    CHECKED_STATE = 2
+
+# ========== ПРОВЕРКА PILLOW ==========
+try:
+    from PIL import Image, ImageSequence
+
+    PIL_AVAILABLE = True
+    print("✓ Pillow (PIL) загружен")
+except ImportError:
+    PIL_AVAILABLE = False
+    print("✗ Pillow (PIL) не найден - GIF анимации будут отключены")
+    print("Установите: pip install pillow")
 
 
-class DynamicPonySelector:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("DPP2 - Pony Selector") # здесь надо будет доделать интерфейс + сделать возможность листать страницу колёсиком мыши
-        self.root.geometry("520x500")
-        self.root.minsize(300, 400)
+# ========== КЛАСС ДЛЯ АНИМИРОВАННЫХ GIF ==========
+class AnimatedGIFLabel(QLabel):
+    """QLabel с поддержкой анимированных GIF"""
 
-        # Флаг для отслеживания состояния
-        self.should_exit = False
+    def __init__(self, gif_path=None, parent=None):
+        super().__init__(parent)
+        self.frames = []
+        self.current_frame = 0
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.next_frame)
+
+        if gif_path and os.path.exists(gif_path) and PIL_AVAILABLE:
+            self.load_gif(gif_path)
+        else:
+            self.set_default_image()
+
+    def set_default_image(self):
+        """Устанавливает изображение по умолчанию"""
+        pixmap = QPixmap(100, 60)
+        pixmap.fill(QColor("#3498db"))
+        self.setPixmap(pixmap)
+        self.setAlignment(Qt.AlignCenter)
+
+    def load_gif(self, gif_path):
+        """Загружает GIF файл"""
+        try:
+            pil_image = Image.open(gif_path)
+            self.frames = []
+
+            for frame in ImageSequence.Iterator(pil_image):
+                # Конвертируем PIL Image в QImage
+                if frame.mode == 'P':
+                    frame = frame.convert("RGBA")
+                elif frame.mode != 'RGBA':
+                    frame = frame.convert("RGBA")
+
+                data = frame.tobytes("raw", "RGBA")
+                qimage = QImage(data, frame.width, frame.height, QImage.Format_RGBA8888)
+                qpixmap = QPixmap.fromImage(qimage)
+                self.frames.append(qpixmap.scaled(100, 60, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+            if self.frames:
+                self.setPixmap(self.frames[0])
+                self.setAlignment(Qt.AlignCenter)
+                self.timer.start(100)  # 10 FPS
+            else:
+                self.set_default_image()
+        except Exception as e:
+            print(f"Ошибка загрузки GIF {gif_path}: {e}")
+            self.set_default_image()
+
+    def next_frame(self):
+        """Показывает следующий кадр"""
+        if self.frames:
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
+            self.setPixmap(self.frames[self.current_frame])
+
+
+# ========== ВЫПАДАЮЩИЙ СПИСОК ТЕМ ==========
+class ThemeDropdown(QWidget):
+    """Кастомный выпадающий список тем"""
+    theme_selected = Signal(str, str, str, str)  # bg, card, text, name
+
+    def __init__(self, current_theme, parent=None):
+        super().__init__(parent)
+        self.current_theme = current_theme
+        self.is_open = False
+
+        # Цветовые схемы для тем
+        self.themes = {
+            "black": ("#000000", "#454545", "white"),
+            "gray": ("#808080", "#A0A0A0", "black"),
+            "white": ("#FFFFFF", "#E0E0E0", "black")
+        }
+
+        self.init_ui()
+
+    def init_ui(self):
+        """Инициализация интерфейса dropdown"""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Заголовок dropdown
+        self.header = QWidget()
+        self.header.setCursor(Qt.PointingHandCursor)
+        header_layout = QHBoxLayout(self.header)
+        header_layout.setContentsMargins(10, 5, 10, 5)
+
+        self.selected_label = QLabel(self.current_theme)
+        self.arrow_label = QLabel("▼")
+
+        header_layout.addWidget(self.selected_label)
+        header_layout.addStretch()
+        header_layout.addWidget(self.arrow_label)
+
+        # Список опций (изначально скрыт)
+        self.options_widget = QWidget()
+        self.options_widget.setVisible(False)
+        options_layout = QVBoxLayout(self.options_widget)
+        options_layout.setContentsMargins(0, 0, 0, 0)
+        options_layout.setSpacing(1)
+
+        # Создаем опции для каждой темы
+        for theme_name, colors in self.themes.items():
+            option_widget = QWidget()
+            option_widget.setFixedHeight(30)
+            option_widget.setCursor(Qt.PointingHandCursor)
+
+            option_layout = QHBoxLayout(option_widget)
+            option_layout.setContentsMargins(10, 0, 10, 0)
+
+            option_label = QLabel(theme_name)
+            option_layout.addWidget(option_label)
+
+            # Сохраняем данные темы
+            option_widget.theme_data = colors + (theme_name,)
+
+            # Обработчик клика
+            option_widget.mousePressEvent = lambda e, opt=option_widget: self.select_theme(*opt.theme_data)
+
+            options_layout.addWidget(option_widget)
+
+        layout.addWidget(self.header)
+        layout.addWidget(self.options_widget)
+
+        # Обработчик клика по заголовку
+        self.header.mousePressEvent = self.toggle_dropdown
+
+    def toggle_dropdown(self, event):
+        """Показывает/скрывает список опций"""
+        if self.is_open:
+            self.options_widget.setVisible(False)
+            self.arrow_label.setText("▼")
+        else:
+            self.options_widget.setVisible(True)
+            self.arrow_label.setText("▲")
+
+        self.is_open = not self.is_open
+
+    def select_theme(self, bg_color, card_color, text_color, theme_name):
+        """Выбирает тему"""
+        self.selected_label.setText(theme_name)
+        self.options_widget.setVisible(False)
+        self.arrow_label.setText("▼")
+        self.is_open = False
+        self.theme_selected.emit(bg_color, card_color, text_color, theme_name)
+
+
+# ========== ДИАЛОГ НАСТРОЕК ==========
+class OptionsDialog(QDialog):
+    """Диалоговое окно настроек"""
+
+    def __init__(self, current_theme, current_scale, parent=None):
+        super().__init__(parent)
+        self.current_theme = current_theme
+        self.current_scale = current_scale
+
+        self.setWindowTitle("Options")
+        self.setFixedSize(350, 250)
+        self.setModal(True)
+
+        self.init_ui()
+
+    def init_ui(self):
+        """Инициализация интерфейса диалога"""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # Раздел "Color Theme"
+        theme_group = QGroupBox("Color Theme")
+        theme_layout = QVBoxLayout(theme_group)
+
+        self.theme_dropdown = ThemeDropdown(self.current_theme)
+        theme_layout.addWidget(self.theme_dropdown)
+
+        layout.addWidget(theme_group)
+
+        # Раздел "Pony Scale"
+        scale_group = QGroupBox("Pony Scale")
+        scale_layout = QVBoxLayout(scale_group)
+
+        # Метка с текущим значением
+        scale_percent = int(self.current_scale * 100)
+        self.scale_label = QLabel(f"Scale: {scale_percent}%")
+        self.scale_label.setAlignment(Qt.AlignCenter)
+
+        # Слайдер
+        self.scale_slider = QSlider(Qt.Horizontal)
+        self.scale_slider.setMinimum(25)  # 25%
+        self.scale_slider.setMaximum(200)  # 200%
+        self.scale_slider.setValue(scale_percent)
+        self.scale_slider.valueChanged.connect(self.on_scale_changed)
+
+        scale_layout.addWidget(self.scale_label)
+        scale_layout.addWidget(self.scale_slider)
+
+        layout.addWidget(scale_group)
+
+        layout.addStretch()
+
+        # Кнопки
+        button_layout = QHBoxLayout()
+
+        self.apply_btn = QPushButton("Apply Scale")
+        self.apply_btn.clicked.connect(self.apply_scale)
+
+        self.close_btn = QPushButton("Close")
+        self.close_btn.clicked.connect(self.close)
+
+        button_layout.addWidget(self.apply_btn)
+        button_layout.addStretch()
+        button_layout.addWidget(self.close_btn)
+
+        layout.addLayout(button_layout)
+
+    def on_scale_changed(self, value):
+        """Обработчик изменения слайдера"""
+        self.current_scale = value / 100.0
+        self.scale_label.setText(f"Scale: {value}%")
+
+    def apply_scale(self):
+        """Применяет масштаб"""
+        print(f"Масштаб применен: {self.current_scale}")
+        self.accept()
+
+
+# ========== ГЛАВНОЕ ОКНО ПРИЛОЖЕНИЯ ==========
+class DynamicPonySelector(QMainWindow):
+    """Главное окно приложения"""
+
+    def __init__(self):
+        super().__init__()
+
+        print("=" * 50)
+        print(f"Запуск DPP2 Pony Selector с {QT_LIB}")
+        print("=" * 50)
 
         # Конфигурационный файл
         self.config_file = "theme_config.json"
+        self.should_exit = False
 
-        # Загружаем сохраненную тему или используем значения по умолчанию
-        saved_theme = self.load_theme()
-
-        # Текущая цветовая схема
-        self.current_bg = saved_theme.get('bg_color', '#000000')
-        self.current_card_bg = saved_theme.get('card_color', '#454545')
-        self.current_text_color = saved_theme.get('text_color', 'white')
-        self.current_theme_name = saved_theme.get('theme_name', 'black')
-
-        # Настройки масштаба пони
-        self.current_scale = saved_theme.get('pony_scale', 0.95)
-        self.scale_options = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0,
-                              1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45, 1.5, 1.55, 1.6, 1.65, 1.7, 1.75, 1.8,
-                              1.85, 1.9, 1.95, 2.0]
-
-        # Настройки цвета контекстного меню
-        self.menu_bg_color = saved_theme.get('menu_bg_color', '#2d2d2d')
-        self.menu_fg_color = saved_theme.get('menu_fg_color', '#ffffff')
-        self.menu_active_bg = saved_theme.get('menu_active_bg', '#0078d7')
-        self.menu_active_fg = saved_theme.get('menu_active_fg', '#ffffff')
-
-        # Список персонажей (имена пони)
+        # Данные пони
         self.pony_names = [
             "Twilight Sparkle", "Rainbow Dash", "Pinkie Pie", "Apple Jack",
             "Fluttershy", "Rarity", "Trixie", "Starlight", "Sunset",
-            "Cadance","Celestia", "Luna"
+            "Cadance", "Celestia", "Luna"
         ]
 
-        # Карточки с GIF превью
         self.pony_gifs = {
             "Twilight Sparkle": "twilight.gif",
             "Rainbow Dash": "rainbow.gif",
@@ -62,961 +324,633 @@ class DynamicPonySelector:
             "Luna": "luna.gif"
         }
 
-        self.check_vars = {}
-        self.card_width = 150
-        self.card_height = 120
-        self.padding = 5
-        self.running_processes = {}
+        # Настройки масштаба
+        self.current_scale = 0.95
 
-        # Словарь для хранения анимаций гифок
-        self.gif_labels = {}
-        self.gif_frames = {}
+        # Инициализируем словарь состояний
+        self.selected_ponies = {}
+        for pony_name in self.pony_names:
+            self.selected_ponies[pony_name] = False
 
-        # Переменные для управления dropdown
-        self.dropdown_open = False
-        self.options_window = None
+        # Загружаем сохраненную тему
+        self.load_theme()
 
-        # Счетчик активных пони
+        # Инициализация процессов
+        self.running_processes = {}  # {имя_пони: (process, pid)}
         self.active_ponies_count = 0
-        # Флаг для отслеживания состояния главного окна
         self.main_window_hidden = False
+        self.restore_timer = QTimer()
+        self.restore_timer.timeout.connect(self.check_and_restore_window)
+        self.restore_timer.start(2000)  # Проверяем каждые 2 секунды
 
-        # Сначала настраиваем UI с загруженной темой
-        self.root.configure(bg=self.current_bg)
-        self.setup_ui()
-        self.root.bind('<Configure>', self.on_resize)
+        # Храним чекбоксы
+        self.checkboxes = {}
 
-        # Обработчик закрытия окна
-        self.root.protocol("WM_DELETE_WINDOW", self.exit_app)
+        # Инициализация UI
+        self.init_ui()
 
-        # Запускаем монитор для проверки активных процессов
-        self.monitor_thread = threading.Thread(target=self._monitor_processes, daemon=True)
-        self.monitor_thread.start()
-
-    def load_gif_frames(self, gif_path):
-        """Загружает кадры GIF-файла"""
-        try:
-            if not os.path.exists(gif_path):
-                print(f"[ERROR] GIF файл не найден: {gif_path}")
-                return None
-
-            gif = Image.open(gif_path)
-            frames = []
-
-            try:
-                while True:
-                    frame = gif.copy()
-                    # Масштабируем кадр под размер карточки
-                    frame = frame.resize((self.card_width - 10, 80), Image.Resampling.LANCZOS)
-                    frames.append(ImageTk.PhotoImage(frame))
-                    gif.seek(len(frames))  # Переход к следующему кадру
-            except EOFError:
-                pass
-
-            return frames
-        except Exception as e:
-            print(f"[ERROR] Ошибка загрузки GIF {gif_path}: {e}")
-            return None
-
-    def animate_gif(self, pony_name, label, frames, frame_index=0):
-        """Анимирует GIF в метке"""
-        if pony_name not in self.gif_labels:
-            return
-
-        # Обновляем кадр
-        if frames:
-            label.configure(image=frames[frame_index])
-
-            # Следующий кадр
-            next_index = (frame_index + 1) % len(frames)
-
-            # Запускаем следующий кадр через 100 мс
-            self.root.after(100, lambda: self.animate_gif(pony_name, label, frames, next_index))
+        print("✓ Приложение инициализировано")
 
     def load_theme(self):
-        """Загружает сохраненную тему из файла конфигурации"""
+        """Загружает сохраненную тему"""
         try:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                    print(f"[INFO] Загружена сохраненная тема: {config.get('theme_name', 'default')}")
-                    return config
-            else:
-                print("[INFO] Файл конфигурации не найден, используются значения по умолчанию")
-        except Exception as e:
-            print(f"[ERROR] Ошибка загрузки темы: {e}")
+                print(f"✓ Загружена тема: {config.get('theme_name', 'default')}")
 
-        # Возвращаем значения по умолчанию для черной темы
-        return {
-            'bg_color': '#000000',
-            'card_color': '#454545',
-            'text_color': 'white',
-            'theme_name': 'black',
-            'menu_bg_color': '#2d2d2d',
-            'menu_fg_color': '#ffffff',
-            'menu_active_bg': '#0078d7',
-            'menu_active_fg': '#ffffff',
-            'pony_scale': 1.0
-        }
+                self.current_bg = config.get('bg_color', '#000000')
+                self.current_card_bg = config.get('card_color', '#454545')
+                self.current_text_color = config.get('text_color', 'white')
+                self.current_theme_name = config.get('theme_name', 'black')
+                self.current_scale = config.get('pony_scale', 0.95)
+
+                # Загружаем состояния пони
+                saved_ponies = config.get('selected_ponies', {})
+                for pony_name in self.pony_names:
+                    self.selected_ponies[pony_name] = saved_ponies.get(pony_name, False)
+                print("✓ Состояния пони загружены")
+            else:
+                raise FileNotFoundError
+        except Exception as e:
+            print(f"✗ Ошибка загрузки темы: {e}")
+            print("Используются значения по умолчанию")
+            # Значения по умолчанию
+            self.current_bg = '#000000'
+            self.current_card_bg = '#454545'
+            self.current_text_color = 'white'
+            self.current_theme_name = 'black'
+            self.current_scale = 0.95
 
     def save_theme(self):
-        """Сохраняет текущую тему в файл конфигурации"""
+        """Сохраняет текущую тему"""
         try:
+            # Получаем актуальные состояния из чекбоксов
+            self.get_selected_ponies_from_checkboxes()
+
             config = {
                 'bg_color': self.current_bg,
                 'card_color': self.current_card_bg,
                 'text_color': self.current_text_color,
                 'theme_name': self.current_theme_name,
-                'menu_bg_color': self.menu_bg_color,
-                'menu_fg_color': self.menu_fg_color,
-                'menu_active_bg': self.menu_active_bg,
-                'menu_active_fg': self.menu_active_fg,
-                'pony_scale': self.current_scale
+                'pony_scale': self.current_scale,
+                'selected_ponies': self.selected_ponies
             }
 
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
 
-            print(f"[SUCCESS] Тема '{self.current_theme_name}' сохранена в конфигурацию")
+            print(f"✓ Тема '{self.current_theme_name}' сохранена")
         except Exception as e:
-            print(f"[ERROR] Ошибка сохранения темы: {e}")
+            print(f"✗ Ошибка сохранения темы: {e}")
 
-    def setup_ui(self):
-        # Главный заголовок
-        self.title_label = tk.Label(
-            self.root,
-            text="",
-            font=('Arial', 16, 'bold'),
-            fg=self.current_text_color,
-            bg=self.current_bg
-        )
-        self.title_label.pack(pady=10)
+    def get_selected_ponies_from_checkboxes(self):
+        """Получает выбранных пони из чекбоксов"""
+        for pony_name, checkbox in self.checkboxes.items():
+            self.selected_ponies[pony_name] = checkbox.isChecked()
 
-        # Контейнер для карточек с прокруткой
-        self.container = tk.Frame(self.root, bg=self.current_bg)
-        self.container.pack(fill='both', expand=True, padx=10)
+    def init_ui(self):
+        """Инициализация пользовательского интерфейса"""
+        print("Создание интерфейса...")
 
-        # Canvas для прокрутки
-        self.canvas = tk.Canvas(self.container, bg=self.current_bg, highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(self.container, orient='vertical', command=self.canvas.yview)
+        # Настройки окна
+        self.setWindowTitle("DPP2 - Pony Selector")
+        self.setGeometry(100, 100, 520, 500)
+        self.setMinimumSize(400, 400)
 
-        self.scrollable_frame = tk.Frame(self.canvas, bg=self.current_bg)
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
+        # Центральный виджет
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        # Главный layout
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(10)
 
-        # Упаковка
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
+        # Заголовок
+        self.title_label = QLabel("DPP2 - Pony Selector")
+        self.title_label.setAlignment(Qt.AlignCenter)
 
-        # Фрейм для кнопок внизу
-        self.button_frame = tk.Frame(self.root, bg=self.current_bg)
-        self.button_frame.pack(fill='x', padx=10, pady=10)
+        # Область с карточками (прокручиваемая)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        # Кнопка options
-        self.options_btn = tk.Button(
-            self.button_frame,
-            text="options",
-            command=self.show_options,
-            font=('Arial', 12, 'bold'),
-            bg=self.current_card_bg,
-            fg=self.current_text_color,
-            padx=20,
-            pady=5,
-            relief='flat',
-            bd=0,
-            highlightthickness=0
-        )
-        self.options_btn.pack(side='left')
+        self.cards_widget = QWidget()
+        self.cards_layout = QGridLayout(self.cards_widget)
+        self.cards_layout.setSpacing(10)
+        self.cards_layout.setAlignment(Qt.AlignTop | Qt.AlignLeft)
 
-        # Кнопка start в правом углу
-        self.select_btn = tk.Button(
-            self.button_frame,
-            text="start",
-            command=self.launch_selected,
-            font=('Arial', 12, 'bold'),
-            bg=self.current_card_bg,
-            fg=self.current_text_color,
-            padx=30,
-            pady=5,
-            relief='flat',
-            bd=0,
-            highlightthickness=0
-        )
-        self.select_btn.pack(side='right')
+        self.scroll_area.setWidget(self.cards_widget)
 
-        # Кнопка stop всех пони
-        self.stop_btn = tk.Button(
-            self.button_frame,
-            text="stop all",
-            command=self.stop_all,
-            font=('Arial', 12, 'bold'),
-            bg='#ff4444',
-            fg='white',
-            padx=20,
-            pady=5,
-            relief='flat',
-            bd=0,
-            highlightthickness=0
-        )
-        self.stop_btn.pack(side='right', padx=10)
+        # Кнопки внизу
+        bottom_widget = QWidget()
+        bottom_layout = QHBoxLayout(bottom_widget)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Первоначальное размещение
-        self.update_layout()
+        # Кнопка Options
+        self.options_btn = QPushButton("options")
+        self.options_btn.clicked.connect(self.show_options)
 
-    def exit_app(self):
-        """Завершает программу полностью"""
-        print("[EXIT] Завершение программы...")
-        self.should_exit = True
-        self.stop_all()  # Сначала останавливаем всех пони
-        # Очищаем GIF анимации
-        self.gif_labels.clear()
-        self.gif_frames.clear()
-        self.root.quit()
-        self.root.destroy()
+        # Кнопка Stop All
+        self.stop_btn = QPushButton("stop all")
+        self.stop_btn.clicked.connect(self.stop_all)
 
-    def calculate_columns(self):
-        """Вычисляет количество колонок в зависимости от ширина окна"""
-        container_width = self.container.winfo_width()
-        if container_width < 300:
-            return 2
+        # Кнопка Start
+        self.start_btn = QPushButton("start")
+        self.start_btn.clicked.connect(self.launch_selected)
 
-        available_width = container_width - 20
-        columns = max(2, available_width // (self.card_width + self.padding * 2))
-        return min(columns, 6)
+        bottom_layout.addWidget(self.options_btn)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(self.stop_btn)
+        bottom_layout.addWidget(self.start_btn)
 
-    def update_layout(self):
-        """Обновляет расположение карточек"""
-        # Сохраняем текущие состояния чекбоксов
-        saved_states = {}
-        for pony_name in self.pony_names:
-            if pony_name in self.check_vars:
-                saved_states[pony_name] = self.check_vars[pony_name].get()
+        # Добавляем все виджеты
+        main_layout.addWidget(self.title_label)
+        main_layout.addWidget(self.scroll_area)
+        main_layout.addWidget(bottom_widget)
 
-        # Очищаем старые виджеты и анимации
-        for widget in self.scrollable_frame.winfo_children():
-            widget.destroy()
-        self.gif_labels.clear()
-        self.gif_frames.clear()
+        # Применяем текущую тему
+        self.update_theme()
 
-        columns = self.calculate_columns()
+        # Создаем карточки
+        self.create_cards()
+
+        print("✓ Интерфейс создан")
+
+    def update_theme(self):
+        """Обновляет цвета интерфейса"""
+        # Стиль главного окна
+        style = f"""
+            QMainWindow {{
+                background-color: {self.current_bg};
+            }}
+
+            QLabel {{
+                color: {self.current_text_color};
+            }}
+
+            QPushButton {{
+                background-color: {self.current_card_bg};
+                color: {self.current_text_color};
+                border: none;
+                padding: 8px 20px;
+                font-weight: bold;
+                font-size: 12px;
+                border-radius: 5px;
+            }}
+
+            QPushButton:hover {{
+                background-color: #555555;
+            }}
+
+            QGroupBox {{
+                color: {self.current_text_color};
+                border: 1px solid #555;
+                border-radius: 5px;
+                margin-top: 10px;
+                font-weight: bold;
+            }}
+
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px 0 5px;
+            }}
+
+            QScrollArea {{
+                border: none;
+                background-color: {self.current_bg};
+            }}
+
+            QScrollBar:vertical {{
+                border: none;
+                background: {self.current_card_bg};
+                width: 10px;
+                margin: 0px 0px 0px 0px;
+            }}
+
+            QScrollBar::handle:vertical {{
+                background: #666;
+                min-height: 20px;
+                border-radius: 5px;
+            }}
+
+            QScrollBar::handle:vertical:hover {{
+                background: #888;
+            }}
+        """
+
+        self.setStyleSheet(style)
+
+        # Обновляем заголовок
+        self.title_label.setStyleSheet(f"""
+            color: {self.current_text_color};
+            font-size: 16px;
+            font-weight: bold;
+        """)
+
+        # Специальный стиль для кнопки stop
+        self.stop_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #ff4444;
+                color: white;
+            }
+            QPushButton:hover {
+                background-color: #ff6666;
+            }
+        """)
+
+    def create_cards(self):
+        """Создает карточки пони"""
+        # Очищаем старые карточки
+        for i in reversed(range(self.cards_layout.count())):
+            widget = self.cards_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+
+        # Очищаем словарь чекбоксов
+        self.checkboxes.clear()
+
+        # Создаем новые карточки
+        # Вычисляем количество колонок
+        width = self.scroll_area.width()
+        columns = max(2, width // 170)
+        if columns == 0:
+            columns = 2
 
         for i, pony_name in enumerate(self.pony_names):
+            # Создаем карточку
+            card_widget = QWidget()
+            card_widget.setFixedSize(150, 120)
+
+            card_style = f"""
+                QWidget {{
+                    background-color: {self.current_card_bg};
+                    border: 1px solid #555;
+                    border-radius: 8px;
+                }}
+            """
+            card_widget.setStyleSheet(card_style)
+
+            # Layout карточки
+            card_layout = QVBoxLayout(card_widget)
+            card_layout.setContentsMargins(5, 5, 5, 5)
+            card_layout.setSpacing(3)
+
+            # Область для GIF
+            gif_widget = QWidget()
+            gif_widget.setFixedHeight(80)
+            gif_layout = QVBoxLayout(gif_widget)
+            gif_layout.setContentsMargins(0, 0, 0, 0)
+
+            # GIF файл
+            gif_filename = self.pony_gifs.get(pony_name, "placeholder.gif")
+            gif_path = os.path.join("pony_previews", gif_filename)
+            gif_label = AnimatedGIFLabel(gif_path)
+            gif_layout.addWidget(gif_label)
+
+            # Область с именем и чекбоксом
+            info_widget = QWidget()
+            info_widget.setFixedHeight(25)
+            info_layout = QHBoxLayout(info_widget)
+            info_layout.setContentsMargins(5, 0, 5, 0)
+
+            # Имя пони
+            name_label = QLabel(pony_name)
+            name_label.setStyleSheet(f"color: {self.current_text_color}; font-weight: bold; font-size: 10px;")
+            name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+            # Чекбокс
+            checkbox = QCheckBox()
+            checkbox.setFixedSize(20, 20)
+
+            # Устанавливаем начальное состояние из словаря
+            checkbox.setChecked(self.selected_ponies.get(pony_name, False))
+
+            # Сохраняем чекбокс
+            self.checkboxes[pony_name] = checkbox
+
+            info_layout.addWidget(name_label)
+            info_layout.addStretch()
+            info_layout.addWidget(checkbox)
+
+            # Собираем карточку
+            card_layout.addWidget(gif_widget)
+            card_layout.addWidget(info_widget)
+
+            # Позиционируем в сетке
             row = i // columns
             col = i % columns
-            self.create_pony_card(self.scrollable_frame, pony_name, row, col)
-
-        # Восстанавливаем состояния чекбоксов
-        for pony_name, state in saved_states.items():
-            if pony_name in self.check_vars:
-                self.check_vars[pony_name].set(state)
-
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def create_pony_card(self, parent, pony_name, row, col):
-        """Создает карточку персонажа с GIF-анимацией"""
-        card_frame = tk.Frame(
-            parent,
-            bg=self.current_card_bg,
-            relief='solid',
-            bd=1,
-            width=self.card_width,
-            height=self.card_height
-        )
-        card_frame.grid(row=row, column=col, padx=self.padding, pady=self.padding, sticky='nw')
-        card_frame.pack_propagate(False)
-
-        inner_frame = tk.Frame(card_frame, bg=self.current_card_bg)
-        inner_frame.pack(fill='both', expand=True, padx=3, pady=3)
-
-        # Фрейм для GIF
-        gif_frame = tk.Frame(inner_frame, bg=self.current_card_bg, height=90)
-        gif_frame.pack(fill='x', pady=(0, 3))
-        gif_frame.pack_propagate(False)
-
-        # Пытаемся загрузить и показать GIF
-        gif_filename = self.pony_gifs.get(pony_name, "placeholder.gif")
-        gif_path = os.path.join("pony_previews", gif_filename)  # Папка с превью
-
-        # Загружаем кадры GIF
-        frames = self.load_gif_frames(gif_path)
-
-        if frames:
-            # Создаем метку для GIF
-            gif_label = tk.Label(
-                gif_frame,
-                image=frames[0],
-                bg=self.current_card_bg
-            )
-            gif_label.pack(expand=True)
-
-            # Сохраняем ссылки на метку и кадры
-            self.gif_labels[pony_name] = gif_label
-            self.gif_frames[pony_name] = frames
-
-            # Запускаем анимацию
-            self.animate_gif(pony_name, gif_label, frames)
-        else:
-            # Fallback: показываем placeholder если GIF не найден
-            if self.current_theme_name == "white":
-                gif_bg_color = '#3498db'  # Синий для белой темы
-            elif self.current_theme_name == "gray":
-                gif_bg_color = '#27ae60'  # Зеленый для серой темы
-            else:  # black
-                gif_bg_color = '#1abc9c'  # Бирюзовый для черной темы
-
-            placeholder_label = tk.Label(
-                gif_frame,
-                text="[GIF]",
-                bg=gif_bg_color,
-                fg='white',
-                font=('Arial', 7)
-            )
-            placeholder_label.pack(expand=True)
-
-        # Фрейм для имени и чекбокса
-        name_check_frame = tk.Frame(inner_frame, bg=self.current_card_bg, height=20)
-        name_check_frame.pack(fill='x', pady=1)
-        name_check_frame.pack_propagate(False)
-
-        # Имя персонажа
-        name_label = tk.Label(
-            name_check_frame,
-            text=pony_name,
-            font=('Arial', 8, 'bold'),
-            fg=self.current_text_color,
-            bg=self.current_card_bg,
-            anchor='w'
-        )
-        name_label.pack(side='left', fill='x', expand=True)
-
-        # Чекбокс в правом углу
-        if pony_name not in self.check_vars:
-            self.check_vars[pony_name] = tk.BooleanVar()
-
-        check = tk.Checkbutton(
-            name_check_frame,
-            variable=self.check_vars[pony_name],
-            bg=self.current_card_bg,
-            fg=self.current_text_color,
-            selectcolor=self.current_card_bg,
-            activebackground=self.current_card_bg,
-            activeforeground=self.current_text_color,
-            relief='flat',
-            bd=0,
-            highlightthickness=0
-        )
-        check.pack(side='right')
-
-    def on_resize(self, event):
-        """Обработчик изменения размера окна"""
-        if event.widget == self.root:
-            self.root.after(100, self.update_layout)
+            self.cards_layout.addWidget(card_widget, row, col)
 
     def show_options(self):
-        """Показывает окно опций с выпадающим списком тем и ползунком масштаба"""
-        # Закрываем предыдущее окно опций если оно открыто
-        if hasattr(self, 'options_window') and self.options_window and self.options_window.winfo_exists():
-            self.options_window.destroy()
+        """Показывает окно настроек"""
+        print("Открытие настроек...")
+        dialog = OptionsDialog(self.current_theme_name, self.current_scale, self)
+        dialog.theme_dropdown.theme_selected.connect(self.change_theme)
+        dialog.apply_btn.clicked.connect(lambda: self.apply_scale_to_running(dialog.current_scale))
 
-        self.options_window = tk.Toplevel(self.root)
-        self.options_window.title("Options")
-        self.options_window.geometry("350x320")
-        self.options_window.configure(bg=self.current_bg)
-        self.options_window.resizable(False, False)
+        if dialog.exec():
+            print("Настройки сохранены")
 
-        # Центрируем окно относительно главного
-        self.options_window.transient(self.root)
-        self.options_window.grab_set()
+    def change_theme(self, bg_color, card_color, text_color, theme_name):
+        """Изменяет тему приложения"""
+        print(f"Изменение темы на: {theme_name}")
 
-        # Центрирование окна
-        self.options_window.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() - self.options_window.winfo_width()) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - self.options_window.winfo_height()) // 2
-        self.options_window.geometry(f"+{x}+{y}")
-
-        # Основной контейнер
-        main_frame = tk.Frame(self.options_window, bg=self.current_bg)
-        main_frame.pack(fill='both', expand=True, padx=20, pady=20)
-
-        # Раздел Color Theme
-        theme_section = tk.LabelFrame(main_frame, text=" Color Theme ", font=('Arial', 11, 'bold'),
-                                      fg=self.current_text_color, bg=self.current_bg, bd=1, relief='solid')
-        theme_section.pack(fill='x', pady=(0, 15))
-
-        # Фрейм для выпадающего списка
-        dropdown_frame = tk.Frame(theme_section, bg=self.current_bg)
-        dropdown_frame.pack(fill='x', pady=15, padx=10)
-
-        # Создаем кастомный выпадающий список для темы
-        self.create_theme_dropdown(dropdown_frame)
-
-        # Раздел Pony Scale
-        scale_section = tk.LabelFrame(main_frame, text=" Pony Scale ", font=('Arial', 11, 'bold'),
-                                      fg=self.current_text_color, bg=self.current_bg, bd=1, relief='solid')
-        scale_section.pack(fill='x', pady=(0, 15))
-
-        # Фрейм для ползунка масштаба
-        scale_slider_frame = tk.Frame(scale_section, bg=self.current_bg)
-        scale_slider_frame.pack(fill='x', pady=15, padx=10)
-
-        # Создаем кастомный ползунок для масштаба
-        self.create_scale_slider(scale_slider_frame)
-
-        # Кнопка применения масштаба к запущенным пони
-        apply_scale_btn = tk.Button(
-            main_frame,
-            text="Apply Scale to Running Ponies",
-            command=self.apply_scale_to_running_ponies,
-            font=('Arial', 10),
-            bg=self.current_card_bg,
-            fg=self.current_text_color,
-            padx=15,
-            pady=8,
-            relief='flat',
-            bd=0,
-            highlightthickness=0
-        )
-        apply_scale_btn.pack(fill='x', pady=(10, 0))
-
-    def create_theme_dropdown(self, parent):
-        """Создает кастомный выпадающий список для темы"""
-        # Цвета для dropdown в зависимости от темы
-        if self.current_theme_name == "white":
-            dropdown_bg = '#e0e0e0'
-            dropdown_fg = '#000000'
-            option_bg = '#f0f0f0'
-            option_hover = '#d0d0d0'
-        elif self.current_theme_name == "gray":
-            dropdown_bg = '#606060'
-            dropdown_fg = '#ffffff'
-            option_bg = '#707070'
-            option_hover = '#808080'
-        else:  # black
-            dropdown_bg = '#333333'
-            dropdown_fg = '#ffffff'
-            option_bg = '#444444'
-            option_hover = '#555555'
-
-        # Основной фрейм для dropdown
-        dropdown_main = tk.Frame(parent, bg=dropdown_bg, relief='solid', bd=1)
-        dropdown_main.pack(fill='x')
-
-        # Верхняя часть - выбранный элемент и стрелка
-        dropdown_header = tk.Frame(dropdown_main, bg=dropdown_bg, height=30)
-        dropdown_header.pack(fill='x')
-        dropdown_header.pack_propagate(False)
-
-        # Выбранный цвет - используем переменную для хранения текущей темы
-        self.selected_color_var = tk.StringVar(value=self.current_theme_name)
-
-        selected_label = tk.Label(
-            dropdown_header,
-            textvariable=self.selected_color_var,
-            font=('Arial', 10),
-            fg=dropdown_fg,
-            bg=dropdown_bg,
-            anchor='w'
-        )
-        selected_label.pack(side='left', padx=8, fill='x', expand=True)
-
-        # Стрелка (символ ▼)
-        self.arrow_label = tk.Label(
-            dropdown_header,
-            text="▼",
-            font=('Arial', 10),
-            fg=dropdown_fg,
-            bg=dropdown_bg
-        )
-        self.arrow_label.pack(side='right', padx=8)
-
-        # Список вариантов (изначально скрыт)
-        self.options_frame = tk.Frame(dropdown_main, bg=option_bg)
-
-        # Три темы: black, gray, white
-        themes = [
-            ("black", "#000000", "#454545", "white"),
-            ("gray", "#808080", "#A0A0A0", "black"),
-            ("white", "#FFFFFF", "#E0E0E0", "black")
-        ]
-
-        for color_name, bg_color, card_color, text_color in themes:
-            color_option = tk.Frame(self.options_frame, bg=option_bg, height=30)
-            color_option.pack(fill='x')
-            color_option.pack_propagate(False)
-
-            color_btn = tk.Label(
-                color_option,
-                text=color_name,
-                font=('Arial', 10),
-                fg=dropdown_fg,
-                bg=option_bg,
-                anchor='w',
-                cursor='hand2'
-            )
-            color_btn.pack(fill='x', padx=8)
-
-            # Привязываем события мыши
-            color_btn.bind('<Button-1>',
-                           lambda e, bg=bg_color, card=card_color, text=text_color, name=color_name:
-                           self.select_theme(bg, card, text, name))
-
-            color_btn.bind('<Enter>', lambda e, btn=color_btn: btn.configure(bg=option_hover))
-            color_btn.bind('<Leave>', lambda e, btn=color_btn: btn.configure(bg=option_bg))
-
-        # Обработчик клика по заголовку для показа/скрытия списка
-        def toggle_dropdown(event):
-            if self.options_frame.winfo_ismapped():
-                self.options_frame.pack_forget()
-                self.arrow_label.configure(text="▼")
-                self.dropdown_open = False
-            else:
-                self.options_frame.pack(fill='x')
-                self.arrow_label.configure(text="▲")
-                self.dropdown_open = True
-
-        # Привязываем обработчик ко всему заголовку
-        dropdown_header.bind('<Button-1>', toggle_dropdown)
-        selected_label.bind('<Button-1>', toggle_dropdown)
-        self.arrow_label.bind('<Button-1>', toggle_dropdown)
-
-    def create_scale_slider(self, parent):
-        """Создает ползунок для масштаба пони с процентами"""
-        # Цвета в зависимости от темы
-        if self.current_theme_name == "white":
-            bg_color = '#f0f0f0'
-            fg_color = '#000000'
-            trough_color = '#c0c0c0'
-            active_color = '#0078d7'
-            mark_color = '#a0a0a0'
-        elif self.current_theme_name == "gray":
-            bg_color = '#707070'
-            fg_color = '#ffffff'
-            trough_color = '#909090'
-            active_color = '#0078d7'
-            mark_color = '#b0b0b0'
-        else:  # black
-            bg_color = '#444444'
-            fg_color = '#ffffff'
-            trough_color = '#666666'
-            active_color = '#0078d7'
-            mark_color = '#888888'
-
-        # Основной контейнер
-        container = tk.Frame(parent, bg=bg_color)
-        container.pack(fill='x', pady=5)
-
-        # Метка с текущим значением
-        scale_percent = int(self.current_scale * 100)
-        self.scale_label = tk.Label(
-            container,
-            text=f"Scale: {scale_percent}%",
-            font=('Arial', 10, 'bold'),
-            fg=fg_color,
-            bg=bg_color
-        )
-        self.scale_label.pack(pady=(0, 5))
-
-        # Слайдер
-        slider_frame = tk.Frame(container, bg=bg_color)
-        slider_frame.pack(fill='x', pady=5)
-
-        # Находим индекс текущего значения
-        current_index = 0
-        if self.current_scale in self.scale_options:
-            current_index = self.scale_options.index(self.current_scale)
-        else:
-            # Находим ближайшее значение
-            closest_val = min(self.scale_options, key=lambda x: abs(x - self.current_scale))
-            current_index = self.scale_options.index(closest_val)
-            self.current_scale = closest_val
-
-        # Создаем ползунок
-        self.scale_slider = tk.Scale(
-            slider_frame,
-            from_=0,
-            to=len(self.scale_options) - 1,
-            orient='horizontal',
-            length=250,
-            showvalue=0,
-            bg=bg_color,
-            fg=fg_color,
-            troughcolor=trough_color,
-            activebackground=active_color,
-            highlightthickness=0,
-            sliderrelief='flat',
-            resolution=1
-        )
-        self.scale_slider.set(current_index)
-        self.scale_slider.pack(fill='x', padx=5)
-
-        # Обработчик движения ползунка
-        def on_slider_move(val):
-            try:
-                index = int(float(val))
-                if 0 <= index < len(self.scale_options):
-                    self.current_scale = self.scale_options[index]
-                    scale_percent = int(self.current_scale * 100)
-                    self.scale_label.config(text=f"Scale: {scale_percent}%")
-            except Exception as e:
-                print(f"[ERROR] Ошибка движения ползунка: {e}")
-
-        self.scale_slider.config(command=on_slider_move)
-
-        # Метки под слайдером
-        marks_frame = tk.Frame(container, bg=bg_color)
-        marks_frame.pack(fill='x', pady=(5, 0))
-
-        # Показываем ключевые значения в процентах
-        key_values = [0.25, 0.5, 1.0, 1.5, 2.0]
-
-        for value in key_values:
-            if value in self.scale_options:
-                index = self.scale_options.index(value)
-                total = len(self.scale_options) - 1
-                position = (index / total) * 100 if total > 0 else 0
-
-                # Преобразуем в проценты
-                percent_value = int(value * 100)
-
-                label = tk.Label(
-                    marks_frame,
-                    text=f"{percent_value}%",
-                    font=('Arial', 8),
-                    fg=mark_color,
-                    bg=bg_color
-                )
-                label.place(relx=position / 100, x=-10, anchor='n')
-
-        # Автоматическое сохранение при отпускании
-        def save_on_release(event):
-            self.save_theme()
-            scale_percent = int(self.current_scale * 100)
-            print(f"[SUCCESS] Масштаб сохранен: {scale_percent}%")
-
-        self.scale_slider.bind('<ButtonRelease-1>', save_on_release)
-
-        return self.scale_slider
-
-    def select_theme(self, bg_color, card_color, text_color, theme_name=None):
-        """Выбирает тему из dropdown"""
-        self.selected_color_var.set(theme_name)
-
-        # Закрываем dropdown
-        if self.dropdown_open:
-            self.options_frame.pack_forget()
-            self.arrow_label.configure(text="▼")
-            self.dropdown_open = False
-
-        self.change_theme(bg_color, card_color, text_color, theme_name)
-
-        # Обновляем цвета меню в зависимости от темы
-        if theme_name == "black":
-            self.menu_bg_color = '#2d2d2d'
-            self.menu_fg_color = '#ffffff'
-        elif theme_name == "gray":
-            self.menu_bg_color = '#606060'
-            self.menu_fg_color = '#ffffff'
-        else:  # white
-            self.menu_bg_color = '#ffffff'
-            self.menu_fg_color = '#000000'
-
-        self.menu_active_bg = '#0078d7'
-        self.menu_active_fg = '#ffffff'
-
-        # Сохраняем выбранную тему
-        self.save_theme()
-
-    def apply_scale_to_running_ponies(self):
-        """Применяет текущий масштаб ко всем запущенным пони"""
-        scale_percent = int(self.current_scale * 100)
-        print(f"[SCALE] Применение масштаба {scale_percent}% к запущенным пони...")
-
-        # Заново запускаем все пони с новым масштабом
-        running_ponies = list(self.running_processes.keys())
-
-        # Останавливаем всех
-        for pony_name in running_ponies:
-            if pony_name in self.running_processes:
-                try:
-                    self.running_processes[pony_name].terminate()
-                except:
-                    pass
-
-        # Запускаем заново с новым масштабом
-        for pony_name in running_ponies:
-            self._start_via_subprocess(pony_name)
-
-        print("[SUCCESS] Масштаб применен к запущенным пони")
-
-        # Закрываем окно опций
-        if self.options_window and self.options_window.winfo_exists():
-            self.options_window.destroy()
-
-    def change_theme(self, bg_color, card_color, text_color, theme_name=None):
-        """Меняет цветовую схему приложения"""
         self.current_bg = bg_color
         self.current_card_bg = card_color
         self.current_text_color = text_color
-        if theme_name:
-            self.current_theme_name = theme_name
+        self.current_theme_name = theme_name
 
-        # Обновляем цвета главного окна
-        try:
-            self.root.configure(bg=bg_color)
-            self.title_label.configure(bg=bg_color, fg=text_color)
-            self.container.configure(bg=bg_color)
-            self.canvas.configure(bg=bg_color)
-            self.scrollable_frame.configure(bg=bg_color)
-            self.button_frame.configure(bg=bg_color)
+        # Обновляем UI
+        self.update_theme()
+        self.create_cards()  # Пересоздаем карточки с новой темой
 
-            # Обновляем кнопки
-            self.options_btn.configure(bg=card_color, fg=text_color)
-            self.select_btn.configure(bg=card_color, fg=text_color)
-            self.stop_btn.configure(bg='#ff4444', fg='white')
+        # Сохраняем тему
+        self.save_theme()
 
-            # Перерисовываем карточки
-            self.update_layout()
+    def apply_scale_to_running(self, scale):
+        """Применяет масштаб к запущенным пони"""
+        print(f"Применение масштаба {int(scale * 100)}% к запущенным пони...")
 
-            # Обновляем окно опций если оно открыто
-            if hasattr(self, 'options_window') and self.options_window and self.options_window.winfo_exists():
-                self.options_window.destroy()
-                self.show_options()
+        if self.running_processes:
+            # Перезапускаем всех пони с новым масштабом
+            running_ponies = list(self.running_processes.keys())
 
-        except Exception as e:
-            print(f"[WARNING] Ошибка при смене темы: {e}")
+            # Останавливаем
+            for pony_name in running_ponies:
+                if pony_name in self.running_processes:
+                    try:
+                        process, pid = self.running_processes[pony_name]
+                        self.kill_process_tree(pid)
+                        print(f"Остановлен: {pony_name}")
+                    except:
+                        pass
+
+            # Запускаем заново
+            for pony_name in running_ponies:
+                self._start_via_subprocess(pony_name)
+
+            print("✓ Масштаб применен к запущенным пони")
+        else:
+            print("Нет запущенных пони")
 
     def launch_selected(self):
-        """Запускает выбранных персонажей"""
-        selected_ponies = []
+        """Запускает выбранных пони"""
+        # Сначала обновляем словарь из чекбоксов
+        self.get_selected_ponies_from_checkboxes()
 
-        for pony_name in self.pony_names:
-            if self.check_vars[pony_name].get():
-                selected_ponies.append(pony_name)
+        # Получаем список выбранных пони
+        selected_list = [name for name, selected in self.selected_ponies.items() if selected]
 
-        # Закрываем главное окно сразу
-        if selected_ponies:
-            print(f"[SUCCESS] Запуск пони: {', '.join(selected_ponies)}")
-            print("[INFO] Главное окно скрыто")
-            # Скрываем главное окно сразу
-            self.root.withdraw()
-            self.main_window_hidden = True
+        if not selected_list:
+            print("✗ Не выбрано ни одного пони!")
+            print(f"Состояния: {self.selected_ponies}")
 
-            # Запускаем пони параллельно
-            self._launch_ponies_parallel(selected_ponies)
-        else:
-            print("[WARNING] Не выбрано ни одного пони")
+            # Показываем сообщение
+            QMessageBox.warning(self, "Внимание", "Не выбрано ни одного пони!")
+            return
 
-    def _launch_ponies_parallel(self, selected_ponies):
-        """Запускает пони параллельно в отдельных потоках"""
-        threads = []
+        print(f"Запуск пони: {', '.join(selected_list)}")
+        print(f"Всего выбрано: {len(selected_list)}")
+        print("Главное окно скрыто")
 
-        for pony_name in selected_ponies:
-            # Создаем отдельный поток для каждого пони
-            thread = threading.Thread(
-                target=self._launch_single_pony,
-                args=(pony_name,),
-                daemon=True
-            )
-            threads.append(thread)
-            thread.start()
+        # Сохраняем состояния перед запуском
+        self.save_theme()
 
-        # Не ждем завершения всех потоков
-        print(f"[START] Запущено {len(threads)} потоков для пони")
+        # Скрываем главное окно
+        self.hide()
+        self.main_window_hidden = True
 
-    def _launch_single_pony(self, pony_name):
-        """Запускает одного пони в отдельном потоке"""
-        try:
-            # Запускаем через subprocess
+        # Запускаем каждого пони
+        for pony_name in selected_list:
             self._start_via_subprocess(pony_name)
-        except Exception as e:
-            print(f"[ERROR] Ошибка запуска {pony_name} в потоке: {e}")
+
+        print(f"✓ Запущено {len(selected_list)} пони")
+
+    def stop_all(self):
+        """Останавливает всех запущенных пони"""
+        print("Остановка всех пони...")
+
+        # Останавливаем процессы
+        for pony_name, (process, pid) in list(self.running_processes.items()):
+            try:
+                self.kill_process_tree(pid)
+                print(f"✓ Остановлен: {pony_name} (PID: {pid})")
+            except Exception as e:
+                print(f"✗ Ошибка остановки {pony_name}: {e}")
+
+        self.running_processes.clear()
+        self.active_ponies_count = 0
+
+        # Показываем главное окно
+        if self.main_window_hidden:
+            self.show()
+            self.main_window_hidden = False
+            print("Главное окно показано")
+
+        print("✓ Все пони остановлены")
+
+    def kill_process_tree(self, pid):
+        """Убивает процесс и все его дочерние процессы"""
+        try:
+            if os.name == 'nt':  # Windows
+                import ctypes
+                PROCESS_TERMINATE = 1
+                handle = ctypes.windll.kernel32.OpenProcess(PROCESS_TERMINATE, False, pid)
+                ctypes.windll.kernel32.TerminateProcess(handle, -1)
+                ctypes.windll.kernel32.CloseHandle(handle)
+            else:  # Linux/Mac
+                os.kill(pid, signal.SIGTERM)
+                time.sleep(0.1)  # Даем процессу время завершиться
+        except:
+            pass
+
+    def check_and_restore_window(self):
+        """Проверяет и восстанавливает окно если все пони завершились"""
+        if not self.main_window_hidden:
+            return
+
+        # Проверяем завершенные процессы
+        dead_processes = []
+        for pony_name, (process, pid) in list(self.running_processes.items()):
+            try:
+                # Проверяем, жив ли процесс
+                if process.poll() is not None:  # Процесс завершен
+                    print(f"🔄 {pony_name} завершился (returncode: {process.poll()})")
+                    dead_processes.append(pony_name)
+            except:
+                dead_processes.append(pony_name)
+
+        # Удаляем завершенные процессы
+        for pony_name in dead_processes:
+            if pony_name in self.running_processes:
+                del self.running_processes[pony_name]
+                self.active_ponies_count = max(0, self.active_ponies_count - 1)
+
+        # Если все пони завершились - восстанавливаем окно
+        if self.active_ponies_count == 0 and self.main_window_hidden:
+            print("🔄 Все пони завершили работу, восстанавливаю окно...")
+            self._safe_restore_window()
+
+    def _safe_restore_window(self):
+        """Безопасное восстановление окна"""
+        if self.main_window_hidden:
+            self.show()
+            self.main_window_hidden = False
+            self.raise_()
+            self.activateWindow()
+            print("✅ Окно восстановлено и активировано")
+
+    def resizeEvent(self, event):
+        """Обработчик изменения размера окна"""
+        super().resizeEvent(event)
+        # Пересоздаем карточки при изменении размера окна
+        self.create_cards()
 
     def _start_via_subprocess(self, pony_name):
-        """Запускает пони через subprocess с фиксом кодировки"""
+        """Запускает пони через subprocess"""
         try:
-            self.active_ponies_count += 1
-
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            pony_script = "./DPP2serverUDP/Client/characters/pony.py"
 
-            if not os.path.exists(pony_script):
-                print(f"[ERROR] Файл не найден: {pony_script}")
+            # Пробуем разные пути к pony.py
+            possible_paths = [
+                "pony.py",
+                os.path.join("DPP2serverUDP", "Client", "characters", "pony.py"),
+                os.path.join("characters", "pony.py"),
+                os.path.join(current_dir, "pony.py")
+            ]
+
+            pony_script = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    pony_script = path
+                    break
+
+            if not pony_script:
+                print(f"✗ Файл pony.py не найден по путям: {possible_paths}")
                 return
 
-            # КОМАНДА С ПРАВИЛЬНОЙ КОДИРОВКОЙ
-            cmd = f'python "{pony_script}" "{pony_name}" {self.current_scale}'
+            # Команда для запуска
+            cmd = [sys.executable, pony_script, pony_name, str(self.current_scale)]
+            print(f"Команда: {' '.join(cmd)}")
 
-            print(f"[PROCESS] Команда: {cmd}")
-
-            # Запуск с UTF-8 кодировкой
+            # Запуск процесса
             if os.name == 'nt':  # Windows
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = 0  # Скрываем окно консоли
 
-                # Важно: создаем с правильными настройками кодировки
                 process = subprocess.Popen(
                     cmd,
-                    shell=True,
                     startupinfo=startupinfo,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    stdin=subprocess.PIPE,
-                    text=True,  # Используем текстовый режим
-                    encoding='utf-8',  # Указываем UTF-8
-                    errors='ignore',  # Игнорируем ошибки декодирования
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                     cwd=current_dir
                 )
             else:  # Linux/Mac
                 process = subprocess.Popen(
                     cmd,
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    stdin=subprocess.PIPE,
-                    text=True,
-                    encoding='utf-8',
-                    errors='ignore',
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL,
+                    preexec_fn=os.setsid,
                     cwd=current_dir
                 )
 
-            self.running_processes[pony_name] = process
-            print(f"[SUCCESS] {pony_name} запущен (PID: {process.pid})")
+            pid = process.pid
+            self.running_processes[pony_name] = (process, pid)
+            self.active_ponies_count += 1
 
-            # Запускаем поток для чтения вывода
+            print(f"✅ {pony_name} запущен (PID: {pid})")
+
+            # Запускаем мониторинг процесса
             threading.Thread(
-                target=self._safe_read_output,
-                args=(process, pony_name),
+                target=self._monitor_single_process,
+                args=(pony_name, process),
                 daemon=True
             ).start()
 
         except Exception as e:
-            print(f"[ERROR] Ошибка запуска {pony_name}: {e}")
-            self.active_ponies_count -= 1
+            print(f"✗ Ошибка запуска {pony_name}: {e}")
+            self.active_ponies_count = max(0, self.active_ponies_count - 1)
 
-    def _safe_read_output(self, process, pony_name):
-        """Безопасное чтение вывода с обработкой кодировок"""
+            # Если это был последний пони - восстанавливаем окно
+            if self.active_ponies_count == 0 and self.main_window_hidden:
+                QTimer.singleShot(100, self._safe_restore_window)
+
+    def _monitor_single_process(self, pony_name, process):
+        """Мониторит один процесс пони"""
         try:
-            # Читаем stdout
-            stdout_thread = threading.Thread(
-                target=self._read_stream,
-                args=(process.stdout, f"[{pony_name} STDOUT]"),
-                daemon=True
-            )
+            # Ждем завершения процесса
+            return_code = process.wait(timeout=None)
 
-            # Читаем stderr
-            stderr_thread = threading.Thread(
-                target=self._read_stream,
-                args=(process.stderr, f"[{pony_name} STDERR]"),
-                daemon=True
-            )
+            print(f"🔄 {pony_name} завершил работу с кодом {return_code}")
 
-            stdout_thread.start()
-            stderr_thread.start()
+            # Удаляем из running_processes
+            if pony_name in self.running_processes:
+                del self.running_processes[pony_name]
 
-            stdout_thread.join(timeout=1)
-            stderr_thread.join(timeout=1)
+            self.active_ponies_count = max(0, self.active_ponies_count - 1)
 
-        except Exception as e:
-            # Игнорируем ошибки чтения
-            pass
-
-    def _read_stream(self, stream, prefix):
-        """Читает поток с обработкой кодировки"""
-        try:
-            for line in iter(stream.readline, ''):
-                if line:
-                    line = line.strip()
-                    if line:
-                        # Пытаемся декодировать разными способами
-                        try:
-                            print(f"{prefix}: {line}")
-                        except:
-                            # Если не получается - просто выводим как есть
-                            try:
-                                print(f"{prefix}: [бинарные данные]")
-                            except:
-                                pass
-        except Exception as e:
-            # Игнорируем все ошибки при чтении
-            pass
-
-    def _read_process_output(self, process, pony_name):
-        """Читает вывод процесса для отладки"""
-        try:
-            stdout, stderr = process.communicate(timeout=5)
-            if stdout:
-                print(f"[{pony_name} STDOUT]: {stdout}")
-            if stderr:
-                print(f"[{pony_name} STDERR]: {stderr}")
-        except subprocess.TimeoutExpired:
-            # Процесс все еще работает
-            pass
-        except Exception as e:
-            print(f"[ERROR] Ошибка чтения вывода {pony_name}: {e}")
-
-    def _show_main_window(self):
-        """Показывает главное окно"""
-        if self.main_window_hidden:
-            self.root.deiconify()
-            self.root.focus_force()
-            self.main_window_hidden = False
-            print("[INFO] Все пони закрыты, главное окно развернуто")
-
-    def _monitor_processes(self):
-        """Мониторит запущенные процессы"""
-        while not self.should_exit:
-            time.sleep(2)
-
-            # Проверяем процессы
-            active_processes = {}
-            for pony_name, process in self.running_processes.items():
-                try:
-                    if process.poll() is None:
-                        active_processes[pony_name] = process
-                    else:
-                        print(f"[INFO] {pony_name} завершил работу")
-                        # Уменьшаем счетчик активных пони
-                        self.active_ponies_count = max(0, self.active_ponies_count - 1)
-                        print(f"[STATUS] Активных пони: {self.active_ponies_count}")
-                except:
-                    pass
-
-            self.running_processes = active_processes
-
-            # Проверяем, можно ли показать главное окно
+            # Проверяем, нужно ли восстановить окно
             if (self.active_ponies_count == 0 and
                     not self.running_processes and
                     self.main_window_hidden):
-                self.root.after(0, self._show_main_window)
+                print(f"🔄 Все пони завершили работу, восстанавливаю окно...")
+                QTimer.singleShot(100, self._safe_restore_window)
 
-    def stop_all(self):
-        """Останавливает всех запущенных пони"""
-        print("[STOP] Остановка всех пони...")
+        except subprocess.TimeoutExpired:
+            print(f"⚠️ {pony_name}: Таймаут ожидания")
+        except Exception as e:
+            print(f"❌ Ошибка мониторинга {pony_name}: {e}")
+            if pony_name in self.running_processes:
+                del self.running_processes[pony_name]
+            self.active_ponies_count = max(0, self.active_ponies_count - 1)
 
-        # Останавливаем процессы
-        for pony_name, process in list(self.running_processes.items()):
-            try:
-                process.terminate()
-                print(f"[STOP] Остановлен: {pony_name}")
-            except Exception as e:
-                print(f"[ERROR] Ошибка остановки {pony_name}: {e}")
+            if (self.active_ponies_count == 0 and
+                    not self.running_processes and
+                    self.main_window_hidden):
+                QTimer.singleShot(100, self._safe_restore_window)
 
-        self.running_processes.clear()
+    def closeEvent(self, event):
+        """Обработчик закрытия окна"""
+        print("Завершение программы...")
+        self.should_exit = True
+        self.restore_timer.stop()
 
-        # Сбрасываем счетчик активных пони
-        self.active_ponies_count = 0
+        # Сохраняем тему и состояния перед выходом
+        self.save_theme()
 
-        # Показываем главное окно
-        self._show_main_window()
-        print("[STOP] Все пони остановлены")
+        # Останавливаем все процессы
+        self.stop_all()
+        event.accept()
+
+
+# ========== ТОЧКА ВХОДА ==========
+def main():
+    """Главная функция"""
+    try:
+        # Создаем приложение
+        app = QApplication(sys.argv)
+        app.setStyle("Fusion")
+
+        # Создаем главное окно
+        window = DynamicPonySelector()
+        window.show()
+
+        # Запускаем цикл событий
+        return app.exec()
+
+    except Exception as e:
+        print(f"✗ КРИТИЧЕСКАЯ ОШИБКА: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = DynamicPonySelector(root)
-    root.mainloop()
+    sys.exit(main())
