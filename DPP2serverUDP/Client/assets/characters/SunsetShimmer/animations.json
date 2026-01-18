@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "sunsetshimmer-idle-left.gif",
+    "right_file": "sunsetshimmer-idle-right.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "sunsetshimmer-left.gif",
+    "right_file": "sunsetshimmer-right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}

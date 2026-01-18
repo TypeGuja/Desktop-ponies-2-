@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "trixie_naked_stand_lefts.gif",
+    "right_file": "trixie_naked_stand_rights.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "trixie_naked_trot_left.gif",
+    "right_file": "trixie_naked_trot_right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}

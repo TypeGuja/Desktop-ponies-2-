@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "directions": ["left", "right"],
+    "left_file": "starlightglimmer-idle-left.gif",
+    "right_file": "starlightglimmer-idle-right.gif",
+    "speed": 0.1,
+    "loop": true
+  },
+  "walk": {
+    "directions": ["left", "right"],
+    "left_file": "starlightglimmer-trot-left.gif",
+    "right_file": "starlightglimmer-trot-right.gif",
+    "speed": 0.1,
+    "loop": true
+  }
+}
