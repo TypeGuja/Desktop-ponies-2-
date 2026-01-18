@@ -484,7 +484,8 @@ class CharacterSelector:
         self.scroll_offset = 0
 
         custom_order = ["Celestia", "Luna", "Cadance", "TwilightSparkle", "AppleJack",
-                        "RainbowDash", "Fluttershy", "Rarity", "PinkiePie"]
+                        "RainbowDash", "Fluttershy", "Rarity", "PinkiePie","Trixie",
+                        "SunsetShimmer", "StarlightGlimmer"]
 
         loaded_characters = {}
         loaded_animated_chars = {}
