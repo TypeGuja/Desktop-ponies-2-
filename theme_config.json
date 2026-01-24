@@ -3,9 +3,19 @@
     "card_color": "#454545",
     "text_color": "white",
     "theme_name": "black",
-    "menu_bg_color": "#2d2d2d",
-    "menu_fg_color": "#ffffff",
-    "menu_active_bg": "#0078d7",
-    "menu_active_fg": "#ffffff",
-    "pony_scale": 0.9
+    "pony_scale": 0.9,
+    "selected_ponies": {
+        "Twilight Sparkle": false,
+        "Rainbow Dash": false,
+        "Pinkie Pie": false,
+        "Apple Jack": true,
+        "Fluttershy": false,
+        "Rarity": false,
+        "Trixie": false,
+        "Starlight": false,
+        "Sunset": false,
+        "Cadance": false,
+        "Celestia": false,
+        "Luna": false
+    }
 }
