@@ -2,8 +2,8 @@
     "pony_name": "Apple Jack",
     "base_width": 100,
     "base_height": 160,
-    "base_sleep_width": 100,
-    "base_sleep_height": 100,
+    "base_sleep_width": 70,
+    "base_sleep_height": 90,
     "min_distance": 200,
     "max_distance": 600,
     "frame_duration_ms": 90,
@@ -11,21 +11,39 @@
     "move_interval_min": 3,
     "move_interval_max": 15,
     "move_speed": 2,
-    "move_step_delay": 0.06,
+    "move_step_delay": 0.09,
     "screen_margin": 1,
     "bottom_margin": 10,
     "sleep_timeout": 100,
     "push_zone_size": 1,
     "push_force": 5,
     "gif_paths": {
-        "stand_right": "./AppleJack_Gifct/stand_aj_right.gif",
-        "stand_left": "./AppleJack_Gifct/stand_aj_left.gif",
-        "move_right": "./AppleJack_Gifct/trotcycle_aj_right.gif",
-        "move_left": "./AppleJack_Gifct/trotcycle_aj_left.gif",
-        "sleep_right": "./AppleJack_Gifct/sleep-aj/sleep_right.gif",
-        "sleep_left": "./AppleJack_Gifct/sleep-aj/sleep_left.gif",
-        "drag": "./AppleJack_Gifct/drag-aj/aj-drag-left.gif"
+      "stand_right": "./AppleJack_Gifct/stand_aj_right.gif",
+      "stand_left": "./AppleJack_Gifct/stand_aj_left.gif",
+      "move_right": "./AppleJack_Gifct/trotcycle_aj_right.gif",
+      "move_left": "./AppleJack_Gifct/trotcycle_aj_left.gif",
+      "sleep_right": "./AppleJack_Gifct/sleep-aj/sleep_right.gif",
+      "sleep_left": "./AppleJack_Gifct/sleep-aj/sleep_left.gif",
+      "drag": "./AppleJack_Gifct/drag-aj/aj-drag-left.gif"
     },
+    "special_animations": {
+    "lasso_left_seq": [
+        "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
+        "./AppleJack_Gifct/lasso-aj/lasso2_left.gif",
+        "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
+        "./AppleJack_Gifct/pose-aj/aj_pose_left.gif",
+        "false",
+        "0.1"
+    ],
+    "lasso_right_seq": [
+        "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
+        "./AppleJack_Gifct/lasso-aj/lasso2_right.gif",
+        "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
+        "./AppleJack_Gifct/pose-aj/aj_pose_right.gif",
+        "false",
+        "0.1"
+    ]
+},
     "sleep_enabled": true,
     "menu_bg_color": "#2d2d2d",
     "menu_fg_color": "#ffffff",
