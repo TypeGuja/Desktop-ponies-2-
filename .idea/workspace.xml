@@ -6,11 +6,22 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/animated_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/animated_character.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/animations.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/animations.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShommer/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/rear_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/rear_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/Новая папка/aj-rear-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/Новая папка/aj-rear-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/hurdle_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/lasso2_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/lasso2_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/rear_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/rear_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/sleep_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/sleep_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/sparkle.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/stand_aj_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/stand_aj_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/theme_config.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -41,39 +52,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.Cadance.executor": "Run",
-    "Python.DPP2.executor": "Run",
-    "Python.DPP2Launcher.executor": "Run",
-    "Python.Fluttershy.executor": "Run",
-    "Python.Luna.executor": "Debug",
-    "Python.RainbowDash.executor": "Run",
-    "Python.main (1).executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.pony (1).executor": "Run",
-    "Python.pony.executor": "Run",
-    "Python.pony1 (1).executor": "Run",
-    "Python.pony2.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "dungeon",
-    "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/assets/characters/Trixie",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.general",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
+    &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.DPP2Launcher.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Fluttershy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Luna.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony1 (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony2.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/characters&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\Trixie" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\SunsetShommer" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\StarlightGlimmer" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\SunsetShimmer" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
