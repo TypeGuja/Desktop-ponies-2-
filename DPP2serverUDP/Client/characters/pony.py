@@ -32,6 +32,26 @@ class UniversalPony:
 
         # ========== ЗАГРУЗКА КОНФИГА ==========
         self.config = self._load_config()
+        # ДЕБАГ: Проверка специальных анимаций
+        print("🔍 ДЕБАГ: Проверка специальных анимаций")
+        print(f"Все ключи в конфиге: {list(self.config.keys())}")
+
+        # Проверяем оба варианта написания
+        if 'special_animations' in self.config:
+            print(f"✅ Найдено 'special_animations': {self.config['special_animations']}")
+        elif 'spacial_animations' in self.config:
+            print(f"✅ Найдено 'spacial_animations' (опечатка): {self.config['spacial_animations']}")
+            # Автоматически исправляем
+            self.config['special_animations'] = self.config['spacial_animations']
+            del self.config['spacial_animations']
+        else:
+            print("❌ Не найдено ни 'special_animations', ни 'spacial_animations'")
+
+        # Выводим что загрузилось
+        if 'special_animations' in self.config:
+            print(f"📊 Загружено специальных анимаций: {len(self.config['special_animations'])}")
+            for name, config in self.config['special_animations'].items():
+                print(f"  🎬 {name}: {config}")
 
         # ========== НАСТРОЙКИ ИЗ КОНФИГА ==========
 
@@ -76,6 +96,15 @@ class UniversalPony:
             "drag": "drag.gif"
         })
 
+        # ========== ДОПОЛНИТЕЛЬНЫЕ АНИМАЦИИ ИЗ КОНФИГА ==========
+        self.SPECIAL_ANIMATIONS = self.config.get('special_animations', {})
+        # Формат: {
+        #     "название_анимации": [
+        #         ["путь/к/гифке1.gif", "путь/к/гифке2.gif", "false", "0.1"],
+        #         ["путь/к/гифке3.gif", "путь/к/гифке4.gif", "true", "0.05"]
+        #     ]
+        # }
+
         # Настройки функциональности
         self.SLEEP_ENABLED = self.config.get('sleep_enabled', True)
 
@@ -97,6 +126,14 @@ class UniversalPony:
         self._just_woke_up = False
         self._forced_sleep = False
 
+        # ========== ПЕРЕМЕННЫЕ ДЛЯ ДОПОЛНИТЕЛЬНЫХ АНИМАЦИЙ ==========
+        self.is_in_special_animation = False
+        self.current_special_animation = []
+        self.current_special_index = 0
+        self.special_should_move = False
+        self.special_animation_name = ""
+        self.special_animation_timer = None
+
         # Сохранение состояний
         self._saved_frames = []
         self._saved_frame_index = 0
@@ -104,6 +141,8 @@ class UniversalPony:
         self._saved_state = "idle"
         self._saved_direction = "right"
         self._saved_before_sleep_geometry = None
+        self._saved_before_special_state = None
+        self._saved_before_special_direction = None
 
         # Контекстное меню
         self.context_menu = None
@@ -135,12 +174,173 @@ class UniversalPony:
         self._animation_thread = threading.Thread(target=self._safe_animate, daemon=True)
         self._move_thread = threading.Thread(target=self._safe_move_loop, daemon=True)
         self._sleep_thread = threading.Thread(target=self._safe_sleep_monitor, daemon=True)
+        self._special_animation_thread = threading.Thread(target=self._safe_special_animation_monitor, daemon=True)
 
         self._animation_thread.start()
         self._move_thread.start()
         self._sleep_thread.start()
+        self._special_animation_thread.start()
 
         self._schedule_change()
+
+    # ========== МОНИТОР ДОПОЛНИТЕЛЬНЫХ АНИМАЦИЙ ==========
+
+    def _safe_special_animation_monitor(self):
+        """Мониторит и запускает дополнительные анимации из конфига"""
+        print("🔄 Монитор специальных анимаций ЗАПУЩЕН")
+
+        while self._threads_running and not self._shutdown_flag.is_set():
+            try:
+                print("🔍 Проверка условий для анимации...")
+                print(f"  is_in_special_animation: {self.is_in_special_animation}")
+                print(f"  is_dragging: {self.is_dragging}")
+                print(f"  is_sleeping: {self.is_sleeping}")
+                print(f"  _just_woke_up: {self._just_woke_up}")
+                print(f"  Всего анимаций в конфиге: {len(self.SPECIAL_ANIMATIONS)}")
+
+                if (not self.is_in_special_animation and not self.is_dragging and
+                        not self.is_sleeping and not self._just_woke_up and
+                        self._threads_running and not self._shutdown_flag.is_set()):
+
+                    print("✅ Условия выполнены, проверяем анимации...")
+
+                    # Проверяем все анимации из конфига
+                    for anim_name, anim_configs in self.SPECIAL_ANIMATIONS.items():
+                        print(f"  Проверяем анимацию: {anim_name}")
+
+                        # В твоем конфиге anim_configs - это список из 4 элементов, а не список списков!
+                        # Формат: ["гифка1", "гифка2", "false", "0.1"]
+                        if isinstance(anim_configs, list):
+                            print(f"    Конфиг: {anim_configs}")
+
+                            # Проверяем вероятность
+                            if len(anim_configs) >= 4:
+                                probability_str = anim_configs[-1]
+                                try:
+                                    probability = float(probability_str)
+                                    print(f"    Вероятность: {probability}")
+
+                                    if random.random() < probability:
+                                        print(f"    🎰 ВЫПАЛ ШАНС! Запускаем {anim_name}")
+                                        # Запускаем анимацию
+                                        gif_paths = anim_configs[:-2]  # Берем все кроме последних двух
+                                        should_move = anim_configs[-2].lower() == "true"
+                                        self.root.after(0, lambda paths=gif_paths, move=should_move, name=anim_name:
+                                        self._start_special_animation(paths, move, name))
+                                        break
+                                    else:
+                                        print(f"    ❌ Шанс не выпал")
+                                except ValueError:
+                                    print(f"    ⚠️ Некорректная вероятность: {probability_str}")
+
+                    # Ждем перед следующей проверкой
+                    if self._threads_running and not self._shutdown_flag.is_set():
+                        print("⏳ Жду 2 секунды до следующей проверки...")
+                        time.sleep(2)
+
+            except Exception as e:
+                print(f"❌ Ошибка в мониторе анимаций: {e}")
+                import traceback
+                traceback.print_exc()
+                if self._threads_running and not self._shutdown_flag.is_set():
+                    time.sleep(1)
+
+    def _start_special_animation(self, gif_paths, should_move, anim_name):
+        """Запускает дополнительную анимацию"""
+        if (self.is_in_special_animation or self.is_dragging or self.is_sleeping or
+                self._shutdown_flag.is_set() or not self._threads_running):
+            return
+
+        print(f"🎬 Запуск дополнительной анимации {anim_name}")
+
+        self.is_in_special_animation = True
+        self.current_special_animation = gif_paths
+        self.current_special_index = 0
+        self.special_should_move = should_move
+        self.special_animation_name = anim_name
+
+        # Сохраняем текущее состояние
+        self._saved_before_special_state = self.current_state
+        self._saved_before_special_direction = self.current_direction
+
+        # Загружаем первую гифку
+        self._load_next_special_gif()
+
+    def _load_next_special_gif(self):
+        """Загружает следующую гифку в анимации"""
+        if (not self.is_in_special_animation or
+                self.current_special_index >= len(self.current_special_animation) or
+                self._shutdown_flag.is_set()):
+            self._end_special_animation()
+            return
+
+        gif_path = self.current_special_animation[self.current_special_index]
+
+        # Определяем полный путь
+        full_path = None
+        if os.path.isabs(gif_path):
+            full_path = gif_path
+        elif os.path.exists(os.path.join(self.pony_folder, gif_path)):
+            full_path = os.path.join(self.pony_folder, gif_path)
+        elif os.path.exists(gif_path):
+            full_path = gif_path
+
+        if not full_path or not os.path.exists(full_path):
+            print(f"  ❌ Файл не найден: {gif_path}")
+            self._end_special_animation()
+            return
+
+        frames = self._load_gif(full_path)
+        if frames:
+            self.frames = frames
+            self.frame_index = 0
+            self.current_gif_path = full_path
+            self.current_state = f"special_{self.special_animation_name}"
+
+            # Если нужно двигаться
+            if self.special_should_move and self.moving:
+                self._pick_target()
+
+            # Переходим к следующей гифке
+            self.current_special_index += 1
+
+            # Таймер для следующей гифки
+            gif_duration = len(frames) * (self.FRAME_DURATION_MS / 1000)
+
+            if not self._shutdown_flag.is_set():
+                if self.special_animation_timer:
+                    self.root.after_cancel(self.special_animation_timer)
+                self.special_animation_timer = self.root.after(
+                    int(gif_duration * 1000),
+                    self._load_next_special_gif
+                )
+        else:
+            print(f"  ❌ Не удалось загрузить гифку: {full_path}")
+            self._end_special_animation()
+
+    def _end_special_animation(self):
+        """Завершает дополнительную анимацию"""
+        if not self.is_in_special_animation:
+            return
+
+        self.is_in_special_animation = False
+        self.current_special_animation = []
+        self.current_special_index = 0
+        self.special_should_move = False
+
+        # Отменяем таймер
+        if self.special_animation_timer:
+            try:
+                self.root.after_cancel(self.special_animation_timer)
+            except:
+                pass
+            self.special_animation_timer = None
+
+        # Восстанавливаем состояние
+        if self._saved_before_special_direction:
+            self._load_stand_gif(self._saved_before_special_direction)
+        else:
+            self._load_stand_gif(self.current_direction)
 
     # ========== ПОИСК ПАПКИ И КОНФИГА ==========
 
@@ -293,6 +493,7 @@ class UniversalPony:
                 "sleep_left": "sleep_left.gif",
                 "drag": "drag.gif"
             },
+            'special_animations': {},  # Дополнительные анимации
             'sleep_enabled': True,
             'menu_bg_color': '#2d2d2d',
             'menu_fg_color': '#ffffff',
@@ -362,7 +563,7 @@ class UniversalPony:
                 self._create_sample_config()
 
                 # Создаем подпапки
-                subfolders = ["sleep", "drag", "animations"]
+                subfolders = ["sleep", "drag", "animations", "lasso-aj", "pose-aj", "dance-aj"]
                 for subfolder in subfolders:
                     subfolder_path = os.path.join(self.pony_folder, subfolder)
                     os.makedirs(subfolder_path, exist_ok=True)
@@ -407,6 +608,12 @@ class UniversalPony:
                 "sleep_left": "sleep/sleep_left.gif",
                 "drag": "drag/drag.gif"
             },
+            "special_animations": {
+                "dance_seq": [
+                    ["./dance/dance_left.gif", "./dance/dance_middle.gif", "./dance/dance_right.gif",
+                     "true", "0.05"]
+                ]
+            },
             "sleep_enabled": True,
             "menu_bg_color": "#2d2d2d",
             "menu_fg_color": "#ffffff",
@@ -421,6 +628,313 @@ class UniversalPony:
         except Exception as e:
             print(f"❌ Ошибка создания конфигурационного файла: {e}")
 
+    # ========== ОБНОВЛЕННЫЕ МЕТОДЫ ДВИЖЕНИЯ ==========
+
+    def _safe_move_loop(self):
+        """Безопасная версия цикла движения"""
+        while self._threads_running and not self._shutdown_flag.is_set():
+            try:
+                if (self.moving and not self.is_dragging and
+                        self.animating and not self.is_sleeping and
+                        self._threads_running and not self._shutdown_flag.is_set() and
+                        not self.is_in_special_animation):
+
+                    if random.random() < 0.1:
+                        self.root.after(0, self._fix_stuck_position)
+
+                    # Проверка и выталкивание из краевых зон
+                    self.root.after(0, self._check_and_push_from_edges)
+
+                    if self._just_woke_up:
+                        time.sleep(1)
+                    self._pick_target()
+                    self._safe_move_to_target()
+
+                if self._threads_running and not self._shutdown_flag.is_set():
+                    delay = random.uniform(self.MOVE_INTERVAL_MIN, self.MOVE_INTERVAL_MAX)
+                    elapsed = 0
+                    while (elapsed < delay and
+                           self._threads_running and
+                           not self._shutdown_flag.is_set()):
+                        time.sleep(0.1)
+                        elapsed += 0.1
+            except Exception as e:
+                if self._threads_running and not self._shutdown_flag.is_set():
+                    time.sleep(1)
+
+    def _safe_move_to_target(self):
+        """Безопасная версия движения к цели"""
+        while (self.moving and not self.is_dragging and
+               self.animating and not self.is_sleeping and
+               self._threads_running and not self._shutdown_flag.is_set()):
+            try:
+                if self._shutdown_flag.is_set():
+                    break
+
+                # Если в анимации и она не должна двигаться - пропускаем
+                if self.is_in_special_animation and not self.special_should_move:
+                    time.sleep(0.1)
+                    continue
+
+                current_x, current_y = self.root.winfo_x(), self.root.winfo_y()
+
+                # Проверка на нахождение в зоне выталкивания
+                if self._is_in_push_zone(current_x, current_y):
+                    new_x, new_y = self._apply_push_force(current_x, current_y)
+                    self.root.after(0, lambda: self._safe_set_geometry(new_x, new_y))
+                    self.target_x, self.target_y = new_x, new_y
+                    continue
+
+                if (abs(current_x - self.target_x) <= self.MOVE_SPEED_PX_PER_STEP and
+                        abs(current_y - self.target_y) <= self.MOVE_SPEED_PX_PER_STEP):
+                    if self.current_state != "idle" and not self.is_in_special_animation:
+                        self._load_stand_gif(self.current_direction)
+                    return
+
+                if self._check_wall_collision(current_x, current_y):
+                    print("🚧 Столкновение со стеной, выбираем новую цель")
+                    new_direction = "left" if self.current_direction == "right" else "right"
+                    self.current_direction = new_direction
+                    self._pick_opposite_target(current_x, current_y)
+                    if not self.is_in_special_animation:
+                        self._load_stand_gif(new_direction)
+                    continue
+
+                new_direction = "right" if self.target_x > current_x else "left"
+                if (
+                        new_direction != self.current_direction or self.current_state == "idle") and not self.is_in_special_animation:
+                    self.current_direction = new_direction
+                    self._load_direction_gif(new_direction)
+
+                dx = 0
+                dy = 0
+
+                if current_x < self.target_x:
+                    dx = min(self.MOVE_SPEED_PX_PER_STEP, self.target_x - current_x)
+                elif current_x > self.target_x:
+                    dx = -min(self.MOVE_SPEED_PX_PER_STEP, current_x - self.target_x)
+
+                if current_y < self.target_y:
+                    dy = min(self.MOVE_SPEED_PX_PER_STEP, self.target_y - current_y)
+                elif current_y > self.target_y:
+                    dy = -min(self.MOVE_SPEED_PX_PER_STEP, current_y - self.target_y)
+
+                new_x = current_x + dx
+                new_y = current_y + dy
+
+                # Проверка на попадание в зону выталкивания после шага
+                if self._is_in_push_zone(new_x, new_y):
+                    self._pick_target()
+                    continue
+
+                if self._check_wall_collision(new_x, new_y):
+                    print("⚠️ Шаг ведет к столкновению, выбираем новую цель")
+                    self._pick_target()
+                    continue
+
+                if not self._shutdown_flag.is_set():
+                    self.root.after(0, lambda: self._safe_set_geometry(new_x, new_y))
+
+                elapsed = 0
+                while (elapsed < self.MOVE_STEP_DELAY_SEC and
+                       self._threads_running and
+                       not self._shutdown_flag.is_set()):
+                    time.sleep(0.01)
+                    elapsed += 0.01
+
+            except Exception as e:
+                print(f"Ошибка в движении: {e}")
+                break
+
+    # ========== ОБНОВЛЕННЫЙ МЕТОД ПЕРЕТАСКИВАНИЯ ==========
+
+    def _start_drag(self, event):
+        """Начало перетаскивания"""
+        if self._shutdown_flag.is_set() or self._forced_sleep:
+            return
+
+        self._record_activity(event)
+        self.is_dragging = True
+        self.moving = False
+        self._drag_start_x = event.x
+        self._drag_start_y = event.y
+
+        self._saved_frame_index = self.frame_index
+        self._saved_frames = self.frames.copy()
+        self._saved_gif_path = self.current_gif_path
+        self._saved_state = self.current_state
+        self._saved_direction = self.current_direction
+
+        if not self._is_gif_disabled("drag"):
+            self._load_drag_gif()
+
+    def _do_drag(self, event):
+        """Перетаскивание"""
+        if (self.is_dragging and not self._shutdown_flag.is_set() and
+                not self._forced_sleep):
+
+            self._record_activity(event)
+            x = self.root.winfo_x() + (event.x - self._drag_start_x)
+            y = self.root.winfo_y() + (event.y - self._drag_start_y)
+
+            screen_h = self.root.winfo_screenheight()
+            if y > screen_h - self.HEIGHT - self.BOTTOM_MARGIN:
+                y = screen_h - self.HEIGHT - self.BOTTOM_MARGIN - 10
+
+            # Проверка и выталкивание при перетаскивании
+            if self._is_in_push_zone(x, y):
+                x, y = self._apply_push_force(x, y)
+
+            self.root.geometry(f"+{x}+{y}")
+
+    def _end_drag(self, event):
+        """Конец перетаскивания"""
+        if self._shutdown_flag.is_set() or self._forced_sleep:
+            return
+
+        self._record_activity(event)
+        self.is_dragging = False
+        self.moving = True
+
+        current_x, current_y = self.root.winfo_x(), self.root.winfo_y()
+        screen_h = self.root.winfo_screenheight()
+
+        # Проверка и выталкивание после перетаскивания
+        if self._is_in_push_zone(current_x, current_y):
+            new_x, new_y = self._apply_push_force(current_x, current_y)
+            self.root.geometry(f"+{new_x}+{new_y}")
+            current_x, current_y = new_x, new_y
+
+        if current_y > screen_h - self.HEIGHT - self.BOTTOM_MARGIN:
+            new_y = screen_h - self.HEIGHT - self.BOTTOM_MARGIN - 10
+            self.root.geometry(f"+{current_x}+{new_y}")
+
+        if self._saved_direction and not self.is_in_special_animation:
+            self._load_stand_gif(self._saved_direction)
+        elif not self.is_in_special_animation:
+            self._load_stand_gif(self.current_direction)
+
+    # ========== ОБНОВЛЕННЫЕ МЕТОДЫ ЗАГРУЗКИ ГИФОК ==========
+
+    def _load_stand_gif(self, direction):
+        """Загружает stand гифку"""
+        if self.is_sleeping or self._shutdown_flag.is_set() or self.is_in_special_animation:
+            return True
+
+        if self._just_woke_up:
+            return self._force_load_stand_gif(direction)
+
+        stand_path = self._get_gif_path(f"stand_{direction}")
+        if stand_path and os.path.exists(stand_path):
+            if self.current_gif_path == stand_path and self.frames:
+                return True
+
+            frames = self._load_gif(stand_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = stand_path
+                self.current_state = "idle"
+                self.current_direction = direction
+                return True
+
+        opposite_direction = "left" if direction == "right" else "right"
+        fallback_path = self._get_gif_path(f"stand_{opposite_direction}")
+        if fallback_path and os.path.exists(fallback_path):
+            if self.current_gif_path == fallback_path and self.frames:
+                return True
+
+            frames = self._load_gif(fallback_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = fallback_path
+                self.current_state = "idle"
+                self.current_direction = opposite_direction
+                return True
+
+        return self._load_any_gif()
+
+    def _load_direction_gif(self, direction):
+        """Загружает гифку движения"""
+        if self.is_sleeping or self._shutdown_flag.is_set() or self.is_in_special_animation:
+            return True
+
+        if self._just_woke_up:
+            return self._load_stand_gif(direction)
+
+        # Проверяем, отключена ли анимация движения
+        if self._is_gif_disabled(f"move_{direction}"):
+            print(f"⚠️ Анимация движения {direction} отключена, используем stand")
+            return self._load_stand_gif(direction)
+
+        direction_path = self._get_gif_path(f"move_{direction}")
+        if direction_path and os.path.exists(direction_path):
+            if self.current_gif_path == direction_path and self.frames:
+                return True
+
+            frames = self._load_gif(direction_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = direction_path
+                self.current_state = f"move_{direction}"
+                self.current_direction = direction
+                return True
+
+        return self._load_stand_gif(direction)
+
+    def _load_drag_gif(self):
+        """Загружает drag гифку"""
+        if self._shutdown_flag.is_set() or self.is_in_special_animation:
+            return False
+
+        if self._is_gif_disabled("drag"):
+            print("⚠️ Drag анимация отключена")
+            return False
+
+        drag_path = self._get_gif_path("drag")
+        if drag_path and os.path.exists(drag_path):
+            frames = self._load_gif(drag_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = drag_path
+                self.current_state = "drag"
+                return True
+        return False
+
+    def _force_load_stand_gif(self, direction):
+        """Принудительно загружает stand гифку"""
+        if self._shutdown_flag.is_set() or self.is_in_special_animation:
+            return False
+
+        stand_path = self._get_gif_path(f"stand_{direction}")
+        if stand_path and os.path.exists(stand_path):
+            frames = self._load_gif(stand_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = stand_path
+                self.current_state = "idle"
+                self.current_direction = direction
+                return True
+
+        # Пробуем противоположное направление
+        opposite_direction = "left" if direction == "right" else "right"
+        fallback_path = self._get_gif_path(f"stand_{opposite_direction}")
+        if fallback_path and os.path.exists(fallback_path):
+            frames = self._load_gif(fallback_path)
+            if frames:
+                self.frames = frames
+                self.frame_index = 0
+                self.current_gif_path = fallback_path
+                self.current_state = "idle"
+                self.current_direction = opposite_direction
+                return True
+
+        return self._load_any_gif()
+
     # ========== МЕТОДЫ ДЛЯ ИЗМЕНЕНИЯ МАСШТАБА ==========
 
     def change_scale(self, new_scale):
@@ -432,6 +946,7 @@ class UniversalPony:
             # Сохраняем текущее состояние
             was_sleeping = self.is_sleeping
             was_dragging = self.is_dragging
+            was_in_special = self.is_in_special_animation
             current_x = self.root.winfo_x()
             current_y = self.root.winfo_y()
 
@@ -460,7 +975,7 @@ class UniversalPony:
                 self.canvas.config(width=self.WIDTH, height=self.HEIGHT)
 
             # Если не перетаскиваем и не спим, перезагружаем гифки
-            if not was_dragging and not was_sleeping:
+            if not was_dragging and not was_sleeping and not was_in_special:
                 self._reload_current_gif()
 
             print(f"✅ Масштаб изменен на {self.WIDTH}x{self.HEIGHT}")
@@ -604,7 +1119,7 @@ class UniversalPony:
 
     def _check_and_push_from_edges(self):
         """Проверяет и выталкивает персонажа из краевых зон"""
-        if self._shutdown_flag.is_set() or self.is_dragging or self.is_sleeping:
+        if self._shutdown_flag.is_set() or self.is_dragging or self.is_sleeping or self.is_in_special_animation:
             return
 
         try:
@@ -621,164 +1136,6 @@ class UniversalPony:
         except Exception as e:
             if not self._shutdown_flag.is_set():
                 print(f"❌ Ошибка при выталкивании: {e}")
-
-    # ========== ОБНОВЛЕННЫЕ МЕТОДЫ ДВИЖЕНИЯ ==========
-
-    def _safe_move_loop(self):
-        """Безопасная версия цикла движения"""
-        while self._threads_running and not self._shutdown_flag.is_set():
-            try:
-                if (self.moving and not self.is_dragging and
-                        self.animating and not self.is_sleeping and
-                        self._threads_running and not self._shutdown_flag.is_set()):
-
-                    if random.random() < 0.1:
-                        self.root.after(0, self._fix_stuck_position)
-
-                    # Проверка и выталкивание из краевых зон
-                    self.root.after(0, self._check_and_push_from_edges)
-
-                    if self._just_woke_up:
-                        time.sleep(1)
-                    self._pick_target()
-                    self._safe_move_to_target()
-
-                if self._threads_running and not self._shutdown_flag.is_set():
-                    delay = random.uniform(self.MOVE_INTERVAL_MIN, self.MOVE_INTERVAL_MAX)
-                    elapsed = 0
-                    while (elapsed < delay and
-                           self._threads_running and
-                           not self._shutdown_flag.is_set()):
-                        time.sleep(0.1)
-                        elapsed += 0.1
-            except Exception as e:
-                if self._threads_running and not self._shutdown_flag.is_set():
-                    time.sleep(1)
-
-    def _safe_move_to_target(self):
-        """Безопасная версия движения к цели"""
-        while (self.moving and not self.is_dragging and
-               self.animating and not self.is_sleeping and
-               self._threads_running and not self._shutdown_flag.is_set()):
-            try:
-                if self._shutdown_flag.is_set():
-                    break
-
-                current_x, current_y = self.root.winfo_x(), self.root.winfo_y()
-
-                # Проверка на нахождение в зоне выталкивания
-                if self._is_in_push_zone(current_x, current_y):
-                    new_x, new_y = self._apply_push_force(current_x, current_y)
-                    self.root.after(0, lambda: self._safe_set_geometry(new_x, new_y))
-                    self.target_x, self.target_y = new_x, new_y
-                    continue
-
-                if (abs(current_x - self.target_x) <= self.MOVE_SPEED_PX_PER_STEP and
-                        abs(current_y - self.target_y) <= self.MOVE_SPEED_PX_PER_STEP):
-                    if self.current_state != "idle":
-                        self._load_stand_gif(self.current_direction)
-                    return
-
-                if self._check_wall_collision(current_x, current_y):
-                    print("🚧 Столкновение со стеной, выбираем новую цель")
-                    new_direction = "left" if self.current_direction == "right" else "right"
-                    self.current_direction = new_direction
-                    self._pick_opposite_target(current_x, current_y)
-                    self._load_stand_gif(new_direction)
-                    continue
-
-                new_direction = "right" if self.target_x > current_x else "left"
-                if new_direction != self.current_direction or self.current_state == "idle":
-                    self.current_direction = new_direction
-                    self._load_direction_gif(new_direction)
-
-                dx = 0
-                dy = 0
-
-                if current_x < self.target_x:
-                    dx = min(self.MOVE_SPEED_PX_PER_STEP, self.target_x - current_x)
-                elif current_x > self.target_x:
-                    dx = -min(self.MOVE_SPEED_PX_PER_STEP, current_x - self.target_x)
-
-                if current_y < self.target_y:
-                    dy = min(self.MOVE_SPEED_PX_PER_STEP, self.target_y - current_y)
-                elif current_y > self.target_y:
-                    dy = -min(self.MOVE_SPEED_PX_PER_STEP, current_y - self.target_y)
-
-                new_x = current_x + dx
-                new_y = current_y + dy
-
-                # Проверка на попадание в зону выталкивания после шага
-                if self._is_in_push_zone(new_x, new_y):
-                    self._pick_target()
-                    continue
-
-                if self._check_wall_collision(new_x, new_y):
-                    print("⚠️ Шаг ведет к столкновению, выбираем новую цель")
-                    self._pick_target()
-                    continue
-
-                if not self._shutdown_flag.is_set():
-                    self.root.after(0, lambda: self._safe_set_geometry(new_x, new_y))
-
-                elapsed = 0
-                while (elapsed < self.MOVE_STEP_DELAY_SEC and
-                       self._threads_running and
-                       not self._shutdown_flag.is_set()):
-                    time.sleep(0.01)
-                    elapsed += 0.01
-
-            except Exception as e:
-                print(f"Ошибка в движении: {e}")
-                break
-
-    # ========== ОБНОВЛЕННЫЙ МЕТОД ПЕРЕТАСКИВАНИЯ ==========
-
-    def _do_drag(self, event):
-        """Перетаскивание"""
-        if (self.is_dragging and not self._shutdown_flag.is_set() and
-                not self._forced_sleep):
-
-            self._record_activity()
-            x = self.root.winfo_x() + (event.x - self._drag_start_x)
-            y = self.root.winfo_y() + (event.y - self._drag_start_y)
-
-            screen_h = self.root.winfo_screenheight()
-            if y > screen_h - self.HEIGHT - self.BOTTOM_MARGIN:
-                y = screen_h - self.HEIGHT - self.BOTTOM_MARGIN - 10
-
-            # Проверка и выталкивание при перетаскивании
-            if self._is_in_push_zone(x, y):
-                x, y = self._apply_push_force(x, y)
-
-            self.root.geometry(f"+{x}+{y}")
-
-    def _end_drag(self, event):
-        """Конец перетаскивания"""
-        if self._shutdown_flag.is_set() or self._forced_sleep:
-            return
-
-        self._record_activity()
-        self.is_dragging = False
-        self.moving = True
-
-        current_x, current_y = self.root.winfo_x(), self.root.winfo_y()
-        screen_h = self.root.winfo_screenheight()
-
-        # Проверка и выталкивание после перетаскивания
-        if self._is_in_push_zone(current_x, current_y):
-            new_x, new_y = self._apply_push_force(current_x, current_y)
-            self.root.geometry(f"+{new_x}+{new_y}")
-            current_x, current_y = new_x, new_y
-
-        if current_y > screen_h - self.HEIGHT - self.BOTTOM_MARGIN:
-            new_y = screen_h - self.HEIGHT - self.BOTTOM_MARGIN - 10
-            self.root.geometry(f"+{current_x}+{new_y}")
-
-        if self._saved_direction:
-            self._load_stand_gif(self._saved_direction)
-        else:
-            self._load_stand_gif(self.current_direction)
 
     # ========== ОСТАЛЬНЫЕ МЕТОДЫ ==========
 
@@ -801,7 +1158,7 @@ class UniversalPony:
 
     def _load_sleep_gif(self, direction):
         """Загружает sleep гифку"""
-        if self._shutdown_flag.is_set() or not self._is_sleep_enabled():
+        if self._shutdown_flag.is_set() or not self._is_sleep_enabled() or self.is_in_special_animation:
             return False
 
         # Если sleep анимация отключена
@@ -822,7 +1179,7 @@ class UniversalPony:
 
     def _go_to_sleep(self):
         """Переход в режим сна"""
-        if self.is_sleeping or self._shutdown_flag.is_set() or not self._is_sleep_enabled():
+        if self.is_sleeping or self._shutdown_flag.is_set() or not self._is_sleep_enabled() or self.is_in_special_animation:
             return
 
         print(f"😴 {self.pony_name} засыпает")
@@ -888,7 +1245,7 @@ class UniversalPony:
 
                 if (not self.is_sleeping and not self.is_dragging and
                         not self._forced_sleep and self._threads_running and
-                        not self._shutdown_flag.is_set()):
+                        not self._shutdown_flag.is_set() and not self.is_in_special_animation):
 
                     idle_time = time.time() - self.last_activity_time
                     if idle_time >= self.SLEEP_TIMEOUT:
@@ -972,145 +1329,6 @@ class UniversalPony:
             print("💤 Принудительный переход в сон")
             self._forced_sleep = True
             self._go_to_sleep()
-
-    def _force_load_stand_gif(self, direction):
-        """Принудительно загружает stand гифку"""
-        if self._shutdown_flag.is_set():
-            return False
-
-        stand_path = self._get_gif_path(f"stand_{direction}")
-        if stand_path and os.path.exists(stand_path):
-            frames = self._load_gif(stand_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = stand_path
-                self.current_state = "idle"
-                self.current_direction = direction
-                return True
-
-        # Пробуем противоположное направление
-        opposite_direction = "left" if direction == "right" else "right"
-        fallback_path = self._get_gif_path(f"stand_{opposite_direction}")
-        if fallback_path and os.path.exists(fallback_path):
-            frames = self._load_gif(fallback_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = fallback_path
-                self.current_state = "idle"
-                self.current_direction = opposite_direction
-                return True
-
-        return self._load_any_gif()
-
-    def _load_stand_gif(self, direction):
-        """Загружает stand гифку"""
-        if self.is_sleeping or self._shutdown_flag.is_set():
-            return True
-
-        if self._just_woke_up:
-            return self._force_load_stand_gif(direction)
-
-        stand_path = self._get_gif_path(f"stand_{direction}")
-        if stand_path and os.path.exists(stand_path):
-            if self.current_gif_path == stand_path and self.frames:
-                return True
-
-            frames = self._load_gif(stand_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = stand_path
-                self.current_state = "idle"
-                self.current_direction = direction
-                return True
-
-        opposite_direction = "left" if direction == "right" else "right"
-        fallback_path = self._get_gif_path(f"stand_{opposite_direction}")
-        if fallback_path and os.path.exists(fallback_path):
-            if self.current_gif_path == fallback_path and self.frames:
-                return True
-
-            frames = self._load_gif(fallback_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = fallback_path
-                self.current_state = "idle"
-                self.current_direction = opposite_direction
-                return True
-
-        return self._load_any_gif()
-
-    def _load_direction_gif(self, direction):
-        """Загружает гифку движения"""
-        if self.is_sleeping or self._shutdown_flag.is_set():
-            return True
-
-        if self._just_woke_up:
-            return self._load_stand_gif(direction)
-
-        # Проверяем, отключена ли анимация движения
-        if self._is_gif_disabled(f"move_{direction}"):
-            print(f"⚠️ Анимация движения {direction} отключена, используем stand")
-            return self._load_stand_gif(direction)
-
-        direction_path = self._get_gif_path(f"move_{direction}")
-        if direction_path and os.path.exists(direction_path):
-            if self.current_gif_path == direction_path and self.frames:
-                return True
-
-            frames = self._load_gif(direction_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = direction_path
-                self.current_state = f"move_{direction}"
-                self.current_direction = direction
-                return True
-
-        return self._load_stand_gif(direction)
-
-    def _load_drag_gif(self):
-        """Загружает drag гифку"""
-        if self._shutdown_flag.is_set():
-            return False
-
-        if self._is_gif_disabled("drag"):
-            print("⚠️ Drag анимация отключена")
-            return False
-
-        drag_path = self._get_gif_path("drag")
-        if drag_path and os.path.exists(drag_path):
-            frames = self._load_gif(drag_path)
-            if frames:
-                self.frames = frames
-                self.frame_index = 0
-                self.current_gif_path = drag_path
-                self.current_state = "drag"
-                return True
-        return False
-
-    def _start_drag(self, event):
-        """Начало перетаскивания"""
-        if self._shutdown_flag.is_set() or self._forced_sleep:
-            return
-
-        self._record_activity()
-        self.is_dragging = True
-        self.moving = False
-        self._drag_start_x = event.x
-        self._drag_start_y = event.y
-
-        self._saved_frame_index = self.frame_index
-        self._saved_frames = self.frames.copy()
-        self._saved_gif_path = self.current_gif_path
-        self._saved_state = self.current_state
-        self._saved_direction = self.current_direction
-
-        if not self._is_gif_disabled("drag"):
-            self._load_drag_gif()
 
     def _get_safe_position(self):
         """Возвращает безопасную позицию на экране"""
@@ -1472,6 +1690,9 @@ class UniversalPony:
             self.last_activity_time = time.time()
             if self.is_sleeping:
                 self._wake_up()
+            # Также прерываем анимацию если пользователь взаимодействует
+            if self.is_in_special_animation and event:
+                self._end_special_animation()
 
     def _reset_wake_up_flag(self):
         """Сбрасывает флаг пробуждения"""
@@ -1523,7 +1744,7 @@ class UniversalPony:
     def _change_gif(self):
         if (self.animating and not self.is_dragging and
                 self.current_state == "idle" and not self.is_sleeping and
-                not self._shutdown_flag.is_set()):
+                not self._shutdown_flag.is_set() and not self.is_in_special_animation):
 
             if not self._just_woke_up:
                 self._load_stand_gif(self.current_direction)
@@ -1585,13 +1806,17 @@ class PonyDiscovery:
                                 gif_files.append(os.path.join(subdir, item))
 
                     if gif_files or root != start_path:
+                        # Проверяем наличие дополнительных анимаций
+                        has_special_animations = 'special_animations' in config and bool(config['special_animations'])
+
                         ponies.append({
                             'name': pony_name,
                             'folder': root,
                             'config': config_path,
                             'gifs': gif_files,
                             'display_name': pony_name,
-                            'has_gifs': len(gif_files) > 0
+                            'has_gifs': len(gif_files) > 0,
+                            'has_special_animations': has_special_animations
                         })
 
                 except (json.JSONDecodeError, UnicodeDecodeError) as e:
@@ -1627,6 +1852,7 @@ class PonyDiscovery:
                     'name': pony_name,
                     'display_name': pony_name,
                     'has_gifs': False,
+                    'has_special_animations': False,
                     'folder': os.path.join(start_path, pony_name.replace(" ", "_")),
                     'config': os.path.join(start_path, pony_name.replace(" ", "_"), "config.json"),
                     'gifs': []
