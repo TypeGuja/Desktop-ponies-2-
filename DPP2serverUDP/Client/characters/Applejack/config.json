@@ -33,7 +33,7 @@
         "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
         "./AppleJack_Gifct/pose-aj/aj_pose_left.gif",
         "false",
-        "0.1"
+        "0.01"
     ],
     "lasso_right_seq": [
         "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
@@ -41,7 +41,7 @@
         "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
         "./AppleJack_Gifct/pose-aj/aj_pose_right.gif",
         "false",
-        "0.1"
+        "0.01"
     ]
 },
     "sleep_enabled": true,
