@@ -302,7 +302,7 @@ class DynamicPonySelector(QMainWindow):
         print("=" * 50)
 
         # Конфигурационный файл
-        self.config_file = "theme_config.json"
+        self.config_file = "DPP2serverUDP/Client/characters/theme_config.json"
         self.should_exit = False
 
         # Данные пони
@@ -810,75 +810,172 @@ class DynamicPonySelector(QMainWindow):
         self.create_cards()
 
     def _start_via_subprocess(self, pony_name):
-        """Запускает пони через subprocess"""
+        """Запускает пони через subprocess (устойчиво к тому, что DPP2 может быть запущен из DPP2Launcher.exe)."""
         try:
+            import shutil
+
+            # Папка, где лежит сам DPP2.py (предпочтительное место для поиска pony.py)
             current_dir = os.path.dirname(os.path.abspath(__file__))
 
-            # Пробуем разные пути к pony.py
-            possible_paths = [
+            # Если приложение упаковано PyInstaller onefile, р��сурсы могут быть в _MEIPASS
+            meipass_dir = getattr(sys, '_MEIPASS', None)
+
+            # Список папок для поиска pony.py (предпочтение: папка скрипта, MEIPASS, папка исполняемого)
+            exe_dir = os.path.dirname(sys.executable) if sys.executable else None
+            search_dirs = [current_dir]
+            if meipass_dir:
+                search_dirs.append(meipass_dir)
+            if exe_dir and exe_dir not in search_dirs:
+                search_dirs.append(exe_dir)
+
+            # Возможные относительные путей к pony.py внутри указанных директорий
+            relative_paths = [
                 "pony.py",
                 os.path.join("DPP2serverUDP", "Client", "characters", "pony.py"),
-                os.path.join("characters", "pony.py"),
-                os.path.join(current_dir, "pony.py")
+                os.path.join("characters", "pony.py")
             ]
 
             pony_script = None
-            for path in possible_paths:
-                if os.path.exists(path):
-                    pony_script = path
+            for d in search_dirs:
+                if not d:
+                    continue
+                for rel in relative_paths:
+                    candidate = os.path.join(d, rel)
+                    if os.path.exists(candidate):
+                        pony_script = os.path.abspath(candidate)
+                        break
+                if pony_script:
                     break
 
             if not pony_script:
-                print(f"✗ Файл pony.py не найден по путям: {possible_paths}")
+                # Ничего не найдено — предупреждаем пользователя и восстанавливаем окно
+                print(f"✗ Файл pony.py не найден. Проверяем папки: {search_dirs}")
+                QMessageBox.warning(self, "Ошибка",
+                                    "Файл pony.py не найден рядом с DPP2.py или в папке запуска. Поместите pony.py рядом с DPP2.py.")
+                if self.active_ponies_count == 0 and self.main_window_hidden:
+                    QTimer.singleShot(100, self._safe_restore_window)
                 return
 
-            # Команда для запуска
-            cmd = [sys.executable, pony_script, pony_name, str(self.current_scale)]
-            print(f"Команда: {' '.join(cmd)}")
+            # Определяем, какой python-исполняемый использовать.
+            # Если sys.executable выглядит как python — используем его. Иначе ищем pythonw/python/python3 в PATH.
+            sys_exe_basename = os.path.basename(sys.executable or "").lower()
+            python_bin = None
 
-            # Запуск процесса
-            if os.name == 'nt':  # Windows
-                startupinfo = subprocess.STARTUPINFO()
-                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                startupinfo.wShowWindow = 0  # Скрываем окно консоли
+            if "python" in sys_exe_basename:
+                python_bin = sys.executable
+            else:
+                # пробуем найти системный pythonw / python / python3
+                python_bin = shutil.which("pythonw") or shutil.which("python") or shutil.which("python3")
 
-                process = subprocess.Popen(
-                    cmd,
-                    startupinfo=startupinfo,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
-                    cwd=current_dir
-                )
-            else:  # Linux/Mac
-                process = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    preexec_fn=os.setsid,
-                    cwd=current_dir
-                )
+            if not python_bin:
+                print("✗ Не найден интерпретатор Python в окружении (pythonw/python/python3).")
+                QMessageBox.critical(self, "Ошибка",
+                                     "Не найден Python для запуска pony.py. Установите Python или положите pony.exe рядом с приложением.")
+                if self.active_ponies_count == 0 and self.main_window_hidden:
+                    QTimer.singleShot(100, self._safe_restore_window)
+                return
+
+            cmd = [python_bin, pony_script, pony_name, str(self.current_scale)]
+            print(f"Команда: {cmd}")
+
+            # Подготовка лог-файла (stdout + stderr)
+            log_dir = current_dir
+            os.makedirs(log_dir, exist_ok=True)
+            logfile_path = os.path.join(log_dir, f"pony_{pony_name.replace(' ', '_')}_launch.log")
+            log_file = open(logfile_path, "ab")
+
+            # Запуск процесса: прячем консоль на Windows, на Unix создаём новую сессию
+            process = None
+            try:
+                if os.name == 'nt':
+                    # Скрыть окно консоли для дочернего процесса
+                    try:
+                        startupinfo = subprocess.STARTUPINFO()
+                        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                        # По возможности используем CREATE_NO_WINDOW
+                        creation_flags = getattr(subprocess, "CREATE_NO_WINDOW",
+                                                 0) or subprocess.CREATE_NEW_PROCESS_GROUP
+                    except Exception:
+                        startupinfo = None
+                        creation_flags = 0
+
+                    process = subprocess.Popen(
+                        cmd,
+                        stdout=log_file,
+                        stderr=log_file,
+                        stdin=subprocess.DEVNULL,
+                        cwd=current_dir,
+                        startupinfo=startupinfo,
+                        creationflags=creation_flags
+                    )
+                else:
+                    # Unix-like
+                    process = subprocess.Popen(
+                        cmd,
+                        stdout=log_file,
+                        stderr=log_file,
+                        stdin=subprocess.DEVNULL,
+                        cwd=current_dir,
+                        preexec_fn=os.setsid
+                    )
+            except Exception as e:
+                # Записать ошибку в лог и показать пользователю
+                try:
+                    errmsg = f"Ошибка запуска процесса: {e}\n".encode(errors='replace')
+                    log_file.write(errmsg)
+                    log_file.flush()
+                except Exception:
+                    pass
+                log_file.close()
+                print(f"✗ Ошибка ��апуска {pony_name}: {e}")
+                QMessageBox.critical(self, "Ошибка", f"Не удалось запустить pony.py:\n{e}")
+                if self.active_ponies_count == 0 and self.main_window_hidden:
+                    QTimer.singleShot(100, self._safe_restore_window)
+                return
 
             pid = process.pid
             self.running_processes[pony_name] = (process, pid)
             self.active_ponies_count += 1
 
-            print(f"✅ {pony_name} запущен (PID: {pid})")
+            print(f"✅ {pony_name} запущен (PID: {pid}), лог: {logfile_path}")
 
-            # Запускаем мониторинг процесса
-            threading.Thread(
-                target=self._monitor_single_process,
-                args=(pony_name, process),
-                daemon=True
-            ).start()
+            # Монитор процесса: дождаться завершения, дописать в лог, закрыть лог и обновить состояния
+            def monitor_and_close(p_name, proc, lf):
+                try:
+                    return_code = proc.wait()
+                    try:
+                        lf.write(f"\n--- Процесс завершился кодом {return_code} ---\n".encode(errors='replace'))
+                        lf.flush()
+                    except Exception:
+                        pass
+                except Exception as e:
+                    try:
+                        lf.write(f"\n--- Ошибка мониторинга: {e} ---\n".encode(errors='replace'))
+                        lf.flush()
+                    except Exception:
+                        pass
+                finally:
+                    try:
+                        lf.close()
+                    except Exception:
+                        pass
+
+                    # Обновляем структуры в GUI-потоке (небольшая защита от исключений)
+                    try:
+                        if p_name in self.running_processes:
+                            del self.running_processes[p_name]
+                        self.active_ponies_count = max(0, self.active_ponies_count - 1)
+                        if (self.active_ponies_count == 0 and not self.running_processes and self.main_window_hidden):
+                            QTimer.singleShot(100, self._safe_restore_window)
+                    except Exception:
+                        pass
+
+            threading.Thread(target=monitor_and_close, args=(pony_name, process, log_file), daemon=True).start()
 
         except Exception as e:
-            print(f"✗ Ошибка запуска {pony_name}: {e}")
-            self.active_ponies_count = max(0, self.active_ponies_count - 1)
-
-            # Если это был последний пони - восстанавливаем окно
+            print(f"✗ Критическая ошибка при запуске {pony_name}: {e}")
+            import traceback
+            traceback.print_exc()
             if self.active_ponies_count == 0 and self.main_window_hidden:
                 QTimer.singleShot(100, self._safe_restore_window)
 
