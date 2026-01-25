@@ -26,32 +26,13 @@ class UniversalPony:
         # ========== ПОИСК ПАПКИ И КОНФИГА ДЛЯ ЭТОГО ПОНИ ==========
         self.pony_folder, self.config_file = self._find_pony_folder_and_config(pony_name)
 
-        print(f"🎠 Пони: {pony_name}")
-        print(f"📁 Папка: {self.pony_folder}")
-        print(f"⚙️  Конфиг: {self.config_file}")
-
         # ========== ЗАГРУЗКА КОНФИГА ==========
         self.config = self._load_config()
-        # ДЕБАГ: Проверка специальных анимаций
-        print("🔍 ДЕБАГ: Проверка специальных анимаций")
-        print(f"Все ключи в конфиге: {list(self.config.keys())}")
 
         # Проверяем оба варианта написания
-        if 'special_animations' in self.config:
-            print(f"✅ Найдено 'special_animations': {self.config['special_animations']}")
-        elif 'spacial_animations' in self.config:
-            print(f"✅ Найдено 'spacial_animations' (опечатка): {self.config['spacial_animations']}")
-            # Автоматически исправляем
+        if 'spacial_animations' in self.config:
             self.config['special_animations'] = self.config['spacial_animations']
             del self.config['spacial_animations']
-        else:
-            print("❌ Не найдено ни 'special_animations', ни 'spacial_animations'")
-
-        # Выводим что загрузилось
-        if 'special_animations' in self.config:
-            print(f"📊 Загружено специальных анимаций: {len(self.config['special_animations'])}")
-            for name, config in self.config['special_animations'].items():
-                print(f"  🎬 {name}: {config}")
 
         # ========== НАСТРОЙКИ ИЗ КОНФИГА ==========
 
@@ -98,12 +79,6 @@ class UniversalPony:
 
         # ========== ДОПОЛНИТЕЛЬНЫЕ АНИМАЦИИ ИЗ КОНФИГА ==========
         self.SPECIAL_ANIMATIONS = self.config.get('special_animations', {})
-        # Формат: {
-        #     "название_анимации": [
-        #         ["путь/к/гифке1.gif", "путь/к/гифке2.gif", "false", "0.1"],
-        #         ["путь/к/гифке3.gif", "путь/к/гифке4.gif", "true", "0.05"]
-        #     ]
-        # }
 
         # Настройки функциональности
         self.SLEEP_ENABLED = self.config.get('sleep_enabled', True)
@@ -164,11 +139,9 @@ class UniversalPony:
 
         # Загрузка гифки
         if not self._load_stand_gif("right"):
-            print(f"❌ Не удалось загрузить стартовую гифку для {pony_name}")
             self._create_fallback_animation()
         else:
             self.animating = True
-            print(f"✅ Стартовая гифка загружена")
 
         # Запускаем потоки
         self._animation_thread = threading.Thread(target=self._safe_animate, daemon=True)
@@ -187,61 +160,35 @@ class UniversalPony:
 
     def _safe_special_animation_monitor(self):
         """Мониторит и запускает дополнительные анимации из конфига"""
-        print("🔄 Монитор специальных анимаций ЗАПУЩЕН")
-
         while self._threads_running and not self._shutdown_flag.is_set():
             try:
-                print("🔍 Проверка условий для анимации...")
-                print(f"  is_in_special_animation: {self.is_in_special_animation}")
-                print(f"  is_dragging: {self.is_dragging}")
-                print(f"  is_sleeping: {self.is_sleeping}")
-                print(f"  _just_woke_up: {self._just_woke_up}")
-                print(f"  Всего анимаций в конфиге: {len(self.SPECIAL_ANIMATIONS)}")
-
                 if (not self.is_in_special_animation and not self.is_dragging and
                         not self.is_sleeping and not self._just_woke_up and
                         self._threads_running and not self._shutdown_flag.is_set()):
 
-                    print("✅ Условия выполнены, проверяем анимации...")
-
                     # Проверяем все анимации из конфига
                     for anim_name, anim_configs in self.SPECIAL_ANIMATIONS.items():
-                        print(f"  Проверяем анимацию: {anim_name}")
-
-                        # В твоем конфиге anim_configs - это список из 4 элементов, а не список списков!
-                        # Формат: ["гифка1", "гифка2", "false", "0.1"]
                         if isinstance(anim_configs, list):
-                            print(f"    Конфиг: {anim_configs}")
-
                             # Проверяем вероятность
                             if len(anim_configs) >= 4:
                                 probability_str = anim_configs[-1]
                                 try:
                                     probability = float(probability_str)
-                                    print(f"    Вероятность: {probability}")
-
                                     if random.random() < probability:
-                                        print(f"    🎰 ВЫПАЛ ШАНС! Запускаем {anim_name}")
                                         # Запускаем анимацию
                                         gif_paths = anim_configs[:-2]  # Берем все кроме последних двух
                                         should_move = anim_configs[-2].lower() == "true"
                                         self.root.after(0, lambda paths=gif_paths, move=should_move, name=anim_name:
                                         self._start_special_animation(paths, move, name))
                                         break
-                                    else:
-                                        print(f"    ❌ Шанс не выпал")
                                 except ValueError:
-                                    print(f"    ⚠️ Некорректная вероятность: {probability_str}")
+                                    pass
 
                     # Ждем перед следующей проверкой
                     if self._threads_running and not self._shutdown_flag.is_set():
-                        print("⏳ Жду 2 секунды до следующей проверки...")
                         time.sleep(2)
 
-            except Exception as e:
-                print(f"❌ Ошибка в мониторе анимаций: {e}")
-                import traceback
-                traceback.print_exc()
+            except Exception:
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(1)
 
@@ -250,8 +197,6 @@ class UniversalPony:
         if (self.is_in_special_animation or self.is_dragging or self.is_sleeping or
                 self._shutdown_flag.is_set() or not self._threads_running):
             return
-
-        print(f"🎬 Запуск дополнительной анимации {anim_name}")
 
         self.is_in_special_animation = True
         self.current_special_animation = gif_paths
@@ -286,7 +231,6 @@ class UniversalPony:
             full_path = gif_path
 
         if not full_path or not os.path.exists(full_path):
-            print(f"  ❌ Файл не найден: {gif_path}")
             self._end_special_animation()
             return
 
@@ -315,7 +259,6 @@ class UniversalPony:
                     self._load_next_special_gif
                 )
         else:
-            print(f"  ❌ Не удалось загрузить гифку: {full_path}")
             self._end_special_animation()
 
     def _end_special_animation(self):
@@ -354,9 +297,6 @@ class UniversalPony:
         # Нормализуем имя пони для поиска
         normalized_name = pony_name.lower().replace(" ", "_")
 
-        print(f"🔍 Поиск папки для пони: {pony_name}")
-        print(f"🔍 Нормализованное имя: {normalized_name}")
-
         # Возможные варианты имен папки
         possible_folder_names = [
             normalized_name,  # twilight_sparkle
@@ -379,25 +319,19 @@ class UniversalPony:
         for folder_name in possible_folder_names:
             folder_path = os.path.join(current_dir, folder_name)
             if os.path.exists(folder_path) and os.path.isdir(folder_path):
-                print(f"✅ Найдена папка в корне: {folder_path}")
-
                 # Ищем конфиг в этой папке
                 for config_name in possible_config_names:
                     config_path = os.path.join(folder_path, config_name)
                     if os.path.exists(config_path):
-                        print(f"✅ Найден конфиг: {config_path}")
                         return folder_path, config_path
 
                 # Ищем любой JSON файл
                 for item in os.listdir(folder_path):
                     if item.lower().endswith('.json'):
                         config_path = os.path.join(folder_path, item)
-                        print(f"📄 Найден JSON: {item}")
                         return folder_path, config_path
 
         # 2. Рекурсивный поиск по всем папкам
-        print("🔍 Рекурсивный поиск по всем папкам...")
-
         for root, dirs, files in os.walk(current_dir):
             # Пропускаем системные папки
             skip_folders = ['__pycache__', '.git', '.vscode', '.idea', 'venv', 'env', 'node_modules']
@@ -412,13 +346,11 @@ class UniversalPony:
                 for possible_name in possible_folder_names:
                     if possible_name.lower() in dir_lower or dir_lower in possible_name.lower():
                         folder_path = os.path.join(root, dir_name)
-                        print(f"🎯 Найдена подходящая папка: {folder_path}")
 
                         # Ищем конфиг
                         for config_name in possible_config_names:
                             config_path = os.path.join(folder_path, config_name)
                             if os.path.exists(config_path):
-                                print(f"✅ Найден конфиг: {config_path}")
                                 return folder_path, config_path
 
                         # Ищем любой JSON
@@ -426,7 +358,6 @@ class UniversalPony:
                             for file in os.listdir(folder_path):
                                 if file.lower().endswith('.json'):
                                     config_path = os.path.join(folder_path, file)
-                                    print(f"📄 Найден JSON: {file}")
                                     return folder_path, config_path
                         except (PermissionError, FileNotFoundError):
                             continue
@@ -443,7 +374,6 @@ class UniversalPony:
                             'config' in file_lower):
 
                         config_path = os.path.join(root, file)
-                        print(f"📄 Найден подходящий JSON файл: {file}")
 
                         # Пробуем найти папку с таким же именем рядом
                         for dir_name in dirs:
@@ -457,7 +387,6 @@ class UniversalPony:
                         return root, config_path
 
         # 3. Если ничего не найдено, создаем новую структуру
-        print(f"⚠️ Папка для {pony_name} не найдена, создаем...")
         default_folder = os.path.join(current_dir, pony_name.replace(" ", "_"))
         default_config = os.path.join(default_folder, "config.json")
 
@@ -493,7 +422,7 @@ class UniversalPony:
                 "sleep_left": "sleep_left.gif",
                 "drag": "drag.gif"
             },
-            'special_animations': {},  # Дополнительные анимации
+            'special_animations': {},
             'sleep_enabled': True,
             'menu_bg_color': '#2d2d2d',
             'menu_fg_color': '#ffffff',
@@ -505,11 +434,9 @@ class UniversalPony:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     loaded_config = json.load(f)
-                    print(f"✅ Загружена конфигурация из {self.config_file}")
 
                     # 🔧 ИСПРАВЛЕНИЕ: Если конфиг имеет структуру с settings
                     if 'settings' in loaded_config:
-                        print("⚠️ Обнаружена старая структура конфига, конвертируем...")
                         # Извлекаем настройки
                         settings = loaded_config.get('settings', {})
                         # Извлекаем пути к гифкам
@@ -538,26 +465,17 @@ class UniversalPony:
                             loaded_config[key] = value
                     return loaded_config
             else:
-                print(f"⚠️ Файл конфигурации не найден: {self.config_file}")
-                print("ℹ️ Используются значения по умолчанию")
                 return default_config
-        except json.JSONDecodeError as e:
-            print(f"❌ Ошибка чтения JSON: {e}")
-            print("ℹ️ Используются значения по умолчанию")
+        except json.JSONDecodeError:
             return default_config
-        except Exception as e:
-            print(f"❌ Ошибка загрузки конфигурации: {e}")
+        except Exception:
             return default_config
 
     def _check_pony_folder(self):
         """Проверяем и создаем папку с гифками если нужно"""
-        print(f"🔍 Проверяем папку с гифками: {self.pony_folder}")
-
         if not os.path.exists(self.pony_folder):
-            print(f"📁 Папка не найдена, создаем: {self.pony_folder}")
             try:
                 os.makedirs(self.pony_folder, exist_ok=True)
-                print("✅ Папка создана")
 
                 # Создаем пример конфигурационного файла
                 self._create_sample_config()
@@ -567,13 +485,10 @@ class UniversalPony:
                 for subfolder in subfolders:
                     subfolder_path = os.path.join(self.pony_folder, subfolder)
                     os.makedirs(subfolder_path, exist_ok=True)
-                    print(f"✅ Создана подпапка: {subfolder}")
 
-            except Exception as e:
-                print(f"❌ Ошибка создания папки: {e}")
+            except Exception:
+                pass
         else:
-            print("✅ Папка с гифками найдена")
-
             # Проверяем, есть ли конфиг
             if not os.path.exists(self.config_file):
                 self._create_sample_config()
@@ -624,9 +539,8 @@ class UniversalPony:
         try:
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(sample_config, f, indent=4, ensure_ascii=False)
-            print("✅ Пример конфигурационного файла создан")
-        except Exception as e:
-            print(f"❌ Ошибка создания конфигурационного файла: {e}")
+        except Exception:
+            pass
 
     # ========== ОБНОВЛЕННЫЕ МЕТОДЫ ДВИЖЕНИЯ ==========
 
@@ -658,7 +572,7 @@ class UniversalPony:
                            not self._shutdown_flag.is_set()):
                         time.sleep(0.1)
                         elapsed += 0.1
-            except Exception as e:
+            except Exception:
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(1)
 
@@ -692,7 +606,6 @@ class UniversalPony:
                     return
 
                 if self._check_wall_collision(current_x, current_y):
-                    print("🚧 Столкновение со стеной, выбираем новую цель")
                     new_direction = "left" if self.current_direction == "right" else "right"
                     self.current_direction = new_direction
                     self._pick_opposite_target(current_x, current_y)
@@ -728,7 +641,6 @@ class UniversalPony:
                     continue
 
                 if self._check_wall_collision(new_x, new_y):
-                    print("⚠️ Шаг ведет к столкновению, выбираем новую цель")
                     self._pick_target()
                     continue
 
@@ -742,8 +654,7 @@ class UniversalPony:
                     time.sleep(0.01)
                     elapsed += 0.01
 
-            except Exception as e:
-                print(f"Ошибка в движении: {e}")
+            except Exception:
                 break
 
     # ========== ОБНОВЛЕННЫЙ МЕТОД ПЕРЕТАСКИВАНИЯ ==========
@@ -865,7 +776,6 @@ class UniversalPony:
 
         # Проверяем, отключена ли анимация движения
         if self._is_gif_disabled(f"move_{direction}"):
-            print(f"⚠️ Анимация движения {direction} отключена, используем stand")
             return self._load_stand_gif(direction)
 
         direction_path = self._get_gif_path(f"move_{direction}")
@@ -890,7 +800,6 @@ class UniversalPony:
             return False
 
         if self._is_gif_disabled("drag"):
-            print("⚠️ Drag анимация отключена")
             return False
 
         drag_path = self._get_gif_path("drag")
@@ -941,7 +850,6 @@ class UniversalPony:
         """Изменяет масштаб пони"""
         try:
             scale_percent = int(new_scale * 100)
-            print(f"📏 Изменение масштаба {self.pony_name} на {scale_percent}%")
 
             # Сохраняем текущее состояние
             was_sleeping = self.is_sleeping
@@ -978,11 +886,9 @@ class UniversalPony:
             if not was_dragging and not was_sleeping and not was_in_special:
                 self._reload_current_gif()
 
-            print(f"✅ Масштаб изменен на {self.WIDTH}x{self.HEIGHT}")
             return True
 
-        except Exception as e:
-            print(f"❌ Ошибка изменения масштаба: {e}")
+        except Exception:
             return False
 
     def _reload_current_gif(self):
@@ -1000,11 +906,8 @@ class UniversalPony:
                 if frames:
                     self.frames = frames
                     self.frame_index = 0
-                    print(f"✅ Гифка перезагружена с размером {target_width}x{target_height}")
-                else:
-                    print("⚠️ Не удалось перезагрузить гифку")
-        except Exception as e:
-            print(f"❌ Ошибка перезагрузки гифки: {e}")
+        except Exception:
+            pass
 
     def _load_gif_specific_size(self, path, target_width, target_height):
         """Загружает GIF файл с заданными размерами"""
@@ -1036,8 +939,8 @@ class UniversalPony:
                     new_frame.paste(frame, (offset_x, offset_y), frame)
 
                     frames.append(ImageTk.PhotoImage(new_frame))
-        except Exception as e:
-            print(f"Ошибка загрузки GIF: {e}")
+        except Exception:
+            pass
         return frames
 
     # ========== НОВЫЕ МЕТОДЫ ДЛЯ ВЫТАЛКИВАНИЯ ==========
@@ -1133,9 +1036,8 @@ class UniversalPony:
                     # Обновляем цель движения
                     self.target_x, self.target_y = new_x, new_y
 
-        except Exception as e:
-            if not self._shutdown_flag.is_set():
-                print(f"❌ Ошибка при выталкивании: {e}")
+        except Exception:
+            pass
 
     # ========== ОСТАЛЬНЫЕ МЕТОДЫ ==========
 
@@ -1163,7 +1065,6 @@ class UniversalPony:
 
         # Если sleep анимация отключена
         if self._is_gif_disabled(f"sleep_{direction}"):
-            print(f"⚠️ Sleep анимация {direction} отключена")
             return False
 
         sleep_path = self._get_gif_path(f"sleep_{direction}")
@@ -1182,7 +1083,6 @@ class UniversalPony:
         if self.is_sleeping or self._shutdown_flag.is_set() or not self._is_sleep_enabled() or self.is_in_special_animation:
             return
 
-        print(f"😴 {self.pony_name} засыпает")
         self.is_sleeping = True
         self.moving = False
         self._just_woke_up = False
@@ -1217,7 +1117,6 @@ class UniversalPony:
         if not self.is_sleeping or self._shutdown_flag.is_set() or not self._is_sleep_enabled():
             return
 
-        print(f"🌅 {self.pony_name} просыпается")
         self.is_sleeping = False
         self.moving = True
         self._just_woke_up = True
@@ -1253,7 +1152,7 @@ class UniversalPony:
 
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(1)
-            except Exception as e:
+            except Exception:
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(1)
 
@@ -1318,15 +1217,12 @@ class UniversalPony:
     def _toggle_sleep_wake(self):
         """Переключает состояние сна/пробуждения"""
         if not self._is_sleep_enabled():
-            print("⚠️ Функциональность сна отключена")
             return
 
         if self.is_sleeping:
-            print("🌅 Принудительное пробуждение")
             self._forced_sleep = False
             self._wake_up()
         else:
-            print("💤 Принудительный переход в сон")
             self._forced_sleep = True
             self._go_to_sleep()
 
@@ -1356,7 +1252,6 @@ class UniversalPony:
             current_x, current_y = self.root.winfo_x(), self.root.winfo_y()
 
             if self._check_wall_collision(current_x, current_y) or self._is_in_push_zone(current_x, current_y):
-                print("🔧 Исправляем застревание...")
                 safe_x, safe_y = self._get_safe_position()
                 self.root.geometry(f"+{safe_x}+{safe_y}")
                 self.target_x, self.target_y = safe_x, safe_y
@@ -1365,7 +1260,6 @@ class UniversalPony:
 
     def _safe_exit_procedure(self):
         """Безопасная процедура выхода"""
-        print("🔒 Запуск безопасного выхода...")
         self._shutdown_flag.set()
         self._stop_all_threads()
         self._clear_canvas_completely()
@@ -1375,14 +1269,11 @@ class UniversalPony:
         """Финальное завершение"""
         try:
             if self.return_to_main_callback:
-                print("✅ Возвращаемся к главному меню")
                 self.return_to_main_callback()
             else:
-                print("⚠️ Колбэк не установлен, закрываем окно")
                 self.root.quit()
                 self.root.destroy()
-        except Exception as e:
-            print(f"❌ Ошибка при завершении: {e}")
+        except Exception:
             self.root.quit()
 
     def _setup_window(self):
@@ -1416,12 +1307,10 @@ class UniversalPony:
 
     def _return_to_main(self):
         """Возвращает к стартовому окну"""
-        print("🔄 Возврат к стартовому окну...")
         self._safe_exit_procedure()
 
     def _exit_program(self):
         """Завершает всю программу"""
-        print("🛑 Завершение программы...")
         self._stop_all_threads()
         self._clear_canvas_completely()
         import sys
@@ -1438,7 +1327,6 @@ class UniversalPony:
     def _create_fallback_animation(self):
         """Создание цветной fallback анимации"""
         try:
-            print("🎨 Создаем fallback анимацию...")
             colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7']
             self.frames = []
 
@@ -1460,10 +1348,8 @@ class UniversalPony:
             self.frame_index = 0
             self.animating = True
             self.current_state = "idle"
-            print("✅ Fallback анимация создана успешно!")
             return True
-        except Exception as e:
-            print(f"❌ Ошибка создания fallback анимации: {e}")
+        except Exception:
             return False
 
     def _create_sleep_fallback(self):
@@ -1489,12 +1375,11 @@ class UniversalPony:
 
             self.frame_index = 0
             self.current_state = "sleep"
-        except Exception as e:
-            print(f"❌ Ошибка создания sleep fallback: {e}")
+        except Exception:
+            pass
 
     def _stop_all_threads(self):
         """Останавливает все потоки"""
-        print(f"🛑 Мягкая остановка потоков {self.pony_name}...")
         self._threads_running = False
         self.animating = False
         self.moving = False
@@ -1524,7 +1409,7 @@ class UniversalPony:
                 else:
                     if self._threads_running and not self._shutdown_flag.is_set():
                         time.sleep(0.1)
-            except Exception as e:
+            except Exception:
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(0.1)
 
@@ -1632,8 +1517,7 @@ class UniversalPony:
 
         except (tk.TclError, ValueError):
             self.target_x, self.target_y = current_x, current_y
-        except Exception as e:
-            print(f"Ошибка при выборе цели: {e}")
+        except Exception:
             self.target_x, self.target_y = current_x, current_y
 
     def _pick_opposite_target(self, current_x, current_y):
@@ -1732,8 +1616,8 @@ class UniversalPony:
                     self.current_gif_path = first_gif
                     self.current_state = "idle"
                     return True
-        except Exception as e:
-            print(f"❌ Ошибка при поиске гифок: {e}")
+        except Exception:
+            pass
 
         return False
 
@@ -1762,8 +1646,8 @@ class UniversalPony:
                 del self.current_image_id
             import gc
             gc.collect()
-        except Exception as e:
-            print(f"Ошибка при очистке canvas: {e}")
+        except Exception:
+            pass
 
 
 # ========== КЛАСС ОБНАРУЖЕНИЯ ПОНИ ==========
@@ -1819,11 +1703,9 @@ class PonyDiscovery:
                             'has_special_animations': has_special_animations
                         })
 
-                except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                    print(f"⚠️ Ошибка чтения конфига {config_path}: {e}")
+                except (json.JSONDecodeError, UnicodeDecodeError):
                     continue
-                except Exception as e:
-                    print(f"❌ Ошибка: {e}")
+                except Exception:
                     continue
 
         return ponies
@@ -1878,7 +1760,7 @@ if __name__ == "__main__":
         try:
             scale = float(sys.argv[2])
         except ValueError:
-            print(f"⚠️ Неверный масштаб, используется 1.0")
+            pass
 
     root = tk.Tk()
     app = UniversalPony(root, pony_name, scale)
