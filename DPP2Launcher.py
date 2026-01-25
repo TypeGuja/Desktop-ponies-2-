@@ -1,9 +1,11 @@
+import shutil
 import sys
 import os
 import subprocess
 import threading
 import time
 import json
+import traceback
 import tempfile
 import urllib.request
 import platform
@@ -422,7 +424,7 @@ class SettingsDialog(QDialog):
 
 
 class InstallationWizard(QDialog):
-    """Мастер установки Python и библиотек"""
+    """Мастер установки Python и библиотек (потокобезопасные GUI-обновления)"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -445,7 +447,7 @@ class InstallationWizard(QDialog):
         title.setAlignment(Qt.AlignmentFlag.AlignCenter if QT_LIB == "PySide6" else Qt.AlignCenter)
         layout.addWidget(title)
 
-        # Info frame
+        # Info frame (placeholder)
         self.info_frame = QFrame()
         self.info_frame.setFrameStyle(QFrame.Shape.Box if QT_LIB == "PySide6" else QFrame.Box)
         layout.addWidget(self.info_frame)
@@ -459,6 +461,12 @@ class InstallationWizard(QDialog):
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setFont(QFont("Consolas", 9))
+        # Make sure wizard log is readable even if global stylesheet affects QTextEdit
+        try:
+            # use contrasting colors for wizard log to guarantee visibility
+            self.log_text.setStyleSheet("background-color: #0f1720; color: #e6eef6;")
+        except Exception:
+            pass
         layout.addWidget(self.log_text)
 
         # Кнопки
@@ -476,137 +484,177 @@ class InstallationWizard(QDialog):
 
         layout.addLayout(button_layout)
 
-        # Запуск проверки при открытии
-        QTimer.singleShot(100, self.start_check)
+        # Запуск проверки при открытии (через GUI-поток)
+        QTimer.singleShot(150, self.start_check)
 
+    # === потокобезопасные инвокеры ===
+    def _invoke_log(self, message):
+        # Запланировать добавление лога в GUI-потоке; capture message to avoid late-binding issues
+        try:
+            QTimer.singleShot(0, lambda m=message: self.log_message(m))
+        except Exception:
+            print(message)
+
+    def _invoke_progress(self, value, message=None):
+        # Запланировать обновление прогресса в GUI-потоке; capture message to avoid late-binding
+        try:
+            if message is None:
+                QTimer.singleShot(0, lambda v=value: self.update_progress(v, None))
+            else:
+                QTimer.singleShot(0, lambda v=value, m=message: self.update_progress(v, m))
+        except Exception:
+            print(f"Progress {value}: {message}")
+
+    # === GUI-обновления (делать только в GUI-потоке) ===
     def log_message(self, message, color=None):
-        """Добавление сообщения в лог"""
-        cursor = self.log_text.textCursor()
-        cursor.movePosition(QTextCursor.MoveOperation.End if QT_LIB == "PySide6" else QTextCursor.End)
-
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        full_message = f"[{timestamp}] {message}\n"
-
-        self.log_text.setTextCursor(cursor)
-        self.log_text.insertPlainText(full_message)
-
-        # Прокрутка вниз
-        cursor.movePosition(QTextCursor.MoveOperation.End if QT_LIB == "PySide6" else QTextCursor.End)
-        self.log_text.setTextCursor(cursor)
+        """Добавление сообщения в лог (GUI-поток)"""
+        try:
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            full_message = f"[{timestamp}] {message}"
+            # append is simpler and robust
+            self.log_text.append(full_message)
+            # keep caret at end
+            self.log_text.moveCursor(QTextCursor.End)
+        except Exception as e:
+            print("log_message error:", e)
+            print(message)
 
     def update_progress(self, value, message=None):
-        """Обновление прогресс бара"""
-        self.progress_bar.setValue(value)
-        if message:
-            self.log_message(message)
-        QApplication.processEvents()
+        """Обновление прогресс бара (GUI-поток)"""
+        try:
+            self.progress_bar.setValue(value)
+            if message:
+                self.log_message(message)
+            QApplication.processEvents()
+        except Exception as e:
+            print("update_progress error:", e)
 
+    # === запуск проверки ===
     def start_check(self):
-        """Запуск проверки окружения"""
-        self.check_btn.setEnabled(False)
-        threading.Thread(target=self.perform_check, daemon=True).start()
+        """Запуск проверки окружения (GUI-поток запускает фоновый поток)"""
+        try:
+            self.check_btn.setEnabled(False)
+            threading.Thread(target=self.perform_check, daemon=True).start()
+        except Exception as e:
+            self._invoke_log(f"Ошибка запуска проверки: {e}")
 
     def perform_check(self):
-        """Выполнение проверки и установки"""
+        """Выполняется в фоновом потоке — НИ В КОЕМ СЛУЧАЕ НЕ ТРОГАТЬ GUI напрямую"""
         try:
-            self.update_progress(10, "Checking Python installation...")
+            self._invoke_progress(10, "Checking Python installation...")
             python_installed, python_version = self.python_installer.check_python_installed()
 
             if not python_installed:
-                self.log_message("Python not found!", "#ff4444")
-                self.update_progress(20, "Python needs to be installed...")
+                self._invoke_log("Python not found!")
+                self._invoke_progress(20, "Python needs to be installed...")
 
-                # Запрашиваем установку
-                reply = QMessageBox.question(
-                    self,
-                    "Python Installation",
-                    "Python is not installed on your computer.\n"
-                    "Do you want to install Python 3.11.5 automatically?\n\n"
-                    "Python is required to run the game.",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if QT_LIB == "PySide6" else QMessageBox.Yes | QMessageBox.No
-                )
-
-                if reply == QMessageBox.StandardButton.Yes if QT_LIB == "PySide6" else reply == QMessageBox.Yes:
-                    self.update_progress(30, "Downloading Python installer...")
-                    installer_path = self.python_installer.download_python_installer()
-
-                    if installer_path:
-                        self.update_progress(50, "Running Python installer...")
-                        self.log_message("Please wait for installation to complete...", "#ffaa00")
-
-                        success = self.python_installer.run_python_installer(installer_path)
-
-                        if success:
-                            self.update_progress(70, "Python successfully installed!")
-                            self.log_message("Python installed successfully!", "#00ff88")
-
-                            time.sleep(2)
-                            self.update_progress(80, "Restarting check...")
-                            python_installed, python_version = self.python_installer.check_python_installed()
-                        else:
-                            self.log_message("Python installation failed!", "#ff4444")
-                            self.update_progress(100)
-                            return
+                # Запрашиваем установку - запрос на GUI нужно делать в GUI-потоке
+                def ask_install():
+                    reply = QMessageBox.question(
+                        self,
+                        "Python Installation",
+                        "Python is not installed on your computer.\n"
+                        "Do you want to install Python 3.11.5 automatically?\n\n"
+                        "Python is required to run the game.",
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No if QT_LIB == "PySide6" else QMessageBox.Yes | QMessageBox.No
+                    )
+                    if reply == QMessageBox.StandardButton.Yes if QT_LIB == "PySide6" else reply == QMessageBox.Yes:
+                        # Запускаем установку в отдельном потоке, чтобы не блокировать GUI
+                        threading.Thread(target=self._install_and_continue, daemon=True).start()
                     else:
-                        self.log_message("Failed to download Python installer", "#ff4444")
-                        self.log_message("Please install Python manually from python.org", "#ffaa00")
-                        self.update_progress(100)
-                        return
-                else:
-                    self.log_message("Python installation cancelled", "#ffaa00")
-                    self.log_message("Game cannot run without Python", "#ff4444")
-                    self.update_progress(100)
-                    return
-            else:
-                self.log_message(f"Python found: {python_version}", "#00ff88")
-                self.update_progress(40, "Python installed ✓")
+                        self._invoke_log("Python installation cancelled")
+                        self._invoke_progress(100, "Cancelled")
 
-            self.update_progress(50, "Checking required libraries...")
+                QTimer.singleShot(0, ask_install)
+                return  # дальше продолжит _install_and_continue при подтверждении
+
+            else:
+                self._invoke_log(f"Python found: {python_version}")
+                self._invoke_progress(40, "Python installed ✓")
+
+            # Проверка библиотек
+            self._invoke_progress(50, "Checking required libraries...")
             installed_libs, missing_libs = self.python_installer.check_libraries()
 
             if installed_libs:
-                self.log_message(f"Found {len(installed_libs)} libraries", "#00ff88")
+                self._invoke_log(f"Found {len(installed_libs)} libraries")
 
             if missing_libs:
-                self.log_message(f"Missing {len(missing_libs)} libraries", "#ffaa00")
-                self.update_progress(60, f"Installing {len(missing_libs)} libraries...")
+                self._invoke_log(f"Missing {len(missing_libs)} libraries")
+                self._invoke_progress(60, f"Installing {len(missing_libs)} libraries...")
 
                 def progress_callback(msg, percent):
-                    self.update_progress(60 + int(percent * 0.4), msg)
+                    # percent in [0..100] for install step
+                    overall = 60 + int(percent * 0.4)
+                    self._invoke_progress(overall, msg)
 
                 success, message = self.python_installer.install_libraries(missing_libs, progress_callback)
 
                 if success:
-                    self.log_message(message, "#00ff88")
-                    self.update_progress(95, "All libraries installed!")
+                    self._invoke_log(message)
+                    self._invoke_progress(95, "All libraries installed!")
                 else:
-                    self.log_message(message, "#ff4444")
-                    self.update_progress(100)
+                    self._invoke_log(message)
+                    self._invoke_progress(100, "Failed")
                     return
             else:
-                self.log_message("All required libraries are installed!", "#00ff88")
-                self.update_progress(90, "Environment configured ✓")
+                self._invoke_log("All required libraries are installed!")
+                self._invoke_progress(90, "Environment configured ✓")
 
-            self.update_progress(95, "Final check...")
+            # Final check
+            self._invoke_progress(95, "Final check...")
             time.sleep(1)
 
             installed_libs, missing_libs = self.python_installer.check_libraries()
 
             if not missing_libs:
-                self.log_message("✓ All checks passed successfully!", "#00ff88")
-                self.log_message("✓ Environment is ready!", "#00ff88")
-                self.update_progress(100, "Done!")
+                self._invoke_log("All checks passed successfully!")
+                self._invoke_progress(100, "Done!")
             else:
-                self.log_message(f"⚠ {len(missing_libs)} issues remain after installation", "#ffaa00")
+                self._invoke_log(f"{len(missing_libs)} issues remain after installation")
                 for lib in missing_libs:
-                    self.log_message(f"  - {lib}", "#ff4444")
-                self.update_progress(100)
+                    self._invoke_log(f"  - {lib}")
+                self._invoke_progress(100, "Done with warnings")
 
         except Exception as e:
-            self.log_message(f"Error: {str(e)}", "#ff4444")
-            self.update_progress(100)
+            import traceback as _tb
+            tb = _tb.format_exc()
+            self._invoke_log(f"Error during environment check: {e}\n{tb}")
+            self._invoke_progress(100, "Error")
         finally:
-            self.check_btn.setEnabled(True)
+            # Разблокируем кнопку в GUI-потоке
+            QTimer.singleShot(0, lambda: self.check_btn.setEnabled(True))
+
+    def _install_and_continue(self):
+        """Вспомогательная ветка для установки Python (в фоновом потоке)"""
+        try:
+            self._invoke_progress(30, "Downloading Python installer...")
+            installer_path = self.python_installer.download_python_installer()
+
+            if installer_path:
+                self._invoke_progress(50, "Running Python installer...")
+                self._invoke_log("Please wait for installation to complete...")
+
+                success = self.python_installer.run_python_installer(installer_path)
+
+                if success:
+                    self._invoke_progress(70, "Python successfully installed!")
+                    self._invoke_log("Python installed successfully!")
+                    time.sleep(2)
+                    self._invoke_progress(80, "Restarting check...")
+                    # После установки — повторно запустить полную проверку
+                    self.perform_check()
+                else:
+                    self._invoke_log("Python installation failed!")
+                    self._invoke_progress(100, "Install failed")
+            else:
+                self._invoke_log("Failed to download Python installer")
+                self._invoke_progress(100, "Download failed")
+        except Exception as e:
+            import traceback as _tb
+            tb = _tb.format_exc()
+            self._invoke_log(f"Installer error: {e}\n{tb}")
+            self._invoke_progress(100, "Installer error")
 
 
 class ProcessManager:
@@ -615,6 +663,11 @@ class ProcessManager:
     def __init__(self):
         self.processes = {}
         self.active_checkers = {}
+        self._on_all_closed = None  # callback when no processes remain
+
+    def set_on_all_closed(self, callback):
+        """Установить callback, вызываемый когда все процессы завершены"""
+        self._on_all_closed = callback
 
     def add_process(self, name, process):
         """Добавить процесс для отслеживания"""
@@ -630,7 +683,23 @@ class ProcessManager:
         if name in self.processes:
             del self.processes[name]
         if name in self.active_checkers:
+            try:
+                self.active_checkers[name].stop()
+            except Exception:
+                pass
             del self.active_checkers[name]
+
+        # Если больше нет процессов — вызываем callback (в GUI-потоке)
+        if not self.processes and self._on_all_closed:
+            try:
+                # Use QTimer.singleShot to ensure callback runs in Qt main thread
+                QTimer.singleShot(100, self._on_all_closed)
+            except Exception:
+                try:
+                    # Fallback: call directly
+                    self._on_all_closed()
+                except Exception:
+                    pass
 
     def get_active_count(self):
         """Получить количество активных процессов"""
@@ -690,7 +759,9 @@ class UltraModernLauncher(QMainWindow):
         self.python_installer = PythonInstaller()
         self.process_manager = ProcessManager()
 
-        # Таймер для проверки процессов
+        # Set callback so launcher is restored when all managed processes finish
+        self.process_manager.set_on_all_closed(self._on_all_managed_processes_closed)
+
         self.check_timer = QTimer()
         self.check_timer.timeout.connect(self.check_running_processes)
         self.check_timer.start(1000)  # Проверяем каждую секунду
@@ -705,9 +776,16 @@ class UltraModernLauncher(QMainWindow):
         if self.settings['auto_check_environment']:
             QTimer.singleShot(500, self.check_environment_on_startup)
 
+    def _on_all_managed_processes_closed(self):
+        """Callback when all processes tracked by ProcessManager are closed"""
+        # Only restore if launcher was hidden by us
+        if getattr(self, 'is_hidden', False):
+            # Use singleShot to ensure running in Qt main thread and slight delay for stability
+            QTimer.singleShot(100, self.restore_launcher)
+
     def setup_ui(self):
         """Настройка пользовательского интерфейса"""
-        self.setWindowTitle("🎮 DPP2 LAUNCHER")
+        self.setWindowTitle("DPP2 LAUNCHER")
         self.setFixedSize(800, 500)
 
         # Центральный виджет
@@ -725,7 +803,7 @@ class UltraModernLauncher(QMainWindow):
         header_layout = QVBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 20, 0, 20)
 
-        title = QLabel("🎮 DPP2 LAUNCHER")
+        title = QLabel("DPP2 LAUNCHER")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter if QT_LIB == "PySide6" else Qt.AlignCenter)
         title.setStyleSheet("""
             font-size: 32px;
@@ -744,26 +822,7 @@ class UltraModernLauncher(QMainWindow):
         header_layout.addWidget(title)
         header_layout.addWidget(subtitle)
 
-        # Кнопка настроек окружения
-        env_btn = QPushButton("🛠️ Setup Environment")
-        env_btn.setCursor(Qt.CursorShape.PointingHandCursor if QT_LIB == "PySide6" else Qt.PointingHandCursor)
-        env_btn.setStyleSheet("""
-            QPushButton {
-                background: transparent;
-                color: #9d4edd;
-                border: 1px solid #9d4edd;
-                border-radius: 4px;
-                padding: 5px 10px;
-                font-weight: bold;
-            }
-            QPushButton:hover {
-                background: #9d4edd20;
-            }
-        """)
-        env_btn.clicked.connect(self.open_environment_wizard)
-
-        # Размещаем кнопку в правом верхнем углу заголовка
-        header_layout.addWidget(env_btn, 0, Qt.AlignmentFlag.AlignRight if QT_LIB == "PySide6" else Qt.AlignRight)
+        # УБРАНА КНОПКА "Setup Environment"
 
         main_layout.addWidget(header_widget)
 
@@ -803,7 +862,7 @@ class UltraModernLauncher(QMainWindow):
         main_layout.addWidget(container)
 
         # Кнопка настроек в правом нижнем углу
-        settings_btn = QPushButton("⚙️ Settings")
+        settings_btn = QPushButton("Settings")
         settings_btn.setCursor(Qt.CursorShape.PointingHandCursor if QT_LIB == "PySide6" else Qt.PointingHandCursor)
         settings_btn.setStyleSheet("""
             QPushButton {
@@ -952,9 +1011,33 @@ class UltraModernLauncher(QMainWindow):
             self.open_environment_wizard()
 
     def open_environment_wizard(self):
-        """Открытие мастера настройки окружения"""
-        wizard = InstallationWizard(self)
-        wizard.exec()
+        """Открытие мастера настройки окружения с защитой от ошибок."""
+        try:
+            wizard = InstallationWizard(self)
+            # Гарантируем модальность приложения (централизует поведение)
+            try:
+                wizard.setWindowModality(Qt.ApplicationModal)
+            except Exception:
+                pass
+
+            # Используем exec_ если есть (PyQt5), иначе exec (PySide6)
+            if hasattr(wizard, "exec_"):
+                wizard.exec_()
+            else:
+                wizard.exec()
+        except Exception as e:
+            # Логируем трассировку и показываем пользователю сообщение
+            tb = traceback.format_exc()
+            print("Ошибка при открытии InstallationWizard:", e)
+            print(tb)
+            try:
+                QMessageBox.critical(
+                    self,
+                    "Ошибка",
+                    f"Не удалось открыть Setup Environment:\n{e}\n\nПолная трассировка в консоли."
+                )
+            except Exception:
+                pass
 
     def open_settings(self):
         """Открытие окна настроек"""
@@ -970,7 +1053,7 @@ class UltraModernLauncher(QMainWindow):
         self.update_hidden_buttons_visibility()
 
     def update_button_colors(self):
-        """Обновление цветов всех кнопок"""
+        """Обновение цветов всех кнопок"""
         if hasattr(self, 'client_btn'):
             self.client_btn.color = self.current_colors['BTN_CLIENT']
             self.client_btn.setStyleSheet(self.client_btn.styleSheet())
@@ -998,8 +1081,9 @@ class UltraModernLauncher(QMainWindow):
 
     def check_running_processes(self):
         """Проверка запущенных процессов"""
-        if self.is_hidden and self.process_manager.get_active_count() == 0:
-            print("📊 Все приложения закрыты, возвращаю лаунчер...")
+        # Backward-compatible check: if launcher was hidden by us and there are no managed processes
+        if getattr(self, 'is_hidden', False) and self.process_manager.get_active_count() == 0:
+            print("Все приложения закрыты, возвращаю лаунчер...")
             self.restore_launcher()
 
     def run_python_script_simple(self, script_path, script_name):
@@ -1031,20 +1115,26 @@ class UltraModernLauncher(QMainWindow):
             print(f"📂 Directory: {work_dir}")
 
             try:
-                # Определяем команду в зависимости от ОС
-                if os.name == 'nt':  # Windows
-                    python_cmd = 'python'
-                else:  # Linux/Mac
-                    python_cmd = 'python3'
+                # Определяем команду в зависимости от ОС.
+                # Prefer pythonw on Windows to avoid console window, fall back to python.
+                if os.name == 'nt':
+                    python_cmd = shutil.which('pythonw') or shutil.which('python') or 'python'
+                else:
+                    python_cmd = shutil.which('python3') or shutil.which('python') or 'python3'
 
                 cmd = [python_cmd, script_path]
                 print(f"Command: {' '.join(cmd)}")
 
                 # Запускаем процесс
+                if os.name == 'nt':
+                    creation = subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0
+                else:
+                    creation = 0
+
                 process = subprocess.Popen(
                     cmd,
                     cwd=work_dir,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                    creationflags=creation
                 )
 
                 print(f"✅ {script_name} launched (PID: {process.pid})")
@@ -1074,51 +1164,54 @@ class UltraModernLauncher(QMainWindow):
 
     def restore_launcher(self):
         """Восстановление лаунчера (вызывается в главном потоке)"""
-        if self.is_hidden:
-            print("🏠 Восстанавливаю окно лаунчера...")
+        if getattr(self, 'is_hidden', False):
+            print("Восстанавливаю окно лаунчера...")
             self.show()
             self.is_hidden = False
             # Поднимаем окно на передний план
-            self.raise_()
-            self.activateWindow()
-            print("✅ Лаунчер восстановлен и активирован")
+            try:
+                self.raise_()
+                self.activateWindow()
+            except Exception:
+                pass
+            print("Лаунчер восстановлен и активирован")
 
     def launch_client(self):
         """Запуск клиента"""
-        print("\n🎮 Launching Client...")
+        print("\nLaunching Client...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.client_path, "Client")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            print("⚠ Client failed to launch, restoring launcher")
+            print("Client failed to launch, restoring launcher")
             QTimer.singleShot(100, self.restore_launcher)
 
     def launch_client_offline(self):
         """Запуск офлайн клиента"""
-        print("\n🎮 Launching Client Offline...")
+        print("\nLaunching Client Offline...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.client_offline_path, "Client Offline")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            print("⚠ Client Offline failed to launch, restoring launcher")
+            print("Client Offline failed to launch, restoring launcher")
             QTimer.singleShot(100, self.restore_launcher)
 
     def launch_server(self):
         """Запуск сервера"""
-        print("\n🖥️ Launching Server...")
+        print("\nLaunching Server...")
         self.hide()
         self.is_hidden = True
         process = self.run_python_script_simple(self.server_path, "Server")
         if not process:
             # Если не удалось запустить, показываем лаунчер снова
-            print("⚠ Server failed to launch, restoring launcher")
+            print("Server failed to launch, restoring launcher")
             QTimer.singleShot(100, self.restore_launcher)
 
     def launch_all(self):
         """Запуск всего (Server+Client)"""
-        print("\n🚀 Launching All (Server + Client)...")
+        print("\nLaunching All (Server + Client)...")
         self.hide()
         self.is_hidden = True
 
@@ -1131,9 +1224,9 @@ class UltraModernLauncher(QMainWindow):
                 print("Starting Client...")
                 client_process = self.run_python_script_simple(self.client_path, "Client")
                 if not client_process:
-                    print("⚠ Failed to launch Client")
+                    print("Failed to launch Client")
             else:
-                print("❌ Failed to launch Server")
+                print("Failed to launch Server")
                 # Если не удалось запустить сервер, показываем лаунчер
                 QTimer.singleShot(1000, self.restore_launcher)
 
@@ -1155,7 +1248,7 @@ class PythonInstaller:
 
             if result.returncode == 0:
                 version = result.stdout.strip()
-                print(f"✓ Python found: {version}")
+                print(f"Python found: {version}")
                 return True, version
 
             # Пробуем python3
@@ -1166,11 +1259,11 @@ class PythonInstaller:
 
             if result.returncode == 0:
                 version = result.stdout.strip()
-                print(f"✓ Python3 found: {version}")
+                print(f"Python3 found: {version}")
                 return True, version
 
         except Exception as e:
-            print(f"✗ Python not found: {e}")
+            print(f"Python not found: {e}")
 
         return False, None
 
@@ -1197,17 +1290,17 @@ class PythonInstaller:
 
                 if result.returncode == 0:
                     installed_libs.append(lib)
-                    print(f"✓ Library installed: {lib_name}")
+                    print(f"Library installed: {lib_name}")
                 else:
                     missing_libs.append(lib)
-                    print(f"✗ Library missing: {lib_name}")
+                    print(f"Library missing: {lib_name}")
 
             except subprocess.CalledProcessError:
                 missing_libs.append(lib)
-                print(f"✗ Error checking library: {lib_name}")
+                print(f"Error checking library: {lib_name}")
             except Exception as e:
                 missing_libs.append(lib)
-                print(f"✗ Exception checking {lib_name}: {e}")
+                print(f"Exception checking {lib_name}: {e}")
 
         return installed_libs, missing_libs
 
@@ -1236,9 +1329,9 @@ class PythonInstaller:
 
                     if result.returncode == 0:
                         installed_count += 1
-                        print(f"✓ Successfully installed: {lib}")
+                        print(f"Successfully installed: {lib}")
                     else:
-                        print(f"✗ Installation error {lib}: {result.stderr[:200]}")
+                        print(f"Installation error {lib}: {result.stderr[:200]}")
 
                         # Пробуем установить без версии
                         lib_name = lib.split('==')[0]
@@ -1249,12 +1342,12 @@ class PythonInstaller:
 
                         if result.returncode == 0:
                             installed_count += 1
-                            print(f"✓ Installed latest version: {lib_name}")
+                            print(f"Installed latest version: {lib_name}")
                         else:
                             return False, f"Failed to install {lib}"
 
                 except Exception as e:
-                    print(f"✗ Exception installing {lib}: {e}")
+                    print(f"Exception installing {lib}: {e}")
 
             if progress_callback:
                 progress_callback("Installation complete!", 100)
@@ -1333,7 +1426,7 @@ if __name__ == "__main__":
         print(f"GUI library: {QT_LIB}")
 
         if not QT_AVAILABLE:
-            print("\n❌ GUI libraries not available!")
+            print("\nGUI libraries not available!")
             print("Try to install manually:")
             print("pip install PySide6")
             input("Press Enter to exit...")
