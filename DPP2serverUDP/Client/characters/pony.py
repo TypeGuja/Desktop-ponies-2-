@@ -1156,6 +1156,8 @@ class UniversalPony:
                 if self._threads_running and not self._shutdown_flag.is_set():
                     time.sleep(1)
 
+    # ========== ОБНОВЛЕННЫЙ МЕТОД СОЗДАНИЯ КОНТЕКСТНОГО МЕНЮ ==========
+
     def _create_context_menu(self):
         """Создает контекстное меню"""
         if self.context_menu:
@@ -1183,6 +1185,16 @@ class UniversalPony:
                 foreground=self.menu_fg_color
             )
             self.context_menu.add_separator()
+
+        # НОВАЯ КНОПКА: Остановить всех пони
+        self.context_menu.add_command(
+            label="🛑 Stop All Ponies",
+            command=self._stop_all_ponies,
+            background='#ff6b6b',
+            foreground='white'
+        )
+
+        self.context_menu.add_separator()
 
         self.context_menu.add_command(
             label="📱 Return to Menu",
@@ -1213,6 +1225,42 @@ class UniversalPony:
             background=self.menu_bg_color,
             foreground='#666666'
         )
+
+    # ========== НОВЫЙ МЕТОД ДЛЯ ОСТАНОВКИ ВСЕХ ПОНИ ==========
+
+    def _stop_all_ponies(self):
+        """Останавливает всех активных пони в системе"""
+        try:
+            # Импортируем здесь, чтобы избежать циклических импортов
+            import signal
+            import os
+
+            # Отправляем сигнал завершения всем процессам Python
+            current_pid = os.getpid()
+
+            # Пытаемся найти и завершить другие процессы пони
+            import psutil
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    # Проверяем, является ли процесс другим экземпляром пони
+                    if (proc.pid != current_pid and
+                            proc.info['name'] and
+                            ('python' in proc.info['name'].lower() or
+                             'pony' in proc.info['name'].lower())):
+
+                        # Проверяем командную строку на наличие нашего скрипта
+                        cmdline = proc.info['cmdline'] or []
+                        if any('pony' in str(arg).lower() for arg in cmdline):
+                            proc.terminate()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+
+            # Также завершаем текущий процесс через короткое время
+            self.root.after(100, self._safe_exit_procedure)
+
+        except ImportError:
+            # Если psutil не доступен, просто завершаем текущий процесс
+            self.root.after(100, self._safe_exit_procedure)
 
     def _toggle_sleep_wake(self):
         """Переключает состояние сна/пробуждения"""
