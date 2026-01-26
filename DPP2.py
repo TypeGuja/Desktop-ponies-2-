@@ -12,25 +12,16 @@ QT_LIB = None
 # Сначала пробуем PySide6
 try:
     import PySide6
-
     QT_LIB = "PySide6"
-    print("✓ PySide6 найден")
 except ImportError:
-    print("✗ PySide6 не найден")
+    pass
 
 # Если PySide6 не найден, пробуем PyQt5
 if QT_LIB is None:
     try:
         import PyQt5
-
         QT_LIB = "PyQt5"
-        print("✓ PyQt5 найден")
     except ImportError:
-        print("✗ PyQt5 не найден")
-        print("\nУстановите одну из библиотек:")
-        print("pip install PySide6")
-        print("ИЛИ")
-        print("pip install PyQt5")
         sys.exit(1)
 
 # ИМПОРТЫ НА УРОВНЕ МОДУЛЯ
@@ -38,7 +29,6 @@ if QT_LIB == "PySide6":
     from PySide6.QtWidgets import *
     from PySide6.QtCore import *
     from PySide6.QtGui import *
-
     Signal = Signal
     Slot = Slot
     CHECKED_STATE = Qt.Checked
@@ -48,19 +38,14 @@ else:  # PyQt5
     from PyQt5.QtGui import *
     from PyQt5.QtCore import pyqtSignal as Signal
     from PyQt5.QtCore import pyqtSlot as Slot
-
     CHECKED_STATE = 2
 
 # ========== ПРОВЕРКА PILLOW ==========
 try:
     from PIL import Image, ImageSequence
-
     PIL_AVAILABLE = True
-    print("✓ Pillow (PIL) загружен")
 except ImportError:
     PIL_AVAILABLE = False
-    print("✗ Pillow (PIL) не найден - GIF анимации будут отключены")
-    print("Установите: pip install pillow")
 
 
 # ========== КЛАСС ДЛЯ АНИМИРОВАННЫХ GIF ==========
@@ -110,8 +95,7 @@ class AnimatedGIFLabel(QLabel):
                 self.timer.start(100)  # 10 FPS
             else:
                 self.set_default_image()
-        except Exception as e:
-            print(f"Ошибка загрузки GIF {gif_path}: {e}")
+        except Exception:
             self.set_default_image()
 
     def next_frame(self):
@@ -286,7 +270,6 @@ class OptionsDialog(QDialog):
 
     def apply_scale(self):
         """Применяет масштаб"""
-        print(f"Масштаб применен: {self.current_scale}")
         self.accept()
 
 
@@ -297,12 +280,8 @@ class DynamicPonySelector(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        print("=" * 50)
-        print(f"Запуск DPP2 Pony Selector с {QT_LIB}")
-        print("=" * 50)
-
         # Конфигурационный файл
-        self.config_file = "DPP2serverUDP/Client/characters/theme_config.json"
+        self.config_file = "theme_config.json"
         self.should_exit = False
 
         # Данные пони
@@ -349,15 +328,12 @@ class DynamicPonySelector(QMainWindow):
         # Инициализация UI
         self.init_ui()
 
-        print("✓ Приложение инициализировано")
-
     def load_theme(self):
         """Загружает сохраненную тему"""
         try:
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     config = json.load(f)
-                print(f"✓ Загружена тема: {config.get('theme_name', 'default')}")
 
                 self.current_bg = config.get('bg_color', '#000000')
                 self.current_card_bg = config.get('card_color', '#454545')
@@ -369,12 +345,9 @@ class DynamicPonySelector(QMainWindow):
                 saved_ponies = config.get('selected_ponies', {})
                 for pony_name in self.pony_names:
                     self.selected_ponies[pony_name] = saved_ponies.get(pony_name, False)
-                print("✓ Состояния пони загружены")
             else:
                 raise FileNotFoundError
-        except Exception as e:
-            print(f"✗ Ошибка загрузки темы: {e}")
-            print("Используются значения по умолчанию")
+        except Exception:
             # Значения по умолчанию
             self.current_bg = '#000000'
             self.current_card_bg = '#454545'
@@ -399,10 +372,8 @@ class DynamicPonySelector(QMainWindow):
 
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(config, f, indent=4, ensure_ascii=False)
-
-            print(f"✓ Тема '{self.current_theme_name}' сохранена")
-        except Exception as e:
-            print(f"✗ Ошибка сохранения темы: {e}")
+        except Exception:
+            pass
 
     def get_selected_ponies_from_checkboxes(self):
         """Получает выбранных пони из чекбоксов"""
@@ -411,8 +382,6 @@ class DynamicPonySelector(QMainWindow):
 
     def init_ui(self):
         """Инициализация пользовательского интерфейса"""
-        print("Создание интерфейса...")
-
         # Настройки окна
         self.setWindowTitle("DPP2 - Pony Selector")
         self.setGeometry(100, 100, 520, 500)
@@ -475,8 +444,6 @@ class DynamicPonySelector(QMainWindow):
 
         # Создаем карточки
         self.create_cards()
-
-        print("✓ Интерфейс создан")
 
     def update_theme(self):
         """Обновляет цвета интерфейса"""
@@ -646,18 +613,13 @@ class DynamicPonySelector(QMainWindow):
 
     def show_options(self):
         """Показывает окно настроек"""
-        print("Открытие настроек...")
         dialog = OptionsDialog(self.current_theme_name, self.current_scale, self)
         dialog.theme_dropdown.theme_selected.connect(self.change_theme)
         dialog.apply_btn.clicked.connect(lambda: self.apply_scale_to_running(dialog.current_scale))
-
-        if dialog.exec():
-            print("Настройки сохранены")
+        dialog.exec()
 
     def change_theme(self, bg_color, card_color, text_color, theme_name):
         """Изменяет тему приложения"""
-        print(f"Изменение темы на: {theme_name}")
-
         self.current_bg = bg_color
         self.current_card_bg = card_color
         self.current_text_color = text_color
@@ -672,8 +634,6 @@ class DynamicPonySelector(QMainWindow):
 
     def apply_scale_to_running(self, scale):
         """Применяет масштаб к запущенным пони"""
-        print(f"Применение масштаба {int(scale * 100)}% к запущенным пони...")
-
         if self.running_processes:
             # Перезапускаем всех пони с новым масштабом
             running_ponies = list(self.running_processes.keys())
@@ -684,17 +644,12 @@ class DynamicPonySelector(QMainWindow):
                     try:
                         process, pid = self.running_processes[pony_name]
                         self.kill_process_tree(pid)
-                        print(f"Остановлен: {pony_name}")
                     except:
                         pass
 
             # Запускаем заново
             for pony_name in running_ponies:
                 self._start_via_subprocess(pony_name)
-
-            print("✓ Масштаб применен к запущенным пони")
-        else:
-            print("Нет запущенных пони")
 
     def launch_selected(self):
         """Запускает выбранных пони"""
@@ -705,16 +660,9 @@ class DynamicPonySelector(QMainWindow):
         selected_list = [name for name, selected in self.selected_ponies.items() if selected]
 
         if not selected_list:
-            print("✗ Не выбрано ни одного пони!")
-            print(f"Состояния: {self.selected_ponies}")
-
             # Показываем сообщение
             QMessageBox.warning(self, "Внимание", "Не выбрано ни одного пони!")
             return
-
-        print(f"Запуск пони: {', '.join(selected_list)}")
-        print(f"Всего выбрано: {len(selected_list)}")
-        print("Главное окно скрыто")
 
         # Сохраняем состояния перед запуском
         self.save_theme()
@@ -727,19 +675,14 @@ class DynamicPonySelector(QMainWindow):
         for pony_name in selected_list:
             self._start_via_subprocess(pony_name)
 
-        print(f"✓ Запущено {len(selected_list)} пони")
-
     def stop_all(self):
         """Останавливает всех запущенных пони"""
-        print("Остановка всех пони...")
-
         # Останавливаем процессы
         for pony_name, (process, pid) in list(self.running_processes.items()):
             try:
                 self.kill_process_tree(pid)
-                print(f"✓ Остановлен: {pony_name} (PID: {pid})")
-            except Exception as e:
-                print(f"✗ Ошибка остановки {pony_name}: {e}")
+            except Exception:
+                pass
 
         self.running_processes.clear()
         self.active_ponies_count = 0
@@ -748,9 +691,6 @@ class DynamicPonySelector(QMainWindow):
         if self.main_window_hidden:
             self.show()
             self.main_window_hidden = False
-            print("Главное окно показано")
-
-        print("✓ Все пони остановлены")
 
     def kill_process_tree(self, pid):
         """Убивает процесс и все его дочерние процессы"""
@@ -778,7 +718,6 @@ class DynamicPonySelector(QMainWindow):
             try:
                 # Проверяем, жив ли процесс
                 if process.poll() is not None:  # Процесс завершен
-                    print(f"🔄 {pony_name} завершился (returncode: {process.poll()})")
                     dead_processes.append(pony_name)
             except:
                 dead_processes.append(pony_name)
@@ -791,7 +730,6 @@ class DynamicPonySelector(QMainWindow):
 
         # Если все пони завершились - восстанавливаем окно
         if self.active_ponies_count == 0 and self.main_window_hidden:
-            print("🔄 Все пони завершили работу, восстанавливаю окно...")
             self._safe_restore_window()
 
     def _safe_restore_window(self):
@@ -801,7 +739,6 @@ class DynamicPonySelector(QMainWindow):
             self.main_window_hidden = False
             self.raise_()
             self.activateWindow()
-            print("✅ Окно восстановлено и активировано")
 
     def resizeEvent(self, event):
         """Обработчик изменения размера окна"""
@@ -810,14 +747,14 @@ class DynamicPonySelector(QMainWindow):
         self.create_cards()
 
     def _start_via_subprocess(self, pony_name):
-        """Запускает пони через subprocess (устойчиво к тому, что DPP2 может быть запущен из DPP2Launcher.exe)."""
+        """Запускает пони через subprocess"""
         try:
             import shutil
 
             # Папка, где лежит сам DPP2.py (предпочтительное место для поиска pony.py)
             current_dir = os.path.dirname(os.path.abspath(__file__))
 
-            # Если приложение упаковано PyInstaller onefile, р��сурсы могут быть в _MEIPASS
+            # Если приложение упаковано PyInstaller onefile, ресурсы могут быть в _MEIPASS
             meipass_dir = getattr(sys, '_MEIPASS', None)
 
             # Список папок для поиска pony.py (предпочтение: папка скрипта, MEIPASS, папка исполняемого)
@@ -849,7 +786,6 @@ class DynamicPonySelector(QMainWindow):
 
             if not pony_script:
                 # Ничего не найдено — предупреждаем пользователя и восстанавливаем окно
-                print(f"✗ Файл pony.py не найден. Проверяем папки: {search_dirs}")
                 QMessageBox.warning(self, "Ошибка",
                                     "Файл pony.py не найден рядом с DPP2.py или в папке запуска. Поместите pony.py рядом с DPP2.py.")
                 if self.active_ponies_count == 0 and self.main_window_hidden:
@@ -857,7 +793,6 @@ class DynamicPonySelector(QMainWindow):
                 return
 
             # Определяем, какой python-исполняемый использовать.
-            # Если sys.executable выглядит как python — используем его. Иначе ищем pythonw/python/python3 в PATH.
             sys_exe_basename = os.path.basename(sys.executable or "").lower()
             python_bin = None
 
@@ -868,7 +803,6 @@ class DynamicPonySelector(QMainWindow):
                 python_bin = shutil.which("pythonw") or shutil.which("python") or shutil.which("python3")
 
             if not python_bin:
-                print("✗ Не найден интерпретатор Python в окружении (pythonw/python/python3).")
                 QMessageBox.critical(self, "Ошибка",
                                      "Не найден Python для запуска pony.py. Установите Python или положите pony.exe рядом с приложением.")
                 if self.active_ponies_count == 0 and self.main_window_hidden:
@@ -876,15 +810,8 @@ class DynamicPonySelector(QMainWindow):
                 return
 
             cmd = [python_bin, pony_script, pony_name, str(self.current_scale)]
-            print(f"Команда: {cmd}")
 
-            # Подготовка лог-файла (stdout + stderr)
-            log_dir = current_dir
-            os.makedirs(log_dir, exist_ok=True)
-            logfile_path = os.path.join(log_dir, f"pony_{pony_name.replace(' ', '_')}_launch.log")
-            log_file = open(logfile_path, "ab")
-
-            # Запуск процесса: прячем консоль на Windows, на Unix создаём новую сессию
+            # Запуск процесса без записи логов в файлы
             process = None
             try:
                 if os.name == 'nt':
@@ -892,7 +819,6 @@ class DynamicPonySelector(QMainWindow):
                     try:
                         startupinfo = subprocess.STARTUPINFO()
                         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                        # По возможности используем CREATE_NO_WINDOW
                         creation_flags = getattr(subprocess, "CREATE_NO_WINDOW",
                                                  0) or subprocess.CREATE_NEW_PROCESS_GROUP
                     except Exception:
@@ -901,8 +827,8 @@ class DynamicPonySelector(QMainWindow):
 
                     process = subprocess.Popen(
                         cmd,
-                        stdout=log_file,
-                        stderr=log_file,
+                        stdout=subprocess.DEVNULL,  # Не пишем логи
+                        stderr=subprocess.DEVNULL,  # Не пишем логи
                         stdin=subprocess.DEVNULL,
                         cwd=current_dir,
                         startupinfo=startupinfo,
@@ -912,22 +838,13 @@ class DynamicPonySelector(QMainWindow):
                     # Unix-like
                     process = subprocess.Popen(
                         cmd,
-                        stdout=log_file,
-                        stderr=log_file,
+                        stdout=subprocess.DEVNULL,  # Не пишем логи
+                        stderr=subprocess.DEVNULL,  # Не пишем логи
                         stdin=subprocess.DEVNULL,
                         cwd=current_dir,
                         preexec_fn=os.setsid
                     )
             except Exception as e:
-                # Записать ошибку в лог и показать пользователю
-                try:
-                    errmsg = f"Ошибка запуска процесса: {e}\n".encode(errors='replace')
-                    log_file.write(errmsg)
-                    log_file.flush()
-                except Exception:
-                    pass
-                log_file.close()
-                print(f"✗ Ошибка ��апуска {pony_name}: {e}")
                 QMessageBox.critical(self, "Ошибка", f"Не удалось запустить pony.py:\n{e}")
                 if self.active_ponies_count == 0 and self.main_window_hidden:
                     QTimer.singleShot(100, self._safe_restore_window)
@@ -937,30 +854,14 @@ class DynamicPonySelector(QMainWindow):
             self.running_processes[pony_name] = (process, pid)
             self.active_ponies_count += 1
 
-            print(f"✅ {pony_name} запущен (PID: {pid}), лог: {logfile_path}")
-
-            # Монитор процесса: дождаться завершения, дописать в лог, закрыть лог и обновить состояния
-            def monitor_and_close(p_name, proc, lf):
+            # Монитор процесса без записи логов
+            def monitor_process(p_name, proc):
                 try:
-                    return_code = proc.wait()
-                    try:
-                        lf.write(f"\n--- Процесс завершился кодом {return_code} ---\n".encode(errors='replace'))
-                        lf.flush()
-                    except Exception:
-                        pass
-                except Exception as e:
-                    try:
-                        lf.write(f"\n--- Ошибка мониторинга: {e} ---\n".encode(errors='replace'))
-                        lf.flush()
-                    except Exception:
-                        pass
+                    proc.wait()
+                except Exception:
+                    pass
                 finally:
-                    try:
-                        lf.close()
-                    except Exception:
-                        pass
-
-                    # Обновляем структуры в GUI-потоке (небольшая защита от исключений)
+                    # Обновляем структуры в GUI-потоке
                     try:
                         if p_name in self.running_processes:
                             del self.running_processes[p_name]
@@ -970,52 +871,14 @@ class DynamicPonySelector(QMainWindow):
                     except Exception:
                         pass
 
-            threading.Thread(target=monitor_and_close, args=(pony_name, process, log_file), daemon=True).start()
+            threading.Thread(target=monitor_process, args=(pony_name, process), daemon=True).start()
 
-        except Exception as e:
-            print(f"✗ Критическая ошибка при запуске {pony_name}: {e}")
-            import traceback
-            traceback.print_exc()
+        except Exception:
             if self.active_ponies_count == 0 and self.main_window_hidden:
-                QTimer.singleShot(100, self._safe_restore_window)
-
-    def _monitor_single_process(self, pony_name, process):
-        """Мониторит один процесс пони"""
-        try:
-            # Ждем завершения процесса
-            return_code = process.wait(timeout=None)
-
-            print(f"🔄 {pony_name} завершил работу с кодом {return_code}")
-
-            # Удаляем из running_processes
-            if pony_name in self.running_processes:
-                del self.running_processes[pony_name]
-
-            self.active_ponies_count = max(0, self.active_ponies_count - 1)
-
-            # Проверяем, нужно ли восстановить окно
-            if (self.active_ponies_count == 0 and
-                    not self.running_processes and
-                    self.main_window_hidden):
-                print(f"🔄 Все пони завершили работу, восстанавливаю окно...")
-                QTimer.singleShot(100, self._safe_restore_window)
-
-        except subprocess.TimeoutExpired:
-            print(f"⚠️ {pony_name}: Таймаут ожидания")
-        except Exception as e:
-            print(f"❌ Ошибка мониторинга {pony_name}: {e}")
-            if pony_name in self.running_processes:
-                del self.running_processes[pony_name]
-            self.active_ponies_count = max(0, self.active_ponies_count - 1)
-
-            if (self.active_ponies_count == 0 and
-                    not self.running_processes and
-                    self.main_window_hidden):
                 QTimer.singleShot(100, self._safe_restore_window)
 
     def closeEvent(self, event):
         """Обработчик закрытия окна"""
-        print("Завершение программы...")
         self.should_exit = True
         self.restore_timer.stop()
 
@@ -1042,10 +905,7 @@ def main():
         # Запускаем цикл событий
         return app.exec()
 
-    except Exception as e:
-        print(f"✗ КРИТИЧЕСКАЯ ОШИБКА: {e}")
-        import traceback
-        traceback.print_exc()
+    except Exception:
         return 1
 
 
