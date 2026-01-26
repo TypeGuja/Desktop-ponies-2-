@@ -3,19 +3,19 @@
     "card_color": "#454545",
     "text_color": "white",
     "theme_name": "black",
-    "pony_scale": 0.9,
+    "pony_scale": 0.95,
     "selected_ponies": {
-        "Twilight Sparkle": false,
-        "Rainbow Dash": false,
-        "Pinkie Pie": false,
+        "Twilight Sparkle": true,
+        "Rainbow Dash": true,
+        "Pinkie Pie": true,
         "Apple Jack": true,
-        "Fluttershy": false,
-        "Rarity": false,
-        "Trixie": false,
-        "Starlight": false,
-        "Sunset": false,
-        "Cadance": false,
-        "Celestia": false,
-        "Luna": false
+        "Fluttershy": true,
+        "Rarity": true,
+        "Trixie": true,
+        "Starlight": true,
+        "Sunset": true,
+        "Cadance": true,
+        "Celestia": true,
+        "Luna": true
     }
 }
