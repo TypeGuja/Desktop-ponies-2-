@@ -6,9 +6,15 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/theme_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/animated_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/animated_character.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/character_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/character_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/animated_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/animated_character.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,7 +88,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.DPP2">
+  <component name="RunManager" selected="Python.main (1)">
     <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
@@ -195,11 +201,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.DPP2" />
         <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.Luna" />
         <item itemvalue="Python.DPP2Launcher" />
+        <item itemvalue="Python.main" />
+        <item itemvalue="Python.DPP2" />
+        <item itemvalue="Python.Luna" />
       </list>
     </recent_temporary>
   </component>

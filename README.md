@@ -12,3 +12,4 @@ This Python project was created by accident, the reasons for its appearance:
 3 The idea of multiplayer with server monitor capture (the idea was that my server's screen would be captured and the players 
 on it could do whatever they wanted, but in practice it turned out to be more difficult to do than I thought)
 
+build command with nuitka: python -m nuitka --standalone --windows-console-mode=disable --mingw64 --enable-plugin=pyside6 --enable-plugin=tk-inter --include-package=PIL --include-module=PIL.Image --include-module=PIL.ImageTk --include-module=PIL.ImageDraw --include-module=PIL.ImageFont --include-module=psutil --include-module=colorama --enable-plugin=numpy --include-package=pygame --output-filename="DPP2_v2.03.exe" DPP2Launcher.py   
