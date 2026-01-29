@@ -199,6 +199,12 @@ class OtherPlayer:
                     character_type = 'Rarity'
                 elif 'pinkie' in name_lower:
                     character_type = 'PinkiePie'
+                elif 'trixie' in name_lower:
+                    character_type = 'Trixie'
+                elif 'sunsetshimmer' in name_lower:
+                    character_type = 'SunsetShimmer'
+                elif 'starlightglimmer' in name_lower:
+                    character_type = 'StarlightGlimmer'
 
             print(f"[DEBUG] Инициализация анимации для: {character_name} (тип: {character_type})")
 
