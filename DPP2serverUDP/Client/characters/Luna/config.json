@@ -26,6 +26,10 @@
         "sleep_left": "none",
         "drag": "none"
     },
+    "special_animations": {
+    "flight_right": ["./Luna_Gifct/luna-flight-right.gif","true/Ymove","0.05"],
+    "flight_left": ["./Luna_Gifct/luna-flight-left.gif","true/Ymove","0.05"]
+    },
     "sleep_enabled": false,
     "menu_bg_color": "#2d2d2d",
     "menu_fg_color": "#ffffff",

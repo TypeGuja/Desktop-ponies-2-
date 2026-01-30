@@ -27,22 +27,8 @@
       "drag": "./AppleJack_Gifct/drag-aj/aj-drag-left.gif"
     },
     "special_animations": {
-    "lasso_left_seq": [
-        "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
-        "./AppleJack_Gifct/lasso-aj/lasso2_left.gif",
-        "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
-        "./AppleJack_Gifct/pose-aj/aj_pose_left.gif",
-        "false",
-        "0.01"
-    ],
-    "lasso_right_seq": [
-        "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
-        "./AppleJack_Gifct/lasso-aj/lasso2_right.gif",
-        "./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif",
-        "./AppleJack_Gifct/pose-aj/aj_pose_right.gif",
-        "false",
-        "0.01"
-    ]
+    "lasso_left_seq": ["./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif","./AppleJack_Gifct/lasso-aj/lasso2_left.gif","./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif","./AppleJack_Gifct/pose-aj/aj_pose_left.gif","false","0.01"],
+    "lasso_right_seq": ["./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif","./AppleJack_Gifct/lasso-aj/lasso2_right.gif","./AppleJack_Gifct/lasso-aj/aj_lasso_right.gif","./AppleJack_Gifct/pose-aj/aj_pose_right.gif","false","0.01"]
 },
     "sleep_enabled": true,
     "menu_bg_color": "#2d2d2d",
