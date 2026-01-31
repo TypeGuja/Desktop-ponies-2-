@@ -8,7 +8,7 @@ import os
 import random
 import threading
 import time
-import json
+import json # приписать длительность анимации
 
 # ------------------------------------------------------------
 # ====  UniversalPony  =======================================
