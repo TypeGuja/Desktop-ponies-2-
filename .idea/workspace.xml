@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="" />
+    <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/theme_config.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -77,7 +81,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main (1)">
+  <component name="RunManager" selected="Python.DPP2">
     <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
@@ -190,10 +194,10 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.DPP2" />
         <item itemvalue="Python.main (1)" />
         <item itemvalue="Python.DPP2Launcher" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.DPP2" />
         <item itemvalue="Python.Luna" />
       </list>
     </recent_temporary>
@@ -235,6 +239,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/DPP2.py</url>
+          <line>19</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>
