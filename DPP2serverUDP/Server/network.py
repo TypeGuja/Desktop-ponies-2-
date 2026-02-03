@@ -1,10 +1,11 @@
 import socket
 import threading
-import json
 import time
 import select
 from datetime import datetime
-from typing import Dict, Tuple, Optional, Any
+from typing import Dict, Tuple, Optional
+
+from DPP2serverUDP import toon
 
 
 class UDPClientConnection:
@@ -72,6 +73,9 @@ class UDPServer:
         self.send_thread = None
         self.cleanup_thread = None
 
+    # ------------------------------------------------------------------
+    #   Запуск / остановка
+    # ------------------------------------------------------------------
     def start(self):
         """Запуск UDP сервера"""
         try:
@@ -102,7 +106,8 @@ class UDPServer:
         ]
 
         for target, name in threads:
-            thread = threading.Thread(target=target, daemon=True, name=f"UDP_{name}")
+            thread = threading.Thread(target=target, daemon=True,
+                                      name=f"UDP_{name}")
             thread.start()
             setattr(self, f"{name}_thread", thread)
 
@@ -110,7 +115,7 @@ class UDPServer:
         """Остановка сервера"""
         self.running = False
 
-        # Отправляем сообщения о выходе
+        # Сообщаем всем клиентам о завершении
         disconnect_msg = {
             'type': 'server_shutdown',
             'message': 'Сервер выключается',
@@ -125,8 +130,11 @@ class UDPServer:
 
         print(f"[UDP SERVER] Сервер остановлен")
 
+    # ------------------------------------------------------------------
+    #   Приём
+    # ------------------------------------------------------------------
     def receive_loop(self):
-        """Цикл приема UDP пакетов"""
+        """Цикл приёма UDP пакетов"""
         print(f"[UDP SERVER] Цикл приема запущен")
 
         while self.running:
@@ -139,7 +147,7 @@ class UDPServer:
                     print(f"[UDP SERVER] Ошибка в цикле приема: {e}")
 
     def _receive_packet(self):
-        """Прием и обработка одного пакета"""
+        """Приём и обработка одного пакета"""
         try:
             data, address = self.socket.recvfrom(self.max_packet_size)
             if data:
@@ -152,11 +160,8 @@ class UDPServer:
     def _process_packet_data(self, data: bytes, address: Tuple[str, int]):
         """Обработка данных пакета"""
         try:
-            json_str = data.decode('utf-8', errors='ignore').strip()
-            if not json_str:
-                return
-
-            message = json.loads(json_str)
+            # Десериализуем бинарный пакет → dict
+            message = toon.decode(data)
             message['client_address'] = address
 
             client = self.get_or_create_client(address)
@@ -167,16 +172,16 @@ class UDPServer:
                 with self.queue_lock:
                     self.incoming_queue.append(message)
 
-                # Логирование (только для отладки)
                 msg_type = message.get('type', 'unknown')
-                if msg_type not in ['heartbeat', 'ping']:
+                if msg_type not in ('heartbeat', 'ping'):
                     print(f"[UDP SERVER] Получено от {client.id}: {msg_type}")
 
-        except json.JSONDecodeError:
-            print(f"[UDP SERVER] Неверный JSON от {address}")
         except Exception as e:
-            print(f"[UDP SERVER] Ошибка обработки пакета: {e}")
+            print(f"[UDP SERVER] Ошибка обработки пакета от {address}: {e}")
 
+    # ------------------------------------------------------------------
+    #   Отправка
+    # ------------------------------------------------------------------
     def send_loop(self):
         """Цикл отправки UDP пакетов"""
         print(f"[UDP SERVER] Цикл отправки запущен")
@@ -195,8 +200,7 @@ class UDPServer:
     def _send_packet(self, address: Tuple[str, int], data: dict):
         """Отправка одного пакета"""
         try:
-            json_str = json.dumps(data, ensure_ascii=False)
-            packet = json_str.encode('utf-8')
+            packet = toon.encode(data)               # <-- бинарная сериализация
 
             if len(packet) > self.max_packet_size:
                 print(f"[UDP SERVER] Пакет слишком большой: {len(packet)} байт")
@@ -207,6 +211,9 @@ class UDPServer:
         except Exception as e:
             print(f"[UDP SERVER] Ошибка отправки: {e}")
 
+    # ------------------------------------------------------------------
+    #   Очистка неактивных клиентов
+    # ------------------------------------------------------------------
     def cleanup_loop(self):
         """Цикл очистки неактивных клиентов"""
         while self.running:
@@ -228,10 +235,13 @@ class UDPServer:
 
         for address, client in clients_to_remove:
             self.remove_client_by_address(address)
-            print(f"[UDP SERVER] Клиент удален по таймауту: {client}")
+            print(f"[UDP SERVER] Клиент удалён по таймауту: {client}")
 
+    # ------------------------------------------------------------------
+    #   Управление клиентами
+    # ------------------------------------------------------------------
     def get_or_create_client(self, address: Tuple[str, int]) -> Optional[UDPClientConnection]:
-        """Получение или создание клиента"""
+        """Получить существующего клиента или создать нового."""
         if address in self.clients:
             return self.clients[address]
 
@@ -248,7 +258,7 @@ class UDPServer:
 
         print(f"[UDP SERVER] Новый клиент: {client}")
 
-        # Отправляем приветственное сообщение
+        # Приветственное сообщение
         self.send_to_address(address, {
             'type': 'welcome',
             'client_id': client_id,
@@ -261,7 +271,7 @@ class UDPServer:
             }
         })
 
-        # Добавляем событие подключения
+        # Сообщаем ядру о подключении
         self.add_to_incoming_queue({
             'type': 'client_connected',
             'client_id': client_id,
@@ -271,14 +281,16 @@ class UDPServer:
 
         return client
 
-    # Вспомогательные методы (без изменений)
+    # ------------------------------------------------------------------
+    #   Очереди (API)
+    # ------------------------------------------------------------------
     def send_to_address(self, address: Tuple[str, int], data: dict):
-        """Отправка данных на конкретный адрес"""
+        """Отправка данных на конкретный адрес (в очередь)."""
         with self.queue_lock:
             self.outgoing_queue.append((address, data))
 
     def send_to_client(self, client_id: int, data: dict):
-        """Отправка данных клиенту по ID"""
+        """Отправка данных клиенту по ID."""
         client = self.clients_by_id.get(client_id)
         if client:
             self.send_to_address(client.address, data)
@@ -286,26 +298,26 @@ class UDPServer:
         return False
 
     def broadcast(self, data: dict, exclude_client_id: int = None):
-        """Широковещательная рассылка"""
+        """Широковещательная рассылка."""
         for client_id, client in self.clients_by_id.items():
             if exclude_client_id and client_id == exclude_client_id:
                 continue
             self.send_to_address(client.address, data)
 
     def get_messages(self):
-        """Получение всех сообщений из очереди"""
+        """Получить все сообщения из входящей очереди."""
         with self.queue_lock:
-            messages = self.incoming_queue.copy()
+            msgs = self.incoming_queue.copy()
             self.incoming_queue.clear()
-            return messages
+            return msgs
 
     def add_to_incoming_queue(self, message: dict):
-        """Добавление сообщения во входящую очередь"""
+        """Добавить сообщение во входящую очередь."""
         with self.queue_lock:
             self.incoming_queue.append(message)
 
     def remove_client_by_address(self, address: Tuple[str, int]):
-        """Удаление клиента по адресу"""
+        """Удалить клиента по адресу."""
         if address in self.clients:
             client = self.clients.pop(address)
 
@@ -320,16 +332,18 @@ class UDPServer:
                 'timestamp': time.time()
             })
 
-            print(f"[UDP SERVER] Клиент удален: {client}")
+            print(f"[UDP SERVER] Клиент удалён: {client}")
 
     def remove_client_by_id(self, client_id: int):
-        """Удаление клиента по ID"""
+        """Удалить клиента по ID."""
         client = self.clients_by_id.get(client_id)
         if client:
             self.remove_client_by_address(client.address)
 
+    # ------------------------------------------------------------------
+    #   Информация о клиентах / статистика
+    # ------------------------------------------------------------------
     def get_client_info(self, client_id: int):
-        """Получение информации о клиенте"""
         client = self.clients_by_id.get(client_id)
         if client:
             return {
@@ -345,29 +359,18 @@ class UDPServer:
         return None
 
     def get_all_clients_info(self):
-        """Получение информации обо всех клиентах"""
-        return [{
-            'id': client.id,
-            'address': client.address,
-            'username': client.username,
-            'authenticated': client.authenticated,
-            'in_world': client.in_world,
-            'character_id': client.character_id,
-            'last_activity': client.last_activity,
-            'ping': client.ping
-        } for client in self.clients.values()]
+        return [self.get_client_info(c.id) for c in self.clients.values()]
 
     def update_client_data(self, client_id: int, updates: dict):
-        """Обновление данных клиента"""
         client = self.clients_by_id.get(client_id)
         if client:
-            for key, value in updates.items():
-                setattr(client, key, value)
+            for k, v in updates.items():
+                setattr(client, k, v)
             return True
         return False
 
     def get_stats(self):
-        """Получение статистики сервера"""
+        """Получить базовую статистику UDP‑сервера."""
         return {
             'running': self.running,
             'clients_count': len(self.clients),
@@ -375,5 +378,5 @@ class UDPServer:
             'packets_sent': self.packets_sent,
             'packet_loss': self.packet_loss,
             'max_clients': self.max_clients,
-            'uptime': time.time() - (getattr(self, 'start_time', time.time()))
+            'uptime': time.time() - getattr(self, 'start_time', time.time())
         }

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 DPP2 UDP Server GUI – PySide6 version (fixed layout, colours and missing theme).
@@ -145,6 +145,14 @@ class GifctConfigDialog(QDialog):
         self.desc_edit = QLineEdit(gifct_data.get("description", "") if gifct_data else "")
         layout.addWidget(self.desc_edit)
 
+        # ----- GIF Directories --------------------------------------
+        layout.addWidget(QLabel("GIF Directories (one per line):"))
+        self.dirs_edit = QTextEdit()
+        if gifct_data and "gif_directories" in gifct_data:
+            self.dirs_edit.setPlainText("\n".join(gifct_data["gif_directories"]))
+        self.dirs_edit.setMaximumHeight(100)
+        layout.addWidget(self.dirs_edit)
+
         # ----- Type (radio buttons) --------------------------------
         layout.addWidget(QLabel("Type:"))
         self.type_group = QButtonGroup(self)
@@ -199,6 +207,10 @@ class GifctConfigDialog(QDialog):
                                  f"Parameters must be valid JSON:\n{exc}")
             return
 
+        # Process GIF directories
+        dirs_text = self.dirs_edit.toPlainText().strip()
+        gif_directories = [d.strip() for d in dirs_text.split('\n') if d.strip()]
+
         typ = next((t for t, rb in
                     [(b.text().lower(), b) for b in self.type_group.buttons()]
                     if rb.isChecked()), "ability")
@@ -207,6 +219,7 @@ class GifctConfigDialog(QDialog):
             "name": self.name_edit.text(),
             "id": self.id_edit.text(),
             "description": self.desc_edit.text(),
+            "gif_directories": gif_directories,
             "type": typ,
             "parameters": params,
             "enabled": self.enabled_chk.isChecked(),
@@ -370,10 +383,10 @@ class ServerGUI(QMainWindow):
                 "sidebar_active": "#595959",  # Серый
                 "sidebar_hover": "#404040",  # Темный серый
                 "sidebar_text": "#e6e6e6",  # Светлый
-                "sidebar_active_text": "#000000",  # Белый
+                "sidebar_active_text": "#ffffff",  # Белый
                 "sidebar_icon": "#cccccc",  # Серый
                 "text": "#000000",  # ЧЕРНЫЙ для максимального контраста
-                "text_secondary": "#000000",  # Темно-серый
+                "text_secondary": "#666666",  # Темно-серый
                 "accent": "#0066cc",  # Синий
                 "accent_light": "#007acc",
                 "success": "#267326",  # Зеленый
@@ -1754,32 +1767,163 @@ class ServerGUI(QMainWindow):
             QMessageBox.critical(self, "UDP Test Failed", error_msg)
 
     # ------------------------------------------------------------------
-    #   Other missing methods (placeholders for functionality)
+    #   GIFCT functionality with directory support
     # ------------------------------------------------------------------
     def add_gifct(self):
-        """Add a new GIFCT configuration."""
-        self._log("➕ Opening GIFCT configuration dialog...", "GIFCT")
-        # TODO: Implement full GIFCT dialog functionality
-        QMessageBox.information(self, "GIFCT", "Add GIFCT functionality coming soon")
+        """Add a new GIFCT configuration with directory selection."""
+        try:
+            dialog = GifctConfigDialog(self, title="Add New GIFCT", colors=self.colors)
+            if dialog.exec() == QDialog.Accepted and dialog.result:
+                gifct_data = dialog.result
+                gifct_id = gifct_data["id"]
+
+                # Save to config
+                self.config["gifct_configurations"][gifct_id] = gifct_data
+                self._save_config()
+
+                # Reload list
+                self.load_gifct_list()
+
+                self._log(f"✅ Added new GIFCT: {gifct_data['name']}", "GIFCT")
+
+                # Show confirmation
+                dirs_count = len(gifct_data.get("gif_directories", []))
+                QMessageBox.information(self, "GIFCT Added",
+                                        f"GIFCT '{gifct_data['name']}' created successfully!\n"
+                                        f"Directories added: {dirs_count}")
+
+        except Exception as e:
+            self._log(f"❌ Error adding GIFCT: {e}", "ERROR")
+            QMessageBox.critical(self, "Error", f"Failed to add GIFCT: {e}")
+
+    def edit_gifct(self, gifct_id: str):
+        """Edit an existing GIFCT configuration."""
+        try:
+            if gifct_id not in self.config["gifct_configurations"]:
+                self._log(f"❌ GIFCT not found: {gifct_id}", "ERROR")
+                return
+
+            gifct_data = self.config["gifct_configurations"][gifct_id]
+            dialog = GifctConfigDialog(self, title=f"Edit GIFCT: {gifct_data['name']}",
+                                       gifct_data=gifct_data, colors=self.colors)
+
+            if dialog.exec() == QDialog.Accepted and dialog.result:
+                updated_data = dialog.result
+                self.config["gifct_configurations"][gifct_id] = updated_data
+                self._save_config()
+                self.load_gifct_list()
+                self._log(f"✅ Updated GIFCT: {updated_data['name']}", "GIFCT")
+
+        except Exception as e:
+            self._log(f"❌ Error editing GIFCT: {e}", "ERROR")
+
+    def delete_gifct(self, gifct_id: str):
+        """Delete a GIFCT configuration."""
+        try:
+            if gifct_id not in self.config["gifct_configurations"]:
+                return
+
+            gifct_name = self.config["gifct_configurations"][gifct_id]["name"]
+            reply = QMessageBox.question(self, "Delete GIFCT",
+                                         f"Are you sure you want to delete '{gifct_name}'?",
+                                         QMessageBox.Yes | QMessageBox.No)
+
+            if reply == QMessageBox.Yes:
+                del self.config["gifct_configurations"][gifct_id]
+                self._save_config()
+                self.load_gifct_list()
+                self._log(f"🗑️ Deleted GIFCT: {gifct_name}", "GIFCT")
+
+        except Exception as e:
+            self._log(f"❌ Error deleting GIFCT: {e}", "ERROR")
+
+    def toggle_gifct(self, gifct_id: str):
+        """Toggle GIFCT enabled/disabled state."""
+        try:
+            if gifct_id not in self.config["gifct_configurations"]:
+                return
+
+            gifct_data = self.config["gifct_configurations"][gifct_id]
+            gifct_data["enabled"] = not gifct_data.get("enabled", True)
+            self.config["gifct_configurations"][gifct_id] = gifct_data
+            self._save_config()
+
+            status = "enabled" if gifct_data["enabled"] else "disabled"
+            self._log(f"🔄 GIFCT {gifct_data['name']} {status}", "GIFCT")
+
+        except Exception as e:
+            self._log(f"❌ Error toggling GIFCT: {e}", "ERROR")
+
+    def load_gifct_list(self):
+        """Load and display the GIFCT configurations list."""
+        try:
+            # Clear existing items
+            while self.gifct_list_layout.count() > 1:  # Keep the stretch
+                item = self.gifct_list_layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+
+            # Add GIFCT items
+            for gifct_id, gifct_data in self.config["gifct_configurations"].items():
+                item = GifctListItem(gifct_id, gifct_data,
+                                     self.edit_gifct, self.delete_gifct, self.toggle_gifct)
+                self.gifct_list_layout.insertWidget(self.gifct_list_layout.count() - 1, item)
+
+            self._log(f"📋 Loaded {len(self.config['gifct_configurations'])} GIFCT configurations", "GIFCT")
+
+        except Exception as e:
+            self._log(f"❌ Error loading GIFCT list: {e}", "ERROR")
 
     def save_gifct_settings(self):
         """Save GIFCT settings."""
-        self._log("💾 Saving GIFCT settings...", "GIFCT")
-        # TODO: Implement GIFCT settings saving
-        QMessageBox.information(self, "GIFCT", "GIFCT settings saved")
+        try:
+            # Save basic GIFCT settings
+            self.config["gifct_settings"]["gifct_enabled"]["Gifct1"] = self.gifct1_enabled.isChecked()
+            self.config["gifct_settings"]["gifct_enabled"]["Gifct2"] = self.gifct2_enabled.isChecked()
+            self.config["gifct_settings"]["gifct_configs"]["Gifct1"] = self.gifct1_name.text()
+            self.config["gifct_settings"]["gifct_configs"]["Gifct2"] = self.gifct2_name.text()
+
+            self._save_config()
+            self._log("💾 GIFCT settings saved", "GIFCT")
+            QMessageBox.information(self, "GIFCT", "GIFCT settings saved successfully")
+
+        except Exception as e:
+            self._log(f"❌ Error saving GIFCT settings: {e}", "ERROR")
+            QMessageBox.critical(self, "Error", f"Failed to save GIFCT settings: {e}")
 
     def reset_gifct_settings(self):
         """Reset GIFCT settings to default."""
-        self._log("🔄 Resetting GIFCT settings...", "GIFCT")
-        # TODO: Implement GIFCT settings reset
-        QMessageBox.information(self, "GIFCT", "GIFCT settings reset")
+        try:
+            reply = QMessageBox.question(self, "Reset GIFCT Settings",
+                                         "Are you sure you want to reset all GIFCT settings to default?",
+                                         QMessageBox.Yes | QMessageBox.No)
 
-    def load_gifct_list(self):
-        """Load GIFCT list from configuration."""
-        self._log("📋 Loading GIFCT list...", "GIFCT")
-        # TODO: Implement GIFCT list loading
-        pass
+            if reply == QMessageBox.Yes:
+                # Reset to default configuration
+                self.config["gifct_settings"] = {
+                    "gifct_enabled": {"Gifct1": True, "Gifct2": True},
+                    "gifct_configs": {"Gifct1": "Primary Ability", "Gifct2": "Secondary Ability"}
+                }
+                self.config["gifct_configurations"] = {}
 
+                self._save_config()
+                self.load_gifct_list()
+
+                # Update UI
+                self.gifct1_enabled.setChecked(True)
+                self.gifct2_enabled.setChecked(True)
+                self.gifct1_name.setText("Primary Ability")
+                self.gifct2_name.setText("Secondary Ability")
+
+                self._log("🔄 GIFCT settings reset to default", "GIFCT")
+                QMessageBox.information(self, "GIFCT", "GIFCT settings reset successfully")
+
+        except Exception as e:
+            self._log(f"❌ Error resetting GIFCT settings: {e}", "ERROR")
+
+    # ------------------------------------------------------------------
+    #   Log management methods
+    # ------------------------------------------------------------------
     def clear_logs(self):
         """Clear the log display."""
         self.log_text.clear()
