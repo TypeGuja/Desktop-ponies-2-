@@ -5,22 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/toon.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/animated_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/animated_character.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/character_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/character_manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/network_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/network_client.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/client_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/client_example.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/gui_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/gui_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/network.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/network.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/client_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/client_example.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/gui_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/gui_controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/network.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/network.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +46,9 @@
     &quot;accountId&quot;: &quot;1eb40712-4b2d-44ac-bd24-5fa14e340f65&quot;
   }
 }</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 5
 }</component>
@@ -86,6 +81,7 @@
     "git-widget-placeholder": "dungeon",
     "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/characters",
     "nodejs_package_manager_path": "npm",
+    "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
   }
