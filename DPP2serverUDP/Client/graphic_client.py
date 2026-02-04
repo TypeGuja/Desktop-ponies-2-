@@ -10,14 +10,19 @@ import time
 import uuid
 import math
 import queue
-from enum import Enum
-from datetime import datetime
+from enum import Enum #сделать маштабирование транслируемого мира
+from datetime import datetime #вернуть анимации в меню выбора
 
 # ----------------------------------------------------------------------
 #   Локальные модули
 # ----------------------------------------------------------------------
 from animated_character import AnimatedCharacter, CharacterSelector
 
+# ----------------------------------------------------------------------
+#   Доп. зависимости для видеострима
+# ----------------------------------------------------------------------
+import base64
+import io                     # <-- загружаем JPEG‑данные в память
 
 # ----------------------------------------------------------------------
 #   Состояния игры
@@ -165,117 +170,75 @@ class OtherPlayer:
         self.is_active = True
         self.is_moving = False
 
-        # анимация персонажа
+        # анимация персонажа – будем пытаться загрузить настоящие GIF‑кадры
         self.animation = None
         self.init_animation(player_data)
 
         print(f"[DEBUG] Created player {self.name} ({self.character_type})")
 
     # --------------------------------------------------------------
-    #   Инициализация/перезагрузка анимации
+    #   Инициализация/перезагрузка анимации (без заглушки)
     # --------------------------------------------------------------
     def init_animation(self, player_data):
+        """
+        Пытаемся загрузить реальную анимацию из папки assets.
+        Если загрузка не удалась – оставляем ``self.animation = None`` и
+        будем показывать простую заглушку в процессе рендеринга.
+        """
         try:
-            character_type = player_data.get('character_type', 'default')
-            character_name = player_data.get('name', 'Player')
+            # Собираем минимальный набор данных, который понимает AnimatedCharacter
+            char_data = {
+                'name': player_data.get('name', 'Player'),
+                'character_type': player_data.get('character_type', 'default')
+            }
 
-            # если тип «default», пытаемся вывести его из имени
-            if character_type == 'default':
-                low = character_name.lower()
+            # Если в данных уже указан путь к готовым спрайтам – передаём его
+            if 'assets_path' in player_data:
+                char_data['assets_path'] = player_data['assets_path']
+
+            # Автоматическое определение типа из имени, если тип «default»
+            if char_data['character_type'] == 'default':
+                low = char_data['name'].lower()
                 if 'celestia' in low:
-                    character_type = 'Celestia'
+                    char_data['character_type'] = 'Celestia'
                 elif 'luna' in low:
-                    character_type = 'Luna'
+                    char_data['character_type'] = 'Luna'
                 elif 'cadance' in low or 'cadence' in low:
-                    character_type = 'Cadance'
+                    char_data['character_type'] = 'Cadance'
                 elif 'twilight' in low:
-                    character_type = 'TwilightSparkle'
+                    char_data['character_type'] = 'TwilightSparkle'
                 elif 'apple' in low:
-                    character_type = 'AppleJack'
+                    char_data['character_type'] = 'AppleJack'
                 elif 'rainbow' in low:
-                    character_type = 'RainbowDash'
+                    char_data['character_type'] = 'RainbowDash'
                 elif 'fluttershy' in low:
-                    character_type = 'Fluttershy'
+                    char_data['character_type'] = 'Fluttershy'
                 elif 'rarity' in low:
-                    character_type = 'Rarity'
+                    char_data['character_type'] = 'Rarity'
                 elif 'pinkie' in low:
-                    character_type = 'PinkiePie'
+                    char_data['character_type'] = 'PinkiePie'
                 elif 'trixie' in low:
-                    character_type = 'Trixie'
+                    char_data['character_type'] = 'Trixie'
                 elif 'sunsetshimmer' in low:
-                    character_type = 'SunsetShimmer'
+                    char_data['character_type'] = 'SunsetShimmer'
                 elif 'starlightglimmer' in low:
-                    character_type = 'StarlightGlimmer'
+                    char_data['character_type'] = 'StarlightGlimmer'
 
-            print(f"[DEBUG] Init animation for {character_name} ({character_type})")
-
-            char_data = {'name': character_name, 'character_type': character_type}
             self.animation = AnimatedCharacter(char_data)
 
             if self.animation.load_animations():
                 self.animation.set_animation("idle")
-                print(f"[DEBUG] ✓ Animation loaded for {character_type}")
+                print(f"[DEBUG] ✓ Animation loaded for {char_data['character_type']}")
                 return True
 
-            # если анимаций нет – подменяем их заглушкой
-            print(f"[DEBUG] ✗ No animation for {character_type}, using stub")
-            self.animation = self.create_stub_animation(character_type)
+            # Если анимаций нет – ставим ``None`` (будет заглушка в рендере)
+            print(f"[DEBUG] ✗ No animation for {char_data['character_type']}")
+            self.animation = None
             return False
         except Exception as e:
-            print(f"[ERROR] Animation init error: {e}")
-            self.animation = self.create_stub_animation('default')
+            print(f"[ERROR] Animation init error for player {self.name}: {e}")
+            self.animation = None
             return False
-
-    # --------------------------------------------------------------
-    #   Простейшая заглушка (круг + первая буква типа)
-    # --------------------------------------------------------------
-    def create_stub_animation(self, char_type):
-        class StubAnimation:
-            def __init__(self, ct):
-                self.char_type = ct
-                self.current_animation = "idle"
-                self.current_direction = "right"
-
-            def set_animation(self, anim):
-                self.current_animation = anim
-                return True
-
-            def set_direction(self, dr):
-                self.current_direction = dr
-                return True
-
-            def update(self):
-                pass
-
-            def draw(self, surface, position, scale=1.0):
-                # цветовая карта по типу
-                color_map = {
-                    'Celestia': (255, 215, 0),
-                    'Luna': (138, 43, 226),
-                    'Cadance': (255, 182, 193),
-                    'TwilightSparkle': (147, 112, 219),
-                    'AppleJack': (255, 165, 0),
-                    'RainbowDash': (0, 191, 255),
-                    'Fluttershy': (255, 255, 0),
-                    'Rarity': (192, 192, 192),
-                    'PinkiePie': (255, 105, 180),
-                    'default': (200, 100, 100)
-                }
-                color = color_map.get(self.char_type, color_map['default'])
-                radius = int(25 * scale)
-                pygame.draw.circle(surface, color,
-                                   (int(position[0]), int(position[1])),
-                                   radius)
-
-                try:
-                    font = pygame.font.Font(None, int(20 * scale))
-                    txt = font.render(self.char_type[0] if self.char_type else "?", True, (255, 255, 255))
-                    rect = txt.get_rect(center=(int(position[0]), int(position[1])))
-                    surface.blit(txt, rect)
-                except Exception:
-                    pass
-
-        return StubAnimation(char_type)
 
     # --------------------------------------------------------------
     #   Обновление позиции от сервера
@@ -312,16 +275,19 @@ class OtherPlayer:
                     direction = "down" if dy > 0 else "up"
 
                 if direction != self.last_direction:
-                    self.animation.set_direction(direction)
+                    if self.animation:
+                        self.animation.set_direction(direction)
                     self.last_direction = direction
 
-                if self.animation.current_animation != "walk":
+                if self.animation and self.animation.current_animation != "walk":
                     self.animation.set_animation("walk")
             else:
-                if self.animation.current_animation != "idle":
+                if self.animation and self.animation.current_animation != "idle":
                     self.animation.set_animation("idle")
 
-            self.animation.update()
+            # Обновляем анимацию каждый кадр (даже если персонаж стоит – анимация может иметь idle‑циклы)
+            if self.animation:
+                self.animation.update()
             self.last_animation_update = now
 
     def get_position(self):
@@ -532,9 +498,14 @@ class DPP2GraphicClient:
         self.stop_network_thread = False
         self.network_thread = None
 
-    # --------------------------------------------------------------
+        # ---------- фон из видеострима ----------
+        self.world_background = None          # pygame.Surface
+        self._screen_frames = {}               # frame_id -> {"chunks":{}, "total":int, "timestamp":float}
+        self._screen_lock = threading.Lock()
+
+    # ------------------------------------------------------------------
     #   Вспомогательные функции
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def load_color_scheme(self):
         scheme = self.config.get_color_scheme(self.current_theme)
         self.colors = {
@@ -591,9 +562,9 @@ class DPP2GraphicClient:
             'tiny': tiny
         }
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   UI‑инициализация (поля ввода, кнопки, темы)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def init_ui(self):
         side_panel_x = self.width - self.side_panel_width
 
@@ -723,16 +694,16 @@ class DPP2GraphicClient:
                 'selected': key == self.current_theme
             })
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Сетевой поток
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def start_network_thread(self):
         if self.network_thread and self.network_thread.is_alive():
             self.stop_network_thread = True
             self.network_thread.join(timeout=1.0)
 
         self.stop_network_thread = False
-        self.network_thread = threading.Thread(target=self.network_loop, daemon=True)
+        self.network_thread = threading.Thread(target=self.network_loop, daemon=True, name="NetworkThread")
         self.network_thread.start()
 
     def network_loop(self):
@@ -763,9 +734,9 @@ class DPP2GraphicClient:
         except queue.Empty:
             pass
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Главный цикл
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def run(self):
         while self.running:
             self.handle_events()
@@ -786,9 +757,9 @@ class DPP2GraphicClient:
         if self.network and self.network.is_connected():
             self.network.disconnect()
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Обработка событий
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -804,16 +775,14 @@ class DPP2GraphicClient:
             elif event.type == pygame.TEXTINPUT:
                 self.handle_text_input(event.text)
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Клавиатура
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def handle_keydown(self, event):
         if event.key in self.keys:
             self.keys[event.key] = True
 
-        # ----------------------------------------------------------
-        #   Если открыт селектор персонажа – только навигация
-        # ----------------------------------------------------------
+        # Если открыт селектор персонажа – только навигация
         if self.show_character_select:
             if event.key == pygame.K_LEFT:
                 self.character_selector.prev_character()
@@ -827,9 +796,7 @@ class DPP2GraphicClient:
                 self.add_chat_message("[SYSTEM] Character selection canceled")
             return
 
-        # ----------------------------------------------------------
-        #   ESC – открыть/закрыть меню
-        # ----------------------------------------------------------
+        # ESC – открыть/закрыть меню
         if event.key == pygame.K_ESCAPE:
             if self.show_settings_menu:
                 self.close_settings()
@@ -841,15 +808,11 @@ class DPP2GraphicClient:
                 self.chat_active = False
                 self.chat_input = ""
 
-        # ----------------------------------------------------------
-        #   F1 – переключить UI
-        # ----------------------------------------------------------
+        # F1 – переключить UI
         elif event.key == pygame.K_F1:
             self.toggle_ui_visibility()
 
-        # ----------------------------------------------------------
-        #   ENTER – отправка чата / подтверждение ввода
-        # ----------------------------------------------------------
+        # ENTER – отправка чата / подтверждение ввода
         elif event.key == pygame.K_RETURN:
             if self.chat_active:
                 self.send_chat_message()
@@ -863,9 +826,7 @@ class DPP2GraphicClient:
             elif self.in_world and not self.show_esc_menu and not self.show_settings_menu and not self.show_character_select:
                 self.chat_active = True
 
-        # ----------------------------------------------------------
-        #   BACKSPACE – удаляем символ из ввода
-        # ----------------------------------------------------------
+        # BACKSPACE – удаляем символ из ввода
         elif event.key == pygame.K_BACKSPACE:
             if self.chat_active:
                 self.chat_input = self.chat_input[:-1]
@@ -875,24 +836,18 @@ class DPP2GraphicClient:
                 if field['text']:
                     field['text'] = field['text'][:-1]
 
-        # ----------------------------------------------------------
-        #   TAB – переключение полей ввода
-        # ----------------------------------------------------------
+        # TAB – переключение полей ввода
         elif event.key == pygame.K_TAB and not self.show_esc_menu \
              and not self.show_settings_menu and not self.show_character_select:
             self.switch_input_field()
 
-        # ----------------------------------------------------------
-        #   Масштабирование камеры
-        # ----------------------------------------------------------
+        # Масштабирование камеры
         elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
             self.camera.zoom_in()
         elif event.key == pygame.K_MINUS:
             self.camera.zoom_out()
 
-        # ----------------------------------------------------------
-        #   Тестовые клавиши анимаций
-        # ----------------------------------------------------------
+        # Тестовые клавиши анимаций
         elif event.key == pygame.K_j and self.in_world and self.player_animation:
             self.set_player_animation("jump")
         elif event.key == pygame.K_k and self.in_world and self.player_animation:
@@ -904,9 +859,9 @@ class DPP2GraphicClient:
         if event.key in self.keys:
             self.keys[event.key] = False
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Мышь
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def handle_mouse_click(self, event):
         # 1️⃣  Если открыт селектор – передаем событие ему
         if self.show_character_select and self.character_selector:
@@ -963,44 +918,44 @@ class DPP2GraphicClient:
     def handle_esc_menu_click(self, event):
         if event.button != 1:
             return
-        mouse_pos = pygame.mouse.get_pos()
+        mouse = pygame.mouse.get_pos()
         menu_w, menu_h = 400, 450
-        menu_x = (self.width - menu_w) // 2
-        menu_y = (self.height - menu_h) // 2
+        mx = (self.width - menu_w) // 2
+        my = (self.height - menu_h) // 2
         btn_h, btn_sp = 55, 8
-        start_y = menu_y + 80
+        start_y = my + 120
 
         for i, btn in enumerate(self.esc_menu_buttons):
-            rect = pygame.Rect(menu_x + 50,
+            rect = pygame.Rect(mx + 50,
                                start_y + i * (btn_h + btn_sp),
                                menu_w - 100, btn_h)
-            if rect.collidepoint(mouse_pos):
+            if rect.collidepoint(mouse):
                 btn['action']()
                 break
 
     def handle_settings_menu_click(self, event):
         if event.button != 1:
             return
-        mouse_pos = pygame.mouse.get_pos()
-        menu_w, menu_h = 500, 500
-        menu_x = (self.width - menu_w) // 2
-        menu_y = (self.height - menu_h) // 2
+        mouse = pygame.mouse.get_pos()
+        w, h = 500, 500
+        mx = (self.width - w) // 2
+        my = (self.height - h) // 2
+        theme_start_y = my + 120
 
         # кнопки тем
-        theme_start_y = menu_y + 120
         for i, btn in enumerate(self.theme_buttons):
-            rect = pygame.Rect(menu_x + 50,
+            rect = pygame.Rect(mx + 50,
                                theme_start_y + i * (45 + 10),
-                               menu_w - 100, 45)
-            if rect.collidepoint(mouse_pos):
+                               w - 100, 45)
+            if rect.collidepoint(mouse):
                 btn['action']()
                 break
 
         # кнопка «Назад»
-        back_rect = pygame.Rect(menu_x + 50,
-                                menu_y + menu_h - 70,
-                                menu_w - 100, 50)
-        if back_rect.collidepoint(mouse_pos):
+        back_rect = pygame.Rect(mx + 50,
+                                my + h - 70,
+                                w - 100, 50)
+        if back_rect.collidepoint(mouse):
             self.close_settings()
 
     def handle_text_input(self, text):
@@ -1026,93 +981,73 @@ class DPP2GraphicClient:
         for i, f in enumerate(self.input_fields):
             f['active'] = (i == self.active_input_field)
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Обновление логики игры (одно место, где считается delta‑time)
-    # --------------------------------------------------------------
-    def update(self):
+    # ------------------------------------------------------------------
+    def update(self) -> None:
+        """
+        Основное обновление логики клиента.
+        Вызывается каждый тик от `run()` – здесь считаем delta‑time,
+        обновляем камеру, игроков, UI‑элементы и чат.
+        """
         now = time.time()
         delta_time = now - self.last_update
         self.last_update = now
 
-        # анимация окна выбора персонажей
-        if self.show_character_select and self.character_selector:
-            self.character_selector.update()
+        # --------------------------------------------------------------
+        # 0️⃣  Обновление позиции собственного персонажа (WASD, Space, Shift)
+        # --------------------------------------------------------------
+        self.update_player_position(delta_time)
 
-        # анимация UI‑меню
-        if self.show_esc_menu:
-            self.menu_animation = min(self.menu_animation + delta_time / self.menu_animation_speed, 1.0)
-        else:
-            self.menu_animation = max(self.menu_animation - delta_time / self.menu_animation_speed, 0.0)
-
-        if self.show_settings_menu:
-            self.settings_animation = min(self.settings_animation + delta_time / self.menu_animation_speed, 1.0)
-        else:
-            self.settings_animation = max(self.settings_animation - delta_time / self.menu_animation_speed, 0.0)
-
-        # авто‑скрытие боковой панели
-        if self.in_world and self.side_panel_auto_hide:
-            self.side_panel_animation = max(self.side_panel_animation - delta_time / 0.5, 0.0)
-            if self.side_panel_animation <= 0:
-                self.side_panel_visible = False
-        else:
-            self.side_panel_animation = min(self.side_panel_animation + delta_time / 0.5, 1.0)
-
-        # движение собственного персонажа
-        if (self.in_world and self.character and not self.chat_active and
-                not self.show_esc_menu and not self.show_settings_menu and not self.show_character_select):
-            self.update_player_position(delta_time)
-
-        # анимация собственного персонажа
-        if self.in_world and self.player_animation:
-            moving = any([self.keys[pygame.K_w], self.keys[pygame.K_s],
-                         self.keys[pygame.K_a], self.keys[pygame.K_d]])
-
-            if moving:
-                if self.keys[pygame.K_a] or self.keys[pygame.K_LEFT]:
-                    self.player_animation.set_direction("left")
-                elif self.keys[pygame.K_d] or self.keys[pygame.K_RIGHT]:
-                    self.player_animation.set_direction("right")
-
-                if self.keys[pygame.K_LSHIFT]:
-                    self.player_animation.set_animation("run")
-                else:
-                    self.player_animation.set_animation("walk")
-            elif self.player_animation.current_animation not in ("jump", "attack", "sleep"):
-                if self.player_animation.current_animation != "idle":
-                    self.player_animation.set_animation("idle")
-
-            self.player_animation.update()
-
-        # камера
+        # --------------------------------------------------------------
+        # 1️⃣  Камера (если мы в мире, есть персонаж и камера следует игроку)
+        # --------------------------------------------------------------
         if self.in_world and self.character and self.camera.follow_player:
-            self.camera.update(self.character.get('position', {'x': 0, 'y': 0, 'z': 0}), delta_time)
+            self.camera.update(
+                self.character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+                delta_time,
+            )
             self.stats['camera_x'] = int(self.camera.offset[0])
             self.stats['camera_y'] = int(self.camera.offset[1])
 
-        # другие игроки
+        # --------------------------------------------------------------
+        # 2️⃣  Другие игроки (интерполяция, анимация)
+        # --------------------------------------------------------------
         for pid, player in self.other_players.items():
             player.update(delta_time)
-            # если игрок двигается – обновляем анимацию
-            if hasattr(player, "animation") and player.animation and player.is_moving:
-                player.animation.update()
+            if player.animation:
+                player.animation.update()          # анимация всегда обновляется
 
-        # статусы соединения и UI‑кнопок
+        # собственный персонаж – обновляем анимацию каждый кадр
+        if self.player_animation:
+            self.player_animation.update()
+
+        # --------------------------------------------------------------
+        # 3️⃣  Статусы соединения и UI‑кнопки
+        # --------------------------------------------------------------
         self.update_connection_status()
         self.stats['players_online'] = len(self.other_players) + (1 if self.character else 0)
         self.update_join_world_button()
 
-        # чат
+        # --------------------------------------------------------------
+        # 4️⃣  Чат (очистка старых сообщений, «над головами», высоты)
+        # --------------------------------------------------------------
         self.cleanup_old_chat_messages()
         self.update_overhead_messages(delta_time)
         self.update_message_heights()
 
+        # фиксируем время первого полученного пакета (для UI‑индикатора)
         if self.connected and self.stats['connection_time'] == 0:
             self.stats['connection_time'] = now
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Движение собственного персонажа (WASD + Space/Shift)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def update_player_position(self, delta_time: float):
+        """
+        Обновление позиции игрока на основе текущего состояния клавиш.
+        Также задаём направление и переключаем анимацию.
+        """
         if not (self.in_world and self.character and not self.chat_active
                 and not self.show_esc_menu and not self.show_settings_menu and not self.show_character_select):
             return
@@ -1133,13 +1068,22 @@ class DPP2GraphicClient:
         if self.keys[pygame.K_LSHIFT]:
             dz -= speed
 
-        if self.player_animation:
-            if dx < 0:
-                self.player_animation.set_direction("left")
-            elif dx > 0:
-                self.player_animation.set_direction("right")
+        moving = dx != 0 or dy != 0 or dz != 0
 
-        if dx != 0 or dy != 0 or dz != 0:
+        # --------------------------------------------------------------
+        # 1️⃣  Обновляем направление анимации (если движение есть)
+        # --------------------------------------------------------------
+        if moving and self.player_animation:
+            if abs(dx) > abs(dy):
+                direction = "right" if dx > 0 else "left"
+            else:
+                direction = "down" if dy > 0 else "up"
+            self.player_animation.set_direction(direction)
+
+        # --------------------------------------------------------------
+        # 2️⃣  Обновляем позицию и отправляем её серверу
+        # --------------------------------------------------------------
+        if moving:
             pos = self.character.get('position', {'x': 0, 'y': 0, 'z': 0})
             pos['x'] += dx
             pos['y'] += dy
@@ -1155,9 +1099,17 @@ class DPP2GraphicClient:
                 self.send_position_update(pos)
                 self.last_position_update = now
 
-    # --------------------------------------------------------------
+            # Переключаем анимацию на «ход».
+            if self.player_animation:
+                self.player_animation.set_animation("walk")
+        else:
+            # Без движения – ставим анимацию idle.
+            if self.player_animation:
+                self.player_animation.set_animation("idle")
+
+    # ------------------------------------------------------------------
     #   Чат (очистка, отправка, вывод)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def cleanup_old_chat_messages(self):
         now = time.time()
         if not self.chat_active:
@@ -1245,9 +1197,9 @@ class DPP2GraphicClient:
         self.stats['udp_packets_sent'] += 1
         self.network.safe_send(data)
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Обработка сообщений от сервера
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def handle_server_message(self, data):
         msg_type = data.get('type')
         print(f"[DEBUG] Server message: {msg_type}")
@@ -1278,7 +1230,6 @@ class DPP2GraphicClient:
             ctype = data.get('character_type', 'default')
             cname = data.get('character_name', 'Unknown')
 
-            # если тип «default», пробуем вытянуть его из имени
             if ctype == 'default' and cname:
                 low = cname.lower()
                 if 'celestia' in low:
@@ -1304,7 +1255,9 @@ class DPP2GraphicClient:
                     'name': cname,
                     'character_type': ctype,
                     'position': pos,
-                    'timestamp': time.time()
+                    'timestamp': time.time(),
+                    # сохраняем путь к ресурсам, если сервер его передал
+                    'assets_path': data.get('assets_path')
                 }
                 self.other_players[cid] = OtherPlayer(pdata)
                 self.other_players_data[cid] = pdata
@@ -1332,7 +1285,8 @@ class DPP2GraphicClient:
                 'name': pname,
                 'character_type': ctype,
                 'position': pos,
-                'timestamp': time.time()
+                'timestamp': time.time(),
+                'assets_path': data.get('assets_path')
             }
             self.other_players[pid] = OtherPlayer(pdata)
             self.other_players_data[pid] = pdata
@@ -1377,7 +1331,8 @@ class DPP2GraphicClient:
                     'name': pname,
                     'character_type': ctype,
                     'position': player.get('position', {'x': 0, 'y': 0, 'z': 0}),
-                    'timestamp': time.time()
+                    'timestamp': time.time(),
+                    'assets_path': player.get('assets_path')
                 }
                 self.other_players[pid] = OtherPlayer(pdata)
                 self.other_players_data[pid] = pdata
@@ -1414,53 +1369,207 @@ class DPP2GraphicClient:
         elif msg_type == 'error':
             self.add_chat_message(f"[ERROR] {data.get('message', 'Error')}")
 
-    # --------------------------------------------------------------
-    #   Рендер (разделён на подпроцедуры)
-    # --------------------------------------------------------------
-    def render(self):
-        self.screen.fill(self.colors['black'])
+        # ------------------------------------------------------------------
+        #   Видеокадр от сервера (screen_frame)
+        # ------------------------------------------------------------------
+        elif msg_type == 'screen_frame':
+            self._handle_screen_frame(data)
 
-        if self.in_world:
-            self.render_game_world()
+        else:
+            print(f"[CLIENT] 📥 Получено: {msg_type}")
 
-        if self.side_panel_visible and self.side_panel_animation > 0:
-            self.render_side_panel()
+    # ------------------------------------------------------------------
+    #   Обработка видеокадра (склейка кусочков, декодирование, создание pygame‑surface)
+    # ------------------------------------------------------------------
+    def _handle_screen_frame(self, msg: dict):
+        """
+        Сборка кадра из кусочков, декодирование JPEG‑данных и создание
+        ``pygame.Surface`` без использования OpenCV / numpy.
+        """
+        frame_id = msg.get('frame_id')
+        idx      = msg.get('chunk_index')
+        total    = msg.get('total_chunks')
+        chunk    = msg.get('data')
 
-        self.render_overhead_messages()
+        if None in (frame_id, idx, total, chunk):
+            return
 
-        if self.show_character_select and self.character_selector:
-            self.character_selector.render(self.screen, self.colors, self.fonts)
+        with self._screen_lock:
+            info = self._screen_frames.setdefault(frame_id, {
+                'chunks': {},
+                'total': total,
+                'timestamp': time.time()
+            })
+            info['chunks'][idx] = chunk
 
-        if self.chat_active:
-            self.render_chat_input()
-        elif self.chat_messages and (self.in_world or self.connected):
-            self.render_chat_history()
+            # Если получены все части – собираем изображение
+            if len(info['chunks']) == info['total']:
+                full_b64 = ''.join(info['chunks'][i] for i in range(info['total']))
+                try:
+                    jpeg_bytes = base64.b64decode(full_b64)
+                    # Загружаем JPEG‑изображение напрямую в pygame
+                    image_file = io.BytesIO(jpeg_bytes)
+                    surf = pygame.image.load(image_file).convert()
+                    # При необходимости масштабируем под текущее окно
+                    self.world_background = pygame.transform.scale(
+                        surf, (self.width, self.height - self.top_panel_height)
+                    )
+                    print("[DEBUG] Received and decoded screen frame")
+                except Exception as exc:
+                    print(f"[ERROR] Ошибка декодирования screen frame: {exc}")
 
-        self.render_top_panel()
+                # Очистка буфера – иначе он будет расти бесконечно
+                del self._screen_frames[frame_id]
 
-        if self.show_esc_menu or self.menu_animation > 0:
-            self.render_esc_menu()
+    # ------------------------------------------------------------------
+    #   Чат‑интерфейс
+    # ------------------------------------------------------------------
+    def render_chat_history(self):
+        if not self.chat_messages:
+            return
 
-        if self.show_settings_menu or self.settings_animation > 0:
-            self.render_settings_menu()
+        max_msg = 5
+        start_x = 10
+        start_y = self.height - 140
+        now = time.time()
 
-        pygame.display.flip()
+        visible = []
+        for msg in reversed(self.chat_messages):
+            age = now - msg['timestamp']
+            if self.chat_active:
+                visible.append(msg)
+            elif age < self.chat_message_lifetime:
+                visible.append(msg)
 
-    # --------------------------------------------------------------
-    #   Отрисовка игрового мира
-    # --------------------------------------------------------------
+            if len(visible) >= max_msg:
+                break
+
+        visible.reverse()
+
+        for i, data in enumerate(visible):
+            txt = data['text']
+            is_self = data.get('is_self', False)
+            age = now - data['timestamp']
+
+            if txt.startswith("[SYSTEM]"):
+                if "Connected" in txt or "successful" in txt or "Entered" in txt:
+                    col = self.colors['success']
+                elif "error" in txt.lower() or "[ERROR]" in txt:
+                    col = self.colors['error']
+                else:
+                    col = self.colors['accent_grey']
+            elif is_self:
+                col = tuple(min(c + 30, 255) for c in self.colors['player'])
+            else:
+                col = self.colors['white']
+
+            alpha = 255
+            if not self.chat_active and age > self.chat_message_lifetime - self.chat_message_fade_time:
+                fade = (age - (self.chat_message_lifetime - self.chat_message_fade_time)) / \
+                       self.chat_message_fade_time
+                alpha = int(255 * (1 - fade))
+
+            t_surf = self.fonts['tiny'].render(txt, True, col)
+            if alpha < 255:
+                t_surf.set_alpha(alpha)
+
+            bg = pygame.Rect(start_x - 5, start_y + i * 22 - 3,
+                             t_surf.get_width() + 10, t_surf.get_height() + 6)
+            bg_surf = pygame.Surface((bg.width, bg.height), pygame.SRCALPHA)
+            bg_surf.fill((*self.colors['dark_grey'][:3], min(200, alpha)))
+            self.screen.blit(bg_surf, bg)
+            self.screen.blit(t_surf, (start_x, start_y + i * 22))
+
+    def render_chat_input(self):
+        h = 40
+        y = self.height - h - 10
+        w = self.width - 20
+
+        if self.chat_messages:
+            max_msg = 10
+            start_x = 10
+            start_y = self.height - 140 - 30
+            recent = self.chat_messages[-max_msg:]
+
+            for i, data in enumerate(recent):
+                txt = data['text']
+                is_self = data.get('is_self', False)
+
+                if txt.startswith("[SYSTEM]"):
+                    if "Connected" in txt or "successful" in txt or "Entered" in txt:
+                        col = self.colors['success']
+                    elif "error" in txt.lower() or "[ERROR]" in txt:
+                        col = self.colors['error']
+                    else:
+                        col = self.colors['accent_grey']
+                elif is_self:
+                    col = tuple(min(c + 30, 255) for c in self.colors['player'])
+                else:
+                    col = self.colors['white']
+
+                ts = self.fonts['tiny'].render(txt, True, col)
+                bg = pygame.Rect(start_x - 5, start_y + i * 22 - 3,
+                                 ts.get_width() + 10, ts.get_height() + 6)
+                bg_s = pygame.Surface((bg.width, bg.height), pygame.SRCALPHA)
+                bg_s.fill((*self.colors['dark_grey'][:3], 230))
+                self.screen.blit(bg_s, bg)
+                self.screen.blit(ts, (start_x, start_y + i * 22))
+
+        pygame.draw.rect(self.screen, self.colors['dark_grey'],
+                         (10, y, w, h), border_radius=6)
+        pygame.draw.rect(self.screen, self.colors['accent_grey'],
+                         (10, y, w, h), 2, border_radius=6)
+
+        label = self.fonts['small'].render("CHAT:", True, self.colors['white'])
+        self.screen.blit(label, (20, y + 10))
+
+        disp = self.chat_input if self.chat_input else "Type your message..."
+        col = self.colors['white'] if self.chat_input else self.colors['accent_grey']
+        txt = self.fonts['medium'].render(disp, True, col)
+
+        max_w = w - 100
+        if txt.get_width() > max_w:
+            disp = "…" + disp[-(max_w // 10):]
+            txt = self.fonts['medium'].render(disp, True, col)
+
+        self.screen.blit(txt, (80, y + 10))
+
+        if int(time.time() * 2) % 2 == 0:
+            cur_x = 80 + txt.get_width() + 2 if self.chat_input else 80
+            cur = pygame.Rect(cur_x, y + 12, 2, h - 24)
+            pygame.draw.rect(self.screen, self.colors['white'], cur)
+
+        hint = self.fonts['tiny'].render(
+            "Press ENTER to send, ESC to cancel", True,
+            self.colors['accent_grey'])
+        self.screen.blit(hint, (w // 2 - hint.get_width() // 2, y - 20))
+
+    # ------------------------------------------------------------------
+    #   Отрисовка мира (здесь будет вывод фонового изображения)
+    # ------------------------------------------------------------------
     def render_game_world(self):
-        # ширина без учёта скрытой боковой панели
+        """
+        Отрисовка игрового мира. Если получен фоновой скриншот
+        от сервера – выводим его вместо однотонного поля.
+        """
+        # Ширина доступного места без учёта скрытой боковой панели
         if self.side_panel_visible and self.side_panel_animation > 0:
             game_w = self.width - int(self.side_panel_width * self.side_panel_animation)
         else:
             game_w = self.width
 
-        pygame.draw.rect(self.screen, self.colors['dark_grey'],
-                         (0, self.top_panel_height, game_w,
-                          self.height - self.top_panel_height))
+        # 1️⃣ Фоновое изображение (если есть)
+        if self.world_background:
+            bg_scaled = pygame.transform.scale(self.world_background,
+                                               (game_w,
+                                                self.height - self.top_panel_height))
+            self.screen.blit(bg_scaled, (0, self.top_panel_height))
+        else:
+            pygame.draw.rect(self.screen, self.colors['dark_grey'],
+                             (0, self.top_panel_height, game_w,
+                              self.height - self.top_panel_height))
 
-        # сетка (показываем, если зум небольш
+        # 2️⃣ Сетка (если пользователь зумит – показываем)
         if self.camera.zoom < 2.0:
             grid_color = tuple(min(c + 10, 255) for c in self.colors['dark_grey'])
             step = int(self.camera.grid_size * self.camera.zoom)
@@ -1477,63 +1586,20 @@ class DPP2GraphicClient:
                                  (0, y),
                                  (game_w, y), 1)
 
-        # другие игроки
+        # 3️⃣ Другие игроки
         for pid, player in self.other_players.items():
             pos = player.get_position()
             sx, sy = self.camera.world_to_screen(pos)
 
             if (0 <= sx <= game_w and self.top_panel_height <= sy <= self.height):
-                if hasattr(player, "animation") and player.animation:
+                if player.animation:
                     try:
                         player.animation.draw(self.screen, (sx, sy),
                                              scale=0.6 * self.camera.zoom)
-                    except Exception as e:
-                        # fallback – простой круг
-                        rad = int(20 * self.camera.zoom)
-                        color_map = {
-                            'Celestia': (255, 215, 0),
-                            'Luna': (138, 43, 226),
-                            'Cadance': (255, 182, 193),
-                            'TwilightSparkle': (147, 112, 219),
-                            'AppleJack': (255, 165, 0),
-                            'RainbowDash': (0, 191, 255),
-                            'Fluttershy': (255, 255, 0),
-                            'Rarity': (192, 192, 192),
-                            'PinkiePie': (255, 105, 180),
-                            'default': self.colors['other_player']
-                        }
-                        col = color_map.get(player.character_type, color_map['default'])
-                        pygame.draw.circle(self.screen, col, (sx, sy), rad)
-
-                        try:
-                            f = pygame.font.Font(None, int(16 * self.camera.zoom))
-                            txt = f.render(player.character_type[0] if player.character_type else "?",
-                                          True, (255, 255, 255))
-                            rect = txt.get_rect(center=(sx, sy))
-                            self.screen.blit(txt, rect)
-                        except Exception:
-                            pass
-                else:
-                    # без анимации – тоже круг
-                    rad = int(20 * self.camera.zoom)
-                    color_map = {
-                        'Celestia': (255, 215, 0),
-                        'Luna': (138, 43, 226),
-                        'Cadance': (255, 182, 193),
-                        'TwilightSparkle': (147, 112, 219),
-                        'default': self.colors['other_player']
-                    }
-                    col = color_map.get(player.character_type, color_map['default'])
-                    pygame.draw.circle(self.screen, col, (sx, sy), rad)
-
-                    try:
-                        f = pygame.font.Font(None, int(16 * self.camera.zoom))
-                        txt = f.render(player.character_type[0] if player.character_type else "?",
-                                      True, (255, 255, 255))
-                        rect = txt.get_rect(center=(sx, sy))
-                        self.screen.blit(txt, rect)
                     except Exception:
-                        pass
+                        self._draw_placeholder(player, sx, sy)
+                else:
+                    self._draw_placeholder(player, sx, sy)
 
                 # имя над головой
                 pdata = self.other_players_data.get(pid, {'name': 'Unknown'})
@@ -1542,7 +1608,7 @@ class DPP2GraphicClient:
                 name_rect = name_surf.get_rect(center=(sx, sy - 35))
                 self.screen.blit(name_surf, name_rect)
 
-        # собственный персонаж
+        # 4️⃣ Собственный персонаж
         if self.character:
             ppos = self.character.get('position', {'x': 0, 'y': 0, 'z': 0})
             sx, sy = self.camera.world_to_screen(ppos)
@@ -1563,7 +1629,7 @@ class DPP2GraphicClient:
                 name_rect = name.get_rect(center=(sx, sy - 40))
                 self.screen.blit(name, name_rect)
 
-        # инфо о мире
+        # 5️⃣ Инфо о мире (название, текущий день/время и т.д.)
         if self.world_data:
             wname = self.world_data.get('name', 'Unknown World')
             txt = self.fonts['small'].render(f"World: {wname}",
@@ -1576,61 +1642,35 @@ class DPP2GraphicClient:
                 True, self.colors['light_grey'])
             self.screen.blit(cam, (10, self.top_panel_height + 35))
 
-    # --------------------------------------------------------------
-    #   Сообщения над головой
-    # --------------------------------------------------------------
-    def render_overhead_messages(self):
-        msgs_by_char = {}
-        for msg in self.overhead_messages:
-            msgs_by_char.setdefault(msg.character_name, []).append(msg)
+    def _draw_placeholder(self, player, sx, sy):
+        """Простая круговая заглушка – будет использоваться только если анимация не загрузилась."""
+        rad = int(20 * self.camera.zoom)
+        color_map = {
+            'Celestia': (255, 215, 0),
+            'Luna': (138, 43, 226),
+            'Cadance': (255, 182, 193),
+            'TwilightSparkle': (147, 112, 219),
+            'default': self.colors['other_player']
+        }
+        col = color_map.get(player.character_type, color_map['default'])
+        pygame.draw.circle(self.screen, col, (sx, sy), rad)
 
-        for char_name, msgs in msgs_by_char.items():
-            msgs.sort(key=lambda m: m.start_time, reverse=True)
+        try:
+            f = pygame.font.Font(None, int(16 * self.camera.zoom))
+            txt = f.render(player.character_type[0] if player.character_type else "?",
+                          True, (255, 255, 255))
+            rect = txt.get_rect(center=(sx, sy))
+            self.screen.blit(txt, rect)
+        except Exception:
+            pass
 
-            # получаем позицию персонажа
-            if self.character and char_name == self.character['name']:
-                pos = self.character.get('position')
-            else:
-                pos = None
-                for pid, player in self.other_players.items():
-                    pd = self.other_players_data.get(pid, {})
-                    if pd.get('name') == char_name:
-                        pos = player.get_position()
-                        break
-                if pos is None:
-                    continue
-
-            screen_x, screen_y = self.camera.world_to_screen(pos)
-
-            for i, msg in enumerate(msgs):
-                if not (0 <= screen_x <= self.width and 0 <= screen_y <= self.height):
-                    continue
-
-                surf = self.fonts['medium'].render(msg.text, True, (255, 255, 255))
-                if msg.alpha < 255:
-                    surf.set_alpha(msg.alpha)
-
-                txt_w, txt_h = surf.get_width(), surf.get_height()
-                pad = 8
-                bg_w, bg_h = txt_w + pad * 2, txt_h + pad // 2 * 2
-
-                bg_x = screen_x - bg_w // 2
-                bg_y = screen_y - 35 - i * 25 - bg_h // 2
-
-                bg = pygame.Surface((bg_w, bg_h), pygame.SRCALPHA)
-                bg_alpha = int(180 * (msg.alpha / 255))
-                pygame.draw.rect(bg, (0, 0, 0, bg_alpha), (0, 0, bg_w, bg_h), border_radius=6)
-                pygame.draw.rect(bg, (100, 100, 100, bg_alpha), (0, 0, bg_w, bg_h), width=1,
-                                 border_radius=6)
-
-                self.screen.blit(bg, (bg_x, bg_y))
-                self.screen.blit(surf, (screen_x - txt_w // 2,
-                                      screen_y - 35 - i * 25 - txt_h // 2))
-
-    # --------------------------------------------------------------
-    #   Боковая панель
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
+    #   Вспомогательные отрисовки (панели, меню, чат и т.д.)
+    # ------------------------------------------------------------------
     def render_side_panel(self):
+        if not self.side_panel_visible or self.side_panel_animation <= 0:
+            return
+
         factor = self.side_panel_animation
         x = self.width - int(self.side_panel_width * factor)
 
@@ -1722,9 +1762,6 @@ class DPP2GraphicClient:
                                                 btn['rect'].centery))
                 self.screen.blit(txt, txt_rect)
 
-    # --------------------------------------------------------------
-    #   Верхняя панель
-    # --------------------------------------------------------------
     def render_top_panel(self):
         pygame.draw.rect(self.screen, self.colors['dark_grey'],
                          (0, 0, self.width, self.top_panel_height))
@@ -1768,14 +1805,10 @@ class DPP2GraphicClient:
 
         if self.in_world:
             cam = self.fonts['tiny'].render(
-                f"CAMERA: {'FOLLOW' if self.camera.follow_player else 'FREE'}",
+                f"CAMERA: {'ON' if self.camera.follow_player else 'OFF'} | "
+                f"Zoom: {self.camera.zoom:.1f}x",
                 True, self.colors['accent_grey'])
             self.screen.blit(cam, (stats_x + 120, 20))
-
-            zm = self.fonts['tiny'].render(
-                f"ZOOM: {self.camera.zoom:.1f}x",
-                True, self.colors['accent_grey'])
-            self.screen.blit(zm, (stats_x + 120, 40))
 
             if not self.side_panel_visible:
                 hint = self.fonts['tiny'].render(
@@ -1786,135 +1819,54 @@ class DPP2GraphicClient:
                 "Press Enter to chat", True, self.colors['accent_grey'])
             self.screen.blit(chat_hint, (stats_x - 150, 80))
 
-    # --------------------------------------------------------------
-    #   История чата
-    # --------------------------------------------------------------
-    def render_chat_history(self):
-        if not self.chat_messages:
-            return
+    def render_overhead_messages(self):
+        msgs_by_char = {}
+        for msg in self.overhead_messages:
+            msgs_by_char.setdefault(msg.character_name, []).append(msg)
 
-        max_msg = 5
-        start_x = 10
-        start_y = self.height - 140
-        now = time.time()
+        for char_name, msgs in msgs_by_char.items():
+            msgs.sort(key=lambda m: m.start_time, reverse=True)
 
-        visible = []
-        for msg in reversed(self.chat_messages):
-            age = now - msg['timestamp']
-            if self.chat_active:
-                visible.append(msg)
-            elif age < self.chat_message_lifetime:
-                visible.append(msg)
-
-            if len(visible) >= max_msg:
-                break
-
-        visible.reverse()
-
-        for i, data in enumerate(visible):
-            txt = data['text']
-            is_self = data.get('is_self', False)
-            age = now - data['timestamp']
-
-            if txt.startswith("[SYSTEM]"):
-                if "Connected" in txt or "successful" in txt or "Entered" in txt:
-                    col = self.colors['success']
-                elif "error" in txt.lower() or "[ERROR]" in txt:
-                    col = self.colors['error']
-                else:
-                    col = self.colors['accent_grey']
-            elif is_self:
-                col = tuple(min(c + 30, 255) for c in self.colors['player'])
+            # получаем позицию персонажа
+            if self.character and char_name == self.character['name']:
+                pos = self.character.get('position')
             else:
-                col = self.colors['white']
+                pos = None
+                for pid, player in self.other_players.items():
+                    pd = self.other_players_data.get(pid, {})
+                    if pd.get('name') == char_name:
+                        pos = player.get_position()
+                        break
+                if pos is None:
+                    continue
 
-            alpha = 255
-            if not self.chat_active and age > self.chat_message_lifetime - self.chat_message_fade_time:
-                fade = (age - (self.chat_message_lifetime - self.chat_message_fade_time)) / \
-                       self.chat_message_fade_time
-                alpha = int(255 * (1 - fade))
+            screen_x, screen_y = self.camera.world_to_screen(pos)
 
-            t_surf = self.fonts['tiny'].render(txt, True, col)
-            if alpha < 255:
-                t_surf.set_alpha(alpha)
+            for i, msg in enumerate(msgs):
+                if not (0 <= screen_x <= self.width and 0 <= screen_y <= self.height):
+                    continue
 
-            bg = pygame.Rect(start_x - 5, start_y + i * 22 - 3,
-                             t_surf.get_width() + 10, t_surf.get_height() + 6)
-            bg_surf = pygame.Surface((bg.width, bg.height), pygame.SRCALPHA)
-            bg_surf.fill((*self.colors['dark_grey'][:3], min(200, alpha)))
-            self.screen.blit(bg_surf, bg)
-            self.screen.blit(t_surf, (start_x, start_y + i * 22))
+                surf = self.fonts['medium'].render(msg.text, True, (255, 255, 255))
+                if msg.alpha < 255:
+                    surf.set_alpha(msg.alpha)
 
-    # --------------------------------------------------------------
-    #   Поле ввода чата
-    # --------------------------------------------------------------
-    def render_chat_input(self):
-        h = 40
-        y = self.height - h - 10
-        w = self.width - 20
+                txt_w, txt_h = surf.get_width(), surf.get_height()
+                pad = 8
+                bg_w, bg_h = txt_w + pad * 2, txt_h + pad // 2 * 2
 
-        if self.chat_messages:
-            max_msg = 10
-            start_x = 10
-            start_y = self.height - 140 - 30
-            recent = self.chat_messages[-max_msg:]
+                bg_x = screen_x - bg_w // 2
+                bg_y = screen_y - 35 - i * 25 - bg_h // 2
 
-            for i, data in enumerate(recent):
-                txt = data['text']
-                is_self = data.get('is_self', False)
+                bg = pygame.Surface((bg_w, bg_h), pygame.SRCALPHA)
+                bg_alpha = int(180 * (msg.alpha / 255))
+                pygame.draw.rect(bg, (0, 0, 0, bg_alpha), (0, 0, bg_w, bg_h), border_radius=6)
+                pygame.draw.rect(bg, (100, 100, 100, bg_alpha), (0, 0, bg_w, bg_h), width=1,
+                                 border_radius=6)
 
-                if txt.startswith("[SYSTEM]"):
-                    if "Connected" in txt or "successful" in txt or "Entered" in txt:
-                        col = self.colors['success']
-                    elif "error" in txt.lower() or "[ERROR]" in txt:
-                        col = self.colors['error']
-                    else:
-                        col = self.colors['accent_grey']
-                elif is_self:
-                    col = tuple(min(c + 30, 255) for c in self.colors['player'])
-                else:
-                    col = self.colors['white']
+                self.screen.blit(bg, (bg_x, bg_y))
+                self.screen.blit(surf, (screen_x - txt_w // 2,
+                                      screen_y - 35 - i * 25 - txt_h // 2))
 
-                ts = self.fonts['tiny'].render(txt, True, col)
-                bg = pygame.Rect(start_x - 5, start_y + i * 22 - 3,
-                                 ts.get_width() + 10, ts.get_height() + 6)
-                bg_s = pygame.Surface((bg.width, bg.height), pygame.SRCALPHA)
-                bg_s.fill((*self.colors['dark_grey'][:3], 230))
-                self.screen.blit(bg_s, bg)
-                self.screen.blit(ts, (start_x, start_y + i * 22))
-
-        pygame.draw.rect(self.screen, self.colors['dark_grey'],
-                         (10, y, w, h), border_radius=6)
-        pygame.draw.rect(self.screen, self.colors['accent_grey'],
-                         (10, y, w, h), 2, border_radius=6)
-
-        label = self.fonts['small'].render("CHAT:", True, self.colors['white'])
-        self.screen.blit(label, (20, y + 10))
-
-        disp = self.chat_input if self.chat_input else "Type your message..."
-        col = self.colors['white'] if self.chat_input else self.colors['accent_grey']
-        txt = self.fonts['medium'].render(disp, True, col)
-
-        max_w = w - 100
-        if txt.get_width() > max_w:
-            disp = "…" + disp[-(max_w // 10):]
-            txt = self.fonts['medium'].render(disp, True, col)
-
-        self.screen.blit(txt, (80, y + 10))
-
-        if int(time.time() * 2) % 2 == 0:
-            cur_x = 80 + txt.get_width() + 2 if self.chat_input else 80
-            cur = pygame.Rect(cur_x, y + 12, 2, h - 24)
-            pygame.draw.rect(self.screen, self.colors['white'], cur)
-
-        hint = self.fonts['tiny'].render(
-            "Press ENTER to send, ESC to cancel", True,
-            self.colors['accent_grey'])
-        self.screen.blit(hint, (w // 2 - hint.get_width() // 2, y - 20))
-
-    # --------------------------------------------------------------
-    #   ESC‑меню
-    # --------------------------------------------------------------
     def render_esc_menu(self):
         factor = self.menu_animation
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
@@ -1971,9 +1923,6 @@ class DPP2GraphicClient:
                              txt.get_rect(midleft=(rect.x + 60,
                                                    rect.centery)))
 
-    # --------------------------------------------------------------
-    #   Меню настроек
-    # --------------------------------------------------------------
     def render_settings_menu(self):
         factor = self.settings_animation
         overlay = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
@@ -2000,11 +1949,11 @@ class DPP2GraphicClient:
         self.screen.blit(sub, sub.get_rect(center=(mx + w // 2, ay + 85)))
 
         mouse = pygame.mouse.get_pos()
-        start_y = ay + 120
+        theme_start_y = ay + 120
 
         for i, btn in enumerate(self.theme_buttons):
             rect = pygame.Rect(mx + 50,
-                               start_y + i * (45 + 10),
+                               theme_start_y + i * (45 + 10),
                                w - 100, 45)
             hover = rect.collidepoint(mouse)
             selected = btn.get('selected', False)
@@ -2033,7 +1982,7 @@ class DPP2GraphicClient:
             txt = self.fonts['medium'].render(btn['text'], True, txt_col)
             self.screen.blit(txt,
                              txt.get_rect(midleft=(rect.x + 60,
-                                                  rect.centery)))
+                                                   rect.centery)))
 
             if selected:
                 chk = self.fonts['medium'].render("✓", True,
@@ -2058,9 +2007,9 @@ class DPP2GraphicClient:
                                           self.colors['white'])
         self.screen.blit(txt, txt.get_rect(center=back.center))
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   UI‑управление (открытие / закрытие меню, переключение UI)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def toggle_esc_menu(self):
         if self.show_settings_menu:
             self.close_settings()
@@ -2095,9 +2044,9 @@ class DPP2GraphicClient:
             btn['selected'] = (btn['theme_key'] == theme_name)
         print(f"[UI] Theme changed to {theme_name}")
 
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     #   Сетевые операции (connect, login, character select, world, quit)
-    # --------------------------------------------------------------
+    # ------------------------------------------------------------------
     def disconnect_from_server(self):
         if self.network and self.network.is_connected():
             self.network.disconnect()
@@ -2146,6 +2095,7 @@ class DPP2GraphicClient:
                 self.add_chat_message("[ERROR] Connection failed")
         except ValueError:
             self.add_chat_message("[ERROR] Invalid port")
+
         except Exception as e:
             self.add_chat_message(f"[ERROR] {e}")
         finally:
@@ -2355,10 +2305,41 @@ class DPP2GraphicClient:
         self.stats['udp_packets_sent'] += 1
         self.network.safe_send(data)
 
+    # ------------------------------------------------------------------
+    #   Финальная отрисовка
+    # ------------------------------------------------------------------
+    def render(self):
+        self.screen.fill(self.colors['black'])
 
-# ----------------------------------------------------------------------
-#   Точка входа
-# ----------------------------------------------------------------------
+        if self.in_world:
+            self.render_game_world()
+
+        if self.side_panel_visible and self.side_panel_animation > 0:
+            self.render_side_panel()
+
+        self.render_overhead_messages()
+
+        if self.show_character_select and self.character_selector:
+            self.character_selector.render(self.screen, self.colors, self.fonts)
+
+        if self.chat_active:
+            self.render_chat_input()
+        elif self.chat_messages and (self.in_world or self.connected):
+            self.render_chat_history()
+
+        self.render_top_panel()
+
+        if self.show_esc_menu or self.menu_animation > 0:
+            self.render_esc_menu()
+
+        if self.show_settings_menu or self.settings_animation > 0:
+            self.render_settings_menu()
+
+        pygame.display.flip()
+
+    # ------------------------------------------------------------------
+    #   Точка входа
+    # ------------------------------------------------------------------
 def main():
     print("=" * 50)
     print("DPP2 Graphic Client – Camera Follow System")
