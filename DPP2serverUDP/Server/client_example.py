@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-Пример UDP клиента для тестирования DPP2 UDP сервера
-С поддержкой системы скинов (гифок) на игроках
+DPP2 UDP Test Client с поддержкой видеострима (получение screen_frame)
 """
 
 import socket
 import time
 import threading
 import random
+import json
+import base64
+import cv2
+import numpy as np
 
 from DPP2serverUDP import toon
 
@@ -60,7 +63,7 @@ class PlayerSkinManager:
 #   Тестовый UDP‑клиент
 # ----------------------------------------------------------------------
 class UDPTestClient:
-    """Тестовый UDP клиент с поддержкой скинов"""
+    """Тестовый UDP‑клиент с поддержкой видеострима."""
 
     def __init__(self, host='127.0.0.1', port=5555, use_gui=False):
         self.host = host
@@ -71,7 +74,7 @@ class UDPTestClient:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.settimeout(2.0)
 
-        # Состояния подключения
+        # Состояния соединения
         self.client_id = None
         self.connected = False
         self.running = False
@@ -104,7 +107,7 @@ class UDPTestClient:
         self.messages = []
         self.message_lock = threading.Lock()
 
-        # Статистика
+        # Статистика клиента
         self.stats = {
             'messages_sent': 0,
             'messages_received': 0,
@@ -116,6 +119,10 @@ class UDPTestClient:
 
         # Менеджер скинов
         self.skin_manager = PlayerSkinManager()
+
+        # Хранилище для видеокадров (screen_frame)
+        self._screen_frames = {}          # frame_id -> {"chunks":{}, "total":int, "timestamp":float}
+        self._screen_lock = threading.Lock()
 
         # GUI (по желанию)
         self.use_gui = use_gui
@@ -229,7 +236,7 @@ class UDPTestClient:
         return None
 
     # ------------------------------------------------------------------
-    #   Высокоуровневые действия (auth, create character, join world …)
+    #   Высокоуровневые действия (auth, character, join, …)
     # ------------------------------------------------------------------
     def authenticate(self):
         """Аутентификация на сервере."""
@@ -403,7 +410,7 @@ class UDPTestClient:
         return mapping.get(name, '#ffffff')
 
     # ------------------------------------------------------------------
-    #   Цикл получения сообщений
+    #   Фоновый цикл приёма
     # ------------------------------------------------------------------
     def receive_loop(self):
         """Фоновый цикл получения пакетов."""
@@ -421,7 +428,7 @@ class UDPTestClient:
                             self.process_message(m)
                         self.messages.clear()
 
-                # Чистим эффекты
+                # Чистим эффекты скинов
                 self.skin_manager.remove_expired_effects()
                 time.sleep(0.01)
             except Exception as e:
@@ -453,6 +460,8 @@ class UDPTestClient:
             self._handle_world_update(msg)
         elif typ == 'error':
             print(f"[CLIENT] ❌ Ошибка сервера: {msg.get('message')}")
+        elif typ == 'screen_frame':
+            self._handle_screen_frame(msg)
         # типы pong/heartbeat_response уже обработаны в receive()
         else:
             print(f"[CLIENT] 📥 Получено: {typ}")
@@ -527,7 +536,47 @@ class UDPTestClient:
         self.send(req)
 
     # ------------------------------------------------------------------
-    #   Действия игрока (движение, чат, heartbeat, gifct)
+    #   ОБРАБОТКА КАДРОВ ЭКРАНА (screen_frame)
+    # ------------------------------------------------------------------
+    def _handle_screen_frame(self, msg: dict):
+        """
+        Сборка кадра из кусочков, декодирование JPEG и вывод
+        через OpenCV (открывается окно «Server screen»).
+        """
+        frame_id = msg.get('frame_id')
+        idx      = msg.get('chunk_index')
+        total    = msg.get('total_chunks')
+        chunk    = msg.get('data')
+
+        if None in (frame_id, idx, total, chunk):
+            return
+
+        with self._screen_lock:
+            info = self._screen_frames.setdefault(frame_id, {
+                'chunks': {},
+                'total': total,
+                'timestamp': time.time()
+            })
+            info['chunks'][idx] = chunk
+
+            # Если получены все части – собираем и показываем
+            if len(info['chunks']) == info['total']:
+                full_b64 = ''.join(info['chunks'][i] for i in range(info['total']))
+                try:
+                    jpeg_bytes = base64.b64decode(full_b64)
+                    np_arr = np.frombuffer(jpeg_bytes, np.uint8)
+                    frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                    if frame is not None:
+                        cv2.imshow('Server screen', frame)
+                        cv2.waitKey(1)    # заставляем окно обновиться
+                except Exception as exc:
+                    print(f"[CLIENT] Ошибка отображения кадра: {exc}")
+
+                # Очистка буфера
+                del self._screen_frames[frame_id]
+
+    # ------------------------------------------------------------------
+    #   Действия игрока (движение, чат, ping, gifct)
     # ------------------------------------------------------------------
     def move_randomly(self):
         if not self.in_world:
@@ -599,18 +648,18 @@ class UDPTestClient:
         print(f"[CLIENT] ✨ Активирован {gifct_id}")
 
     # ------------------------------------------------------------------
-    #   Тесты / интерактивный режим
+    #   Тестовые сценарии
     # ------------------------------------------------------------------
     def test_scenario(self):
-        """Полный автоматический сценарий."""
+        """Полный автоматический сценарий клиента."""
         print("\n" + "="*50)
         print("🚀 Запуск тестового сценария")
         print("="*50 + "\n")
 
-        if not self.connect():        return False
-        if not self.authenticate():  return False
-        if not self.create_character(): return False
-        if not self.join_world():    return False
+        if not self.connect():          return False
+        if not self.authenticate():    return False
+        if not self.create_character():return False
+        if not self.join_world():      return False
 
         print("\n" + "="*50)
         print("✅ Сценарий завершён")
@@ -640,7 +689,7 @@ class UDPTestClient:
 
     def simple_test(self):
         """Самый короткий ping‑test."""
-        print("[CLIENT] Простой ping‑тест")
+        print("[CLIENT] Простой ping‑test")
         if not self.connect():
             return False
         ping = {
@@ -687,8 +736,18 @@ class UDPTestClient:
             self.socket.close()
         except Exception:
             pass
+
+        # Закрываем окно видеострима, если открыто
+        try:
+            cv2.destroyAllWindows()
+        except Exception:
+            pass
+
         print("[CLIENT] 📡 Отключено")
 
+    # ------------------------------------------------------------------
+    #   Интерактивный режим (не менялся)
+    # ------------------------------------------------------------------
     def run_interactive(self):
         """Текстовый интерактивный режим."""
         print("DPP2 UDP Test Client – интерактивный режим")
@@ -753,11 +812,11 @@ class UDPTestClient:
 
 
 def main():
-    """Точка входа."""
+    """Точка входа клиента."""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description='DPP2 UDP Test Client с поддержкой скинов')
+        description='DPP2 UDP Test Client с поддержкой видеострима')
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=5555)
     parser.add_argument('--simple', action='store_true')
