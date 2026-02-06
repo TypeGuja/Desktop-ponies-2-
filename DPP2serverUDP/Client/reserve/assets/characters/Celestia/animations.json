@@ -1,0 +1,22 @@
+{
+  "idle": {
+    "directions": [
+      "left",
+      "right"
+    ],
+    "left_file": "idle_left.gif",
+    "right_file": "idle_right.gif",
+    "speed": 0.2,
+    "loop": true
+  },
+  "walk": {
+    "directions": [
+      "left",
+      "right"
+    ],
+    "left_file": "walk_left.gif",
+    "right_file": "walk_right.gif",
+    "speed": 0.15,
+    "loop": true
+  }
+}
