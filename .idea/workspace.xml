@@ -6,11 +6,13 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/animations.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/animations.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/stand_fs_left.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_left.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/stand_fs_right.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_right.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/trotcycle_fs_left.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_left.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/trotcycle_fs_right.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_right.gif" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/client_example.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/client_example.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,6 +69,7 @@
     &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
     &quot;Python.gui_controller.executor&quot;: &quot;Run&quot;,
     &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.main (2).executor&quot;: &quot;Run&quot;,
     &quot;Python.main.executor&quot;: &quot;Run&quot;,
     &quot;Python.pony (1).executor&quot;: &quot;Run&quot;,
     &quot;Python.pony.executor&quot;: &quot;Run&quot;,
@@ -121,28 +124,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="gui_controller" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Desktop-ponies-2-" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/DPP2serverUDP/Server" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Server/gui_controller.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="main (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
@@ -157,6 +138,28 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="main (2)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Desktop-ponies-2-" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/DPP2serverUDP/Client/reserve" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/main.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -211,11 +214,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.main (1)" />
+        <item itemvalue="Python.main" />
+        <item itemvalue="Python.main (2)" />
         <item itemvalue="Python.server_core" />
         <item itemvalue="Python.DPP2Launcher" />
-        <item itemvalue="Python.gui_controller" />
       </list>
     </recent_temporary>
   </component>
@@ -258,6 +261,11 @@
           <url>file://$PROJECT_DIR$/DPP2.py</url>
           <line>19</line>
           <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py</url>
+          <line>5</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
