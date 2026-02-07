@@ -6,13 +6,14 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/animations.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/animations.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/stand_fs_left.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_left.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/stand_fs_right.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_right.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/trotcycle_fs_left.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_left.gif" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/FlutterShy/trotcycle_fs_right.gif" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_right.gif" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/game_logic.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/game_logic.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +81,7 @@
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/characters&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-/DPP2serverUDP/Client/reserve/assets&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
@@ -89,11 +90,11 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\reserve\assets" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\Trixie" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\SunsetShommer" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\StarlightGlimmer" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP" />
