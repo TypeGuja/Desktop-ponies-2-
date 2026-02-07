@@ -5,6 +5,7 @@ Config – конфигурация клиента (UDP‑версия).
 
 import json
 import os
+from typing import List
 
 
 class Config:
@@ -185,7 +186,7 @@ class Config:
         schemes = self.get("color_schemes", {})
         return schemes.get(theme, schemes.get("black", {}))
 
-    def get_available_themes(self) -> list[str]:
+    def get_available_themes(self) -> List[str]:
         """Список всех тем, определённых в конфиге."""
         return list(self.get("color_schemes", {}).keys())
 
