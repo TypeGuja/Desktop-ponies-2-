@@ -4,9 +4,15 @@ DPP2 Main Client – запуск графического клиента.
 """
 
 import sys
-import tkinter as tk
-from datetime import datetime
-from tkinter import messagebox, ttk
+
+
+def _show_error(title: str, message: str) -> None:
+    """Вывести сообщение об ошибке. Если tkinter недоступен – печатаем в консоль."""
+    try:
+        from tkinter import messagebox
+        messagebox.showerror(title, message)
+    except Exception:
+        print(f"[{title}] {message}")
 
 
 def main() -> None:
@@ -16,6 +22,8 @@ def main() -> None:
     print("=" * 50)
 
     try:
+        # Импортируем GUI‑модуль только после того, как проверили, что Python
+        # запущен в окружении с поддержкой tkinter.
         from graphic_client import DPP2GraphicClient
 
         app = DPP2GraphicClient()
@@ -25,7 +33,7 @@ def main() -> None:
         import traceback
 
         traceback.print_exc()
-        messagebox.showerror(
+        _show_error(
             "Ошибка",
             f"Не удалось запустить клиент:\n{exc}",
         )

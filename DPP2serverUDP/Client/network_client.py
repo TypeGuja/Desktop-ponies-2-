@@ -10,7 +10,7 @@ from datetime import datetime
 # ----------------------------------------------------------------------
 #   Локальный бинарный протокол «toon» (MessagePack → pickle‑fallback)
 # ----------------------------------------------------------------------
-from DPP2serverUDP import toon             # <-- новый импорт
+from DPP2serverUDP import toon  # <-- новый импорт
 
 
 class NetworkClient:
@@ -23,7 +23,7 @@ class NetworkClient:
         self.connected = False
         self.client_id: str | None = None
 
-        # Параметры надёжности (имитация)
+        # Параметры «надёжности» (имитация)
         self.packet_counter = 0
         self.last_packet_time = 0.0
         self.packet_timeout = 2.0
@@ -42,12 +42,13 @@ class NetworkClient:
             self.server_address = (self.host, self.port)
             self.connected = True
 
+            # client_id будет получен позже от сервера, но выводим текущий статус
             print(f"✅ UDP клиент инициализирован (client_id: {self.client_id})")
             return True
         except socket.timeout:
             print("❌ Таймаут подключения")
             return False
-        except Exception as exc:               # pragma: no cover
+        except Exception as exc:  # pragma: no cover
             print(f"❌ Ошибка инициализации UDP: {exc}")
             return False
 
@@ -72,12 +73,14 @@ class NetworkClient:
             data["packet_id"] = self.packet_counter
             data["timestamp"] = datetime.now().isoformat()
 
-            payload = toon.encode(data)          # <-- бинарная сериализация
+            payload = toon.encode(data)  # <-- бинарная сериализация
 
             if len(payload) > self.max_packet_size:
-                print(f"⚠️ Пакет слишком большой ({len(payload)} байт) – урезаем")
-                # Обрезать нельзя (бинарный), поэтому просто отбрасываем избыточные данные
-                payload = payload[: self.max_packet_size]
+                # Очень большие пакеты в UDP недопустимы – просто отбрасываем их
+                print(
+                    f"⚠️ Пакет слишком большой ({len(payload)} байт) – сообщение НЕ отправлено"
+                )
+                return False
 
             self.socket.sendto(payload, self.server_address)
             self.last_packet_time = time.time()
@@ -88,7 +91,7 @@ class NetworkClient:
         except socket.error as exc:
             print(f"❌ Ошибка отправки UDP: {exc}")
             return False
-        except Exception as exc:               # pragma: no cover
+        except Exception as exc:  # pragma: no cover
             print(f"❌ Ошибка отправки: {exc}")
             return False
 
@@ -100,7 +103,7 @@ class NetworkClient:
                     return True
                 print(f"⚠️ Попытка {attempt + 1} не удалась")
                 time.sleep(0.1)
-            except Exception as exc:           # pragma: no cover
+            except Exception as exc:  # pragma: no cover
                 print(f"⚠️ Попытка {attempt + 1} вызвала ошибку: {exc}")
                 time.sleep(0.1)
 
@@ -117,15 +120,18 @@ class NetworkClient:
 
         try:
             data, addr = self.socket.recvfrom(4096)
-            if addr != self.server_address:
-                print(f"⚠️ Пакет от неизвестного адреса: {addr}")
+
+            # При работе через NAT/прокси IP‑адрес сервера может отличаться.
+            # Сравниваем только порт – это гарантирует, что пакет пришёл от нужного сервера.
+            if self.server_address and addr[1] != self.server_address[1]:
+                print(f"⚠️ Пакет от неизвестного порта: {addr}")
                 return None
 
             if not data:
                 return None
 
             try:
-                parsed = toon.decode(data)        # <-- бинарная десериализация
+                parsed = toon.decode(data)  # <-- бинарная десериализация
                 if isinstance(parsed, dict):
                     typ = parsed.get("type", "unknown")
                     print(f"📥 UDP получено: {typ[:20]}…")
@@ -139,10 +145,10 @@ class NetworkClient:
 
         except socket.timeout:
             return None
-        except socket.error as exc:               # pragma: no cover
+        except socket.error as exc:  # pragma: no cover
             print(f"❌ Ошибка приёма UDP: {exc}")
             return None
-        except Exception as exc:                  # pragma: no cover
+        except Exception as exc:  # pragma: no cover
             print(f"❌ Ошибка приёма: {exc}")
             return None
 
@@ -154,11 +160,13 @@ class NetworkClient:
         if not self.is_connected():
             return False
 
+        # Инкрементируем счётчик, чтобы каждый heartbeat имел уникальный packet_id
+        self.packet_counter += 1
         hb = {
             "type": "heartbeat",
             "client_id": self.client_id,
             "timestamp": datetime.now().isoformat(),
-            "packet_id": self.packet_counter + 1,
+            "packet_id": self.packet_counter,
         }
         return self.send(hb)
 

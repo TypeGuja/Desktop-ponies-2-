@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DPP2 UDP Server Core – полностью переписан.
-*   Видеостриминг теперь отправляется раз в N сек (по умолчанию 10 сек).
+DPP2 UDP Server Core – полностью переписан с исправлением проблемы
+повторного подключения клиентов.
+
+*   Видеостриминг отправляется раз в N сек (по умолчанию 10 сек).
 *   Добавлен throttling широковещательных сообщений (`broadcast_interval`).
 *   Параметры задаются в конфиге и могут менять‑ся без перезапуска кода.
+*   **Критическое исправление** – корректное удаление клиента при
+    получении сообщения `client_disconnect`, что позволяет клиенту
+    переподключаться без «зависания» записи в `self.clients`.
 """
 
 import time
@@ -15,7 +20,7 @@ import io
 import os
 import signal
 from datetime import datetime
-from colorama import init, Fore, Style #вернуь отображение статистики
+from colorama import init, Fore, Style
 
 # ----------------------------------------------------------------------
 #   Внешние зависимости (mss – захват экрана, Pillow – JPEG)
@@ -28,6 +33,7 @@ init(autoreset=True)
 
 class ServerCore:
     """Основной UDP‑сервер с видеостримом."""
+
     # --------------------------------------------------------------
     #   Конструктор
     # --------------------------------------------------------------
@@ -58,7 +64,7 @@ class ServerCore:
             'players_connected': 0,
             'characters_created': 0,
             'udp_packets_received': 0,
-            'udp_packets_sent': 0
+            'udp_packets_sent': 0,
         }
 
         # видеостример (поток, флаг, буфер)
@@ -69,8 +75,10 @@ class ServerCore:
         self._last_broadcast = 0.0
         self.broadcast_interval = self.config['server'].get('broadcast_interval', 0.05)  # сек
 
-        print(f"{Fore.GREEN}DPP2 UDP ServerCore initialized "
-              f"on {self.config['server']['host']}:{self.config['server']['port']}")
+        print(
+            f"{Fore.GREEN}DPP2 UDP ServerCore initialized "
+            f"on {self.config['server']['host']}:{self.config['server']['port']}"
+        )
 
     # --------------------------------------------------------------
     #   Конфиг
@@ -92,8 +100,8 @@ class ServerCore:
                 'tick_rate': 60,
                 'screen_fps': 5,                # старый параметр (не используется)
                 'screen_quality': 70,
-                'screen_update_interval': 10,    # сек. между кадрами
-                'broadcast_interval': 0.05      # сек. между broadcast‑пакетами
+                'screen_update_interval': 10,   # сек. между кадрами
+                'broadcast_interval': 0.05,    # сек. между broadcast‑пакетами
             }
         }
 
@@ -111,18 +119,20 @@ class ServerCore:
         self.running = True
         self._start_worker_threads()
 
-        print(f"{Fore.GREEN}UDP‑сервер запущен на "
-              f"{self.config['server']['host']}:{self.config['server']['port']}")
+        print(
+            f"{Fore.GREEN}UDP‑сервер запущен на "
+            f"{self.config['server']['host']}:{self.config['server']['port']}"
+        )
         print(f"{Fore.CYAN}Ctrl+C – остановка")
         return True
 
     def _start_worker_threads(self):
-        self.main_thread = threading.Thread(target=self.main_loop,
-                                            daemon=True,
-                                            name="MainLoop")
-        self.monitor_thread = threading.Thread(target=self.monitor_loop,
-                                              daemon=True,
-                                              name="Monitor")
+        self.main_thread = threading.Thread(
+            target=self.main_loop, daemon=True, name="MainLoop"
+        )
+        self.monitor_thread = threading.Thread(
+            target=self.monitor_loop, daemon=True, name="Monitor"
+        )
         self.main_thread.start()
         self.monitor_thread.start()
 
@@ -240,37 +250,69 @@ class ServerCore:
                 traceback.print_exc()
 
     def _process_single_message(self, msg):
+        """Обрабатывает одно входящее сообщение."""
         typ = msg.get('type')
         client_id = msg.get('client_id')
+
+        # --------------------------------------------------
+        #   Обработка системных запросов
+        # --------------------------------------------------
         if typ == 'client_connected':
             print(f"{Fore.GREEN}Client connected: {client_id}")
             self.stats['players_connected'] += 1
             return
+
         if typ == 'client_disconnected':
             print(f"{Fore.YELLOW}Client disconnected: {client_id}")
             self._handle_client_disconnect(client_id)
             return
 
-        # передаём игровую часть логике
+        # --------------------------------------------------
+        #   **НОВОЕ**: запрос от клиента на отключение
+        # --------------------------------------------------
+        if typ == 'client_disconnect':
+            # Клиент явно запросил отключение – удаляем его из
+            # сетевого списка, а дальше обработка произойдёт
+            # через обычный сценарий `client_disconnected`,
+            # который уже вызывается после удаления.
+            print(f"{Fore.YELLOW}Client requested disconnect: {client_id}")
+            if client_id is not None:
+                self.network.remove_client_by_id(client_id)
+            else:
+                # Если client_id не передан, будем пытаться удалить
+                # по адресу (можно добавить логику, но в текущем протоколе
+                # client_id всегда присутствует).
+                pass
+            # Не вызываем _handle_client_disconnect сразу – дождёмся
+            # сообщения `client_disconnected`, которое будет добавлено
+            # в очередь network'ом.
+            return
+
+        # --------------------------------------------------
+        #   Передаём игровую часть логике
+        # --------------------------------------------------
         responses = self.game.handle_message(msg)
         if responses:
             self._send_responses(responses)
 
     def _handle_client_disconnect(self, client_id):
+        """Обрабатывает удаление игрока из игрового мира."""
         resp = self.game.remove_player(client_id)
         if resp:
             for r in resp:
                 self.handle_broadcast(r['data'],
-                                       r.get('exclude_client_id'))
+                                      r.get('exclude_client_id'))
 
     def _send_responses(self, responses):
         for resp in responses:
             if resp['target'] == 'client':
-                self.network.send_to_client(resp['client_id'],
-                                            resp['data'])
+                self.network.send_to_client(
+                    resp['client_id'], resp['data']
+                )
             elif resp['target'] == 'broadcast':
-                self.handle_broadcast(resp['data'],
-                                      resp.get('exclude_client_id'))
+                self.handle_broadcast(
+                    resp['data'], resp.get('exclude_client_id')
+                )
 
     def handle_broadcast(self, data, exclude_client_id=None):
         print(f"[BROADCAST] {data.get('type', 'unknown')}")
@@ -320,7 +362,7 @@ class ServerCore:
     def _start_screen_streamer(self):
         cfg_srv = self.config['server']
         interval = cfg_srv.get('screen_update_interval', 10)   # сек
-        quality  = cfg_srv.get('screen_quality', 70)
+        quality = cfg_srv.get('screen_quality', 70)
 
         if interval <= 0:
             interval = 10
@@ -338,16 +380,15 @@ class ServerCore:
 
                     # 1️⃣ захват и кодировка в JPEG
                     img_raw = sct.grab(monitor_cfg)
-                    img = Image.frombytes('RGB',
-                                          (img_raw.width, img_raw.height),
-                                          img_raw.rgb)
+                    img = Image.frombytes(
+                        'RGB', (img_raw.width, img_raw.height), img_raw.rgb
+                    )
 
                     buf = io.BytesIO()
                     img.save(buf, format='JPEG', quality=quality)
                     jpeg = buf.getvalue()
 
-                    # 2️⃣ optional zlib‑компрессия (уменьшает размер ~30%)
-                    # Закомментируйте если не нужно.
+                    # 2️⃣ optional zlib‑компрессия (закомментировано)
                     # import zlib
                     # jpeg = zlib.compress(jpeg)
 
@@ -362,19 +403,21 @@ class ServerCore:
                             'frame_id': frame_id,
                             'chunk_index': idx,
                             'total_chunks': total_chunks,
-                            'data': b64[idx*chunk_sz:(idx+1)*chunk_sz]
+                            'data': b64[idx * chunk_sz:(idx + 1) * chunk_sz],
                         }
                         self.network.broadcast(pkt)
 
-                    frame_id = (frame_id + 1) % (2**31)
+                    frame_id = (frame_id + 1) % (2 ** 31)
 
                     # 4️⃣ ожидание следующего интервала
                     elapsed = time.time() - start
                     if elapsed < interval:
                         time.sleep(interval - elapsed)
 
-        self._screen_thread = threading.Thread(target=stream_loop,
-                                               daemon=True,
-                                               name="ScreenStreamer")
+        self._screen_thread = threading.Thread(
+            target=stream_loop, daemon=True, name="ScreenStreamer"
+        )
         self._screen_thread.start()
-        print(f"[SERVER] ScreenStreamer started (interval={interval}s, quality={quality})")
+        print(
+            f"[SERVER] ScreenStreamer started (interval={interval}s, quality={quality})"
+        )

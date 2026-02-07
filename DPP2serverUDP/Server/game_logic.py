@@ -16,8 +16,10 @@ class GameLogic:
         print(f"[GAME] Протокол: UDP, Порт: {self.world.get('udp_port', 5555)}")
         print(f"[GAME] Время: {self.world['time']}, Погода: {self.world['weather']}")
 
+    # ----------------------------------------------------------------------
+    #   Инициализация мира и вспомогательных структур
+    # ----------------------------------------------------------------------
     def _init_world(self):
-        """Инициализация мира"""
         self.world = self.db.get_world_data()
         if not self.world or 'name' not in self.world:
             self.world = {
@@ -32,32 +34,31 @@ class GameLogic:
             self.db.update_world_data(self.world)
 
     def _init_structures(self):
-        """Инициализация структур данных"""
-        self.online_players = {}  # client_id -> player_id
-        self.active_characters = {}  # client_id -> character_data
-        self.character_clients = {}  # character_id -> client_id
-        self.player_positions = {}  # client_id -> position
-        self.last_position_updates = {}  # client_id -> timestamp
-        self.last_broadcast_updates = {}  # client_id -> timestamp для рассылки
+        self.online_players = {}          # client_id → player_id
+        self.active_characters = {}       # client_id → character_data
+        self.character_clients = {}        # character_id → client_id
+        self.player_positions = {}        # client_id → position
+        self.last_position_updates = {}   # client_id → timestamp
+        self.last_broadcast_updates = {}  # client_id → timestamp
 
     def _init_timers(self):
-        """Инициализация таймеров"""
         self.game_tick = 0
         self.last_world_update = time.time()
         self.world_update_interval = 60
 
-    # Обновление мира
+    # ----------------------------------------------------------------------
+    #   Обновление мира (таймер)
+    # ----------------------------------------------------------------------
     def update_world(self):
-        """Обновление состояния мира для UDP"""
+        """Обновление состояния мира."""
         self.game_tick += 1
-        current_time = time.time()
-        if current_time - self.last_world_update >= self.world_update_interval:
-            self.last_world_update = current_time
+        now = time.time()
+        if now - self.last_world_update >= self.world_update_interval:
+            self.last_world_update = now
             return self._perform_world_update()
         return None
 
     def _perform_world_update(self):
-        """Выполнение обновления мира"""
         updates = []
         time_update = self._update_time()
         if time_update:
@@ -69,7 +70,6 @@ class GameLogic:
         return updates if updates else None
 
     def _update_time(self):
-        """Обновление игрового времени"""
         hours, minutes = map(int, self.world['time'].split(':'))
         minutes += 1
         if minutes >= 60:
@@ -80,10 +80,11 @@ class GameLogic:
                 self.world['day'] += 1
         self.world['time'] = f"{hours:02d}:{minutes:02d}"
         self.db.update_world_data(self.world)
-        return self._create_world_update('time', time=self.world['time'], day=self.world['day'])
+        return self._create_world_update(
+            'time', time=self.world['time'], day=self.world['day']
+        )
 
     def _update_weather(self):
-        """Обновление погоды"""
         weather_types = ['солнечно', 'дождь', 'облачно', 'туман', 'снег', 'гроза']
         new_weather = random.choice(weather_types)
         if new_weather != self.world['weather']:
@@ -93,7 +94,6 @@ class GameLogic:
         return None
 
     def _create_world_update(self, update_type, **data):
-        """Создание сообщения обновления мира"""
         return {
             'target': 'broadcast',
             'data': {
@@ -105,36 +105,47 @@ class GameLogic:
         }
 
     def _auto_save_characters(self):
-        """Автосохранение активных персонажей"""
+        """Автосохранение всех активных персонажей."""
         for client_id, character in self.active_characters.items():
-            self.db.update_character(character['id'], {
-                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
-                'last_played': datetime.now().isoformat()
-            })
+            self.db.update_character(
+                character['id'],
+                {
+                    'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+                    'last_played': datetime.now().isoformat()
+                }
+            )
 
-    # Основной обработчик сообщений
+    # ----------------------------------------------------------------------
+    #   Основной обработчик входящих сообщений
+    # ----------------------------------------------------------------------
     def handle_message(self, message):
-        """Обработка входящих сообщений для UDP"""
+        """Обрабатывает одно сообщение от клиента."""
         msg_type = message.get('type')
         client_id = message.get('client_id')
 
-        if msg_type not in ['heartbeat', 'ping']:
+        if msg_type not in ('heartbeat', 'ping'):
             print(f"[GAME] UDP Обработка от {client_id}: {msg_type}")
 
-        # UDP-специфичные сообщения
+        # --------------------------------------------------
+        #   Специфические UDP‑сообщения
+        # --------------------------------------------------
         if msg_type == 'client_init':
-            return self._create_client_response(client_id, 'client_init_response',
-                                                success=True, message='UDP клиент инициализирован')
-        elif msg_type == 'client_disconnect':
+            return self._create_client_response(
+                client_id, 'client_init_response',
+                success=True, message='UDP клиент инициализирован'
+            )
+        if msg_type == 'client_disconnect':
             return self.remove_player(client_id)
-        elif msg_type == 'heartbeat':
+        if msg_type == 'heartbeat':
             return self.handle_heartbeat(client_id, message)
-        elif msg_type == 'skin_update':
+        if msg_type == 'skin_update':
             return self.handle_skin_update(client_id, message)
-        elif msg_type == 'request_skin':
+        if msg_type == 'request_skin':
             return self.handle_skin_request(client_id, message)
 
-        # Основные игровые сообщения
+        # --------------------------------------------------
+        #   Основные игровые сообщения
+        # --------------------------------------------------
         handlers = {
             'auth': self.handle_auth,
             'character_select': self.handle_character_select,
@@ -145,7 +156,7 @@ class GameLogic:
             'leave_world': self.handle_leave_world,
             'ping': self.handle_ping,
             'test': self.handle_ping,
-            # Совместимость со старыми сообщениями
+            # Совместимость со старым протоколом
             'register': self.handle_register,
             'login': self.handle_login,
             'logout': self.handle_logout,
@@ -165,19 +176,24 @@ class GameLogic:
         print(f"[GAME] Неизвестный тип сообщения UDP: {msg_type}")
         return self.error_response(client_id, f'Неизвестный тип сообщения: {msg_type}')
 
-    # Обработчики сообщений
+    # ----------------------------------------------------------------------
+    #   Обработчики конкретных типов сообщений
+    # ----------------------------------------------------------------------
     def handle_heartbeat(self, client_id, message):
-        """Обработка heartbeat сообщения"""
+        """Heartbeat – обновляем последнюю активность персонажа."""
         if client_id in self.active_characters:
             character = self.active_characters[client_id]
-            self.db.update_character(character['id'], {
-                'last_activity': datetime.now().isoformat()
-            })
-        return self._create_client_response(client_id, 'heartbeat_response',
-                                            timestamp=time.time(), server_tick=self.game_tick)
+            self.db.update_character(
+                character['id'],
+                {'last_activity': datetime.now().isoformat()}
+            )
+        return self._create_client_response(
+            client_id, 'heartbeat_response',
+            timestamp=time.time(), server_tick=self.game_tick
+        )
 
     def handle_auth(self, client_id, message):
-        """Обработка аутентификации для UDP"""
+        """Аутентификация игрока."""
         username = message.get('username')
         if not username:
             return self.error_response(client_id, 'Не указано имя пользователя')
@@ -195,96 +211,91 @@ class GameLogic:
         self.online_players[client_id] = player_id
         self.db.increment_online_players()
 
-        return self._create_client_response(client_id, 'auth_response',
-                                            success=True, player_id=player_id,
-                                            username=username, message='UDP Аутентификация успешна',
-                                            protocol='udp')
+        return self._create_client_response(
+            client_id, 'auth_response',
+            success=True, player_id=player_id,
+            username=username, message='UDP Аутентификация успешна',
+            protocol='udp'
+        )
 
     def handle_character_select(self, client_id, message):
-        """Обработка выбора персонажа"""
+        """Выбор (или создание) персонажа."""
         character_id = message.get('character_id')
         character_data = message.get('character_data')
 
         if not character_id:
             return self.error_response(client_id, 'Не указан ID персонажа')
 
-        # Проверяем player_id
         player_id = self.online_players.get(client_id)
         if not player_id:
             return self.error_response(client_id, 'Не аутентифицирован')
 
-        # Получаем или создаем персонажа
         character = self.db.get_character(character_id)
         if not character:
             if not character_data:
                 return self.error_response(client_id, 'Нет данных персонажа')
+            character_id, character = self.db.create_character(
+                player_id, character_data
+            )
 
-            # Создаем нового персонажа
-            character_id, character = self.db.create_character(player_id, character_data)
-
-        # Ответ клиенту
-        return self._create_client_response(client_id, 'character_select_response',
-                                            success=True,
-                                            character_id=character_id,
-                                            character_data={
-                                                'id': character['id'],
-                                                'name': character['name'],
-                                                'race': character['race'],
-                                                'class': character['class'],
-                                                'level': character['level'],
-                                                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0})
-                                            },
-                                            message='Персонаж выбран')
+        return self._create_client_response(
+            client_id, 'character_select_response',
+            success=True,
+            character_id=character_id,
+            character_data={
+                'id': character['id'],
+                'name': character['name'],
+                'race': character['race'],
+                'class': character['class'],
+                'level': character['level'],
+                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+            },
+            message='Персонаж выбран'
+        )
 
     def handle_skin_update(self, client_id, message):
-        """Обработка обновления скина персонажа"""
+        """Обновление скина игрока."""
         if client_id not in self.active_characters:
             return self.error_response(client_id, 'Не в мире')
 
         character = self.active_characters[client_id]
         skin_data = message.get('skin_data', {})
 
-        # Обновляем данные скина у персонажа
-        if 'current_skin' not in character:
-            character['current_skin'] = {}
+        character.setdefault('current_skin', {})
         character['current_skin'].update(skin_data)
 
-        # Сохраняем в БД
-        self.db.update_character(character['id'], {
-            'current_skin': character['current_skin']
-        })
+        self.db.update_character(
+            character['id'], {'current_skin': character['current_skin']}
+        )
 
-        # Рассылаем обновление другим игрокам
-        broadcast_msg = self._create_broadcast_message('skin_update',
-                                                       character=character,
-                                                       skin_data=skin_data)
-
+        broadcast_msg = self._create_broadcast_message(
+            'skin_update', character=character, skin_data=skin_data
+        )
         return [{'target': 'broadcast', 'data': broadcast_msg,
                  'exclude_client_id': client_id}]
 
     def handle_skin_request(self, client_id, message):
-        """Обработка запроса скина игрока"""
+        """Запрос скина другого персонажа."""
         target_character_id = message.get('target_character_id')
-
         if not target_character_id:
             return self.error_response(client_id, 'Не указан ID персонажа')
 
-        # Ищем игрока с этим character_id
         target_client_id = self.character_clients.get(target_character_id)
-
         if not target_client_id or target_client_id not in self.active_characters:
             return self.error_response(client_id, 'Игрок не найден')
 
         character = self.active_characters[target_client_id]
         skin_data = character.get('current_skin', {})
 
-        return self._create_client_response(client_id, 'skin_info_response',
-                                            character_id=target_character_id,
-                                            character_name=character['name'],
-                                            skin_data=skin_data)
+        return self._create_client_response(
+            client_id, 'skin_info_response',
+            character_id=target_character_id,
+            character_name=character['name'],
+            skin_data=skin_data
+        )
 
     def handle_join_world(self, client_id, message):
-        """Обработка входа в игровой мир для UDP"""
+        """Вход игрока в мир."""
         print(f"[GAME] UDP Запрос на вход в мир от {client_id}")
 
         character_id = message.get('character_id')
@@ -293,14 +304,13 @@ class GameLogic:
         if not character_id:
             return self.error_response(client_id, 'Не указан ID персонажа')
 
-        # Проверяем, есть ли уже активный персонаж у этого клиента
+        # уже в мире?
         if client_id in self.active_characters:
             return self.error_response(client_id, 'Уже в мире с другим персонажем')
 
-        # Получаем данные персонажа из БД
+        # получаем персонажа из БД (создаём, если нет)
         character = self.db.get_character(character_id)
         if not character:
-            # Если персонажа нет в БД, создаем нового
             character_data = {
                 'id': character_id,
                 'name': character_name or f'Character_{character_id}',
@@ -309,41 +319,42 @@ class GameLogic:
                 'level': 1,
                 'health': 100,
                 'max_health': 100,
-                'position': {'x': 0, 'y': 0, 'z': 0}
+                'position': {'x': 0, 'y': 0, 'z': 0},
             }
-
-            # Если есть player_id в online_players, используем его
             player_id = self.online_players.get(client_id, f'player_{client_id}')
+            character_id, character = self.db.create_character(
+                player_id, character_data
+            )
 
-            character_id, character = self.db.create_character(player_id, character_data)
-
-        # Добавляем персонажа в активные
+        # помечаем персонажа как активный
         self.active_characters[client_id] = character
         self.character_clients[character_id] = client_id
 
-        # Обновляем позицию
+        # сохраняем позицию, если клиент её передал
         if 'position' in message:
             character['position'] = message['position']
 
         self.player_positions[client_id] = character.get('position', {'x': 0, 'y': 0, 'z': 0})
         self.last_position_updates[client_id] = time.time()
 
-        # Обновляем в БД
-        self.db.update_character(character_id, {
-            'last_activity': datetime.now().isoformat(),
-            'in_world': True,
-            'position': character.get('position', {'x': 0, 'y': 0, 'z': 0})
-        })
+        self.db.update_character(
+            character_id,
+            {
+                'last_activity': datetime.now().isoformat(),
+                'in_world': True,
+                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+            }
+        )
 
-        # После добавления персонажа в активные
-        self.active_characters[client_id] = character
-
-        # Отправляем новому клиенту скины всех текущих игроков
+        # ------------------------------------------------------------------
+        #   Собираем ответы (skin‑инфо о других игроках, подтверждение,
+        #   широковещательное объявление о появлении)
+        # ------------------------------------------------------------------
         responses = []
 
-        # Скины существующих игроков
-        for other_client_id, other_character in self.active_characters.items():
-            if other_client_id != client_id and 'current_skin' in other_character:
+        # 1️⃣ Скины остальных онлайн‑игроков
+        for other_cid, other_character in self.active_characters.items():
+            if other_cid != client_id and 'current_skin' in other_character:
                 skin_info_msg = {
                     'type': 'player_skin_info',
                     'character_id': other_character['id'],
@@ -357,10 +368,7 @@ class GameLogic:
                     'data': skin_info_msg
                 })
 
-        # Создаем ответ клиенту
-        responses = []
-
-        # Ответ клиенту об успешном входе
+        # 2️⃣ Ответ клиенту о том, что он успешно вошёл
         responses.append({
             'target': 'client',
             'client_id': client_id,
@@ -380,7 +388,7 @@ class GameLogic:
             }
         })
 
-        # Рассылка другим игрокам о новом игроке
+        # 3️⃣ Широковещательное сообщение о появлении нового игрока
         broadcast_msg = {
             'type': 'player_joined',
             'character_id': character_id,
@@ -389,7 +397,6 @@ class GameLogic:
             'timestamp': time.time(),
             'protocol': 'udp'
         }
-
         responses.append({
             'target': 'broadcast',
             'data': broadcast_msg,
@@ -400,29 +407,31 @@ class GameLogic:
         return responses
 
     def handle_leave_world(self, client_id, message):
-        """Обработка выхода из мира"""
+        """Выход персонажа из мира."""
         if client_id not in self.active_characters:
             return self.error_response(client_id, 'Не в мире')
 
         character = self.active_characters[client_id]
         character_id = character['id']
 
-        # Сохраняем данные
-        self.db.update_character(character_id, {
-            'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
-            'last_played': datetime.now().isoformat(),
-            'in_world': False
-        })
+        self.db.update_character(
+            character_id,
+            {
+                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+                'last_played': datetime.now().isoformat(),
+                'in_world': False
+            }
+        )
 
-        # Удаляем из активных
+        # Удаляем из всех внутренних структур
         del self.active_characters[client_id]
+        self.character_clients.pop(character_id, None)
 
-        if character_id in self.character_clients:
-            del self.character_clients[character_id]
-
-        # Очищаем связанные данные
-        for dict_to_clean in [self.player_positions, self.last_position_updates, self.last_broadcast_updates]:
-            dict_to_clean.pop(client_id, None)
+        for d in (self.player_positions,
+                  self.last_position_updates,
+                  self.last_broadcast_updates,
+                  self.online_players):
+            d.pop(client_id, None)
 
         # Ответ клиенту
         responses = [{
@@ -436,7 +445,7 @@ class GameLogic:
             }
         }]
 
-        # Рассылка другим игрокам
+        # Широковещательное сообщение о выходе
         broadcast_msg = {
             'type': 'player_left',
             'character_id': character_id,
@@ -444,7 +453,6 @@ class GameLogic:
             'timestamp': time.time(),
             'protocol': 'udp'
         }
-
         responses.append({
             'target': 'broadcast',
             'data': broadcast_msg,
@@ -455,7 +463,7 @@ class GameLogic:
         return responses
 
     def handle_position_update(self, client_id, message):
-        """Обработка обновления позиции для UDP"""
+        """Обновление позиции персонажа."""
         if client_id not in self.active_characters:
             return None
 
@@ -464,37 +472,39 @@ class GameLogic:
         if not position:
             return None
 
-        # Обновляем позицию
         character['position'] = position
         self.player_positions[client_id] = position
         self.db.update_character(character['id'], {'position': position})
 
-        # Обновляем время
-        current_time = time.time()
-        self.last_position_updates[client_id] = current_time
+        now = time.time()
+        self.last_position_updates[client_id] = now
 
-        # Рассылка с троттлингом
-        last_broadcast = self.last_broadcast_updates.get(client_id, 0)
-        if current_time - last_broadcast >= 0.05:  # 20 FPS
-            self.last_broadcast_updates[client_id] = current_time
-            broadcast_msg = self._create_broadcast_message('position_update',
-                                                           character=character,
-                                                           position=position)
+        # Троттлинг широковещания (≈20 FPS)
+        last_bc = self.last_broadcast_updates.get(client_id, 0)
+        if now - last_bc >= 0.05:
+            self.last_broadcast_updates[client_id] = now
+            broadcast_msg = self._create_broadcast_message(
+                'position_update', character=character, position=position
+            )
             return [{'target': 'broadcast', 'data': broadcast_msg,
                      'exclude_client_id': client_id}]
         return None
 
+    # ------------------------------------------------------------------
+    #   Вспомогательные методы
+    # ------------------------------------------------------------------
     def _extract_position(self, message):
-        """Извлечение позиции из сообщения"""
         if 'position' in message:
             return message['position']
-        elif 'x' in message and 'y' in message:
-            return {'x': message.get('x', 0), 'y': message.get('y', 0),
-                    'z': message.get('z', 0)}
+        if 'x' in message and 'y' in message:
+            return {
+                'x': message.get('x', 0),
+                'y': message.get('y', 0),
+                'z': message.get('z', 0)
+            }
         return None
 
     def _create_broadcast_message(self, msg_type, character, **extra):
-        """Создание широковещательного сообщения"""
         return {
             'type': msg_type,
             'character_id': character['id'],
@@ -505,36 +515,36 @@ class GameLogic:
         }
 
     def _create_client_response(self, client_id, response_type, **data):
-        """Создание ответа клиенту"""
         return [{
             'target': 'client',
             'client_id': client_id,
             'data': {'type': response_type, **data}
         }]
 
-    # Удаление игрока
+    # ------------------------------------------------------------------
+    #   Удаление игрока из всех структур
+    # ------------------------------------------------------------------
     def remove_player(self, client_id):
-        """Удаление игрока при отключении"""
+        """Удалить игрока при отключении."""
         responses = []
 
         if client_id in self.active_characters:
             character = self.active_characters[client_id]
             character_id = character['id']
 
-            # Сохраняем данные
-            self.db.update_character(character_id, {
-                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
-                'last_played': datetime.now().isoformat(),
-                'in_world': False
-            })
-
-            # Удаляем из всех структур
+            self.db.update_character(
+                character_id,
+                {
+                    'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+                    'last_played': datetime.now().isoformat(),
+                    'in_world': False
+                }
+            )
             self._cleanup_player_data(client_id, character_id)
 
-            # Рассылка уведомления
-            broadcast_msg = self._create_broadcast_message('player_left',
-                                                           character=character,
-                                                           reason='disconnect')
+            broadcast_msg = self._create_broadcast_message(
+                'player_left', character=character, reason='disconnect'
+            )
             responses.append({'target': 'broadcast', 'data': broadcast_msg})
 
         elif client_id in self.online_players:
@@ -544,100 +554,94 @@ class GameLogic:
         return responses if responses else None
 
     def _cleanup_player_data(self, client_id, character_id):
-        """Очистка данных игрока"""
-        # Удаляем из активных
-        if client_id in self.active_characters:
-            del self.active_characters[client_id]
+        """Очистка всех вспомогательных словарей, связанных с клиентом."""
+        self.active_characters.pop(client_id, None)
 
-        # Удаляем из индексов
-        for dict_to_clean in [self.character_clients, self.player_positions,
-                              self.last_position_updates, self.last_broadcast_updates,
-                              self.online_players]:
-            dict_to_clean.pop(client_id, None)
+        for d in (self.character_clients, self.player_positions,
+                  self.last_position_updates, self.last_broadcast_updates,
+                  self.online_players):
+            d.pop(client_id, None)
 
-        if character_id in self.character_clients:
-            del self.character_clients[character_id]
+        self.character_clients.pop(character_id, None)
 
-    # Остальные методы (для совместимости)
+    # ------------------------------------------------------------------
+    #   Универсальные ответы и вспомогательные действия
+    # ------------------------------------------------------------------
     def error_response(self, client_id, message):
-        """Создание ответа с ошибкой"""
         print(f"[GAME] UDP Ошибка для {client_id}: {message}")
-        return self._create_client_response(client_id, 'error',
-                                            success=False, message=message, protocol='udp')
+        return self._create_client_response(
+            client_id, 'error',
+            success=False, message=message, protocol='udp'
+        )
 
     def handle_ping(self, client_id, message):
-        """Обработка пинга"""
-        return self._create_client_response(client_id, 'pong',
-                                            timestamp=time.time(),
-                                            server_time=self.world['time'],
-                                            game_tick=self.game_tick,
-                                            protocol='udp')
+        return self._create_client_response(
+            client_id, 'pong',
+            timestamp=time.time(),
+            server_time=self.world['time'],
+            game_tick=self.game_tick,
+            protocol='udp'
+        )
 
     def handle_chat(self, client_id, message):
-        """Обработка чата"""
         if client_id not in self.active_characters:
             return self.error_response(client_id, 'Не в мире')
-
         character = self.active_characters[client_id]
-
-        broadcast_msg = self._create_broadcast_message('chat_message',
-                                                       character=character,
-                                                       text=message.get('text', ''),
-                                                       channel=message.get('channel', 'global'))
-
+        broadcast_msg = self._create_broadcast_message(
+            'chat_message', character=character,
+            text=message.get('text', ''), channel=message.get('channel', 'global')
+        )
         return [{'target': 'broadcast', 'data': broadcast_msg}]
 
-    # Методы для совместимости
+    # ------------------------------------------------------------------
+    #   Совместимость с устаревшими запросами (регистрация, вход и др.)
+    # ------------------------------------------------------------------
     def handle_register(self, client_id, message):
         username = message.get('username')
         password = message.get('password')
         email = message.get('email')
-
         if not username or not password:
             return self.error_response(client_id, 'Не указано имя пользователя или пароль')
-
         player_id, result = self.db.register_player(username, password, email)
-
         if player_id:
-            return self._create_client_response(client_id, 'register_response',
-                                                success=True, player_id=player_id,
-                                                message='Регистрация успешна!')
+            return self._create_client_response(
+                client_id, 'register_response',
+                success=True, player_id=player_id,
+                message='Регистрация успешна!'
+            )
         else:
             return self.error_response(client_id, result)
 
     def handle_login(self, client_id, message):
         username = message.get('username')
         password = message.get('password')
-
         if not username or not password:
             return self.error_response(client_id, 'Не указаны учетные данные')
-
         player_id, result = self.db.authenticate_player(username, password)
-
         if player_id:
             self.online_players[client_id] = player_id
             self.db.increment_online_players()
-
             player_data = self.db.get_player(player_id)
             characters = self.db.get_player_characters(player_id)
             character_list = [{
-                'id': char['id'],
-                'name': char['name'],
-                'race': char['race'],
-                'class': char['class'],
-                'level': char['level'],
-                'last_played': char.get('last_played')
-            } for char in characters]
-
-            return self._create_client_response(client_id, 'login_response',
-                                                success=True, player_id=player_id,
-                                                player_data={
-                                                    'username': player_data['username'],
-                                                    'characters_count': len(characters),
-                                                    'playtime': player_data.get('stats', {}).get('playtime', 0)
-                                                },
-                                                characters=character_list,
-                                                message=f'Добро пожаловать, {username}!')
+                'id': ch['id'],
+                'name': ch['name'],
+                'race': ch['race'],
+                'class': ch['class'],
+                'level': ch['level'],
+                'last_played': ch.get('last_played')
+            } for ch in characters]
+            return self._create_client_response(
+                client_id, 'login_response',
+                success=True, player_id=player_id,
+                player_data={
+                    'username': player_data['username'],
+                    'characters_count': len(characters),
+                    'playtime': player_data.get('stats', {}).get('playtime', 0)
+                },
+                characters=character_list,
+                message=f'Добро пожаловать, {username}!'
+            )
         else:
             return self.error_response(client_id, result)
 
@@ -648,13 +652,13 @@ class GameLogic:
         player_id = self.online_players.get(client_id)
         if not player_id:
             return self.error_response(client_id, 'Не аутентифицирован')
-
         character_data = message.get('character_data', {})
         character_id, character = self.db.create_character(player_id, character_data)
-
-        return self._create_client_response(client_id, 'character_created',
-                                            success=True, character_id=character_id,
-                                            character_data=character)
+        return self._create_client_response(
+            client_id, 'character_created',
+            success=True, character_id=character_id,
+            character_data=character
+        )
 
     def handle_select_character(self, client_id, message):
         return self.handle_character_select(client_id, message)
@@ -663,11 +667,12 @@ class GameLogic:
         character_id = message.get('character_id')
         if not character_id:
             return self.error_response(client_id, 'Не указан ID персонажа')
-
         success = self.db.delete_character(character_id)
         if success:
-            return self._create_client_response(client_id, 'character_deleted',
-                                                success=True, character_id=character_id)
+            return self._create_client_response(
+                client_id, 'character_deleted',
+                success=True, character_id=character_id
+            )
         else:
             return self.error_response(client_id, 'Не удалось удалить персонажа')
 
@@ -675,52 +680,57 @@ class GameLogic:
         player_id = self.online_players.get(client_id)
         if not player_id:
             return self.error_response(client_id, 'Не аутентифицирован')
-
         characters = self.db.get_player_characters(player_id)
         character_list = [{
-            'id': char['id'],
-            'name': char['name'],
-            'race': char['race'],
-            'class': char['class'],
-            'level': char['level'],
-            'position': char.get('position', {'x': 0, 'y': 0, 'z': 0})
-        } for char in characters]
-
-        return self._create_client_response(client_id, 'characters_list',
-                                            characters=character_list)
+            'id': ch['id'],
+            'name': ch['name'],
+            'race': ch['race'],
+            'class': ch['class'],
+            'level': ch['level'],
+            'position': ch.get('position', {'x': 0, 'y': 0, 'z': 0})
+        } for ch in characters]
+        return self._create_client_response(
+            client_id, 'characters_list', characters=character_list
+        )
 
     def handle_character_action(self, client_id, message):
-        # Базовая реализация для тестирования
-        return self._create_client_response(client_id, 'action_response',
-                                            success=True,
-                                            action=message.get('action'),
-                                            message='Действие выполнено')
+        return self._create_client_response(
+            client_id, 'action_response',
+            success=True,
+            action=message.get('action'),
+            message='Действие выполнено'
+        )
 
     def handle_get_world_info(self, client_id, message):
-        return self._create_client_response(client_id, 'world_info',
-                                            world=self.world,
-                                            online_players=len(self.active_characters))
+        return self._create_client_response(
+            client_id, 'world_info',
+            world=self.world,
+            online_players=len(self.active_characters)
+        )
 
     def handle_save_character(self, client_id, message):
         if client_id not in self.active_characters:
             return self.error_response(client_id, 'Нет активного персонажа')
-
         character = self.active_characters[client_id]
-        self.db.update_character(character['id'], {
-            'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
-            'last_played': datetime.now().isoformat()
-        })
+        self.db.update_character(
+            character['id'],
+            {
+                'position': character.get('position', {'x': 0, 'y': 0, 'z': 0}),
+                'last_played': datetime.now().isoformat()
+            }
+        )
+        return self._create_client_response(
+            client_id, 'character_saved',
+            success=True, character_id=character['id']
+        )
 
-        return self._create_client_response(client_id, 'character_saved',
-                                            success=True,
-                                            character_id=character['id'])
-
+    # ------------------------------------------------------------------
+    #   Инструменты для UI/статистики
+    # ------------------------------------------------------------------
     def get_player_count(self):
-        """Получение количества онлайн игроков"""
         return len(self.active_characters)
 
     def get_world_state(self):
-        """Получение текущего состояния мира"""
         return {
             'world': self.world,
             'online_players': len(self.active_characters),
