@@ -5,7 +5,7 @@
     "theme_name": "black",
     "pony_scale": 0.95,
     "selected_ponies": {
-        "Twilight Sparkle": false,
+        "Twilight Sparkle": true,
         "Rainbow Dash": false,
         "Pinkie Pie": false,
         "Apple Jack": false,
