@@ -8,7 +8,10 @@ import os
 import random
 import threading
 import time
-import json # приписать длительность анимации
+import json
+import subprocess
+import sys
+
 
 # ------------------------------------------------------------
 # ====  UniversalPony  =======================================
@@ -16,24 +19,16 @@ import json # приписать длительность анимации
 
 class UniversalPony:
     """
-    Универсальный класс пони.
-    Добавлена поддержка параметров в special_animations:
-        - true / false – должно ли анимироваться перемещение
-        - Xmove / Ymove – ограничение перемещения только по одной оси
-        Формат записи (пример):
-
-        "lasso_left_seq": [
-            "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
-            "./AppleJack_Gifct/lasso-aj/lasso2_left.gif",
-            "./AppleJack_Gifct/lasso-aj/aj_lasso_left.gif",
-            "./AppleJack_Gifct/pose-aj/aj_pose_left.gif",
-            "true/Ymove",               # перемещается только вертикально
-            "0.01"                      # вероятность
-        ],
+    Универсальный класс пони с поддержкой переключения типов.
     """
-    def __init__(self, root, pony_name, initial_scale=1.0):
+
+    def __init__(self, root, pony_name, initial_scale=1.0, type_name=None, start_x=None, start_y=None):
         self.root = root
         self.pony_name = pony_name
+        self.initial_scale = initial_scale
+        self.start_type = type_name
+        self.start_x = start_x
+        self.start_y = start_y
 
         # ---------- Флаг безопасного завершения ----------
         self._shutdown_flag = threading.Event()
@@ -47,9 +42,33 @@ class UniversalPony:
 
         # ========== ПОИСК ПАПКИ И КОНФИГА ДЛЯ ЭТОГО ПОНИ ==========
         self.pony_folder, self.config_file = self._find_pony_folder_and_config(pony_name)
+        print(f"[DEBUG] Папка пони: {self.pony_folder}")
+        print(f"[DEBUG] Конфиг файл: {self.config_file}")
 
-        # ========== ЗАГРУЗКА КОНФИГА ==========
-        self.config = self._load_config()
+        # ========== ЗАГРУЗКА ОСНОВНОГО КОНФИГА (со списком типов) ==========
+        self.main_config = self._load_main_config()
+        print(f"[DEBUG] Основной конфиг: {self.main_config}")
+
+        # ========== ПЕРЕМЕННЫЕ ДЛЯ ТИПОВ ==========
+        self.available_types = {}  # словарь {имя_типа: путь_к_конфигу}
+        self.current_type_name = None  # имя текущего типа
+        self.type_configs = {}  # кэш загруженных конфигов типов
+
+        # ========== ЗАГРУЗКА ДОСТУПНЫХ ТИПОВ ==========
+        self._load_available_types()
+        print(f"[DEBUG] Доступные типы: {self.available_types}")
+
+        # ========== ЗАГРУЗКА КОНФИГА ДЛЯ УКАЗАННОГО ТИПА ==========
+        if self.start_type and self.start_type in self.available_types:
+            self.config = self._load_type_config(self.start_type)
+            self.current_type_name = self.start_type
+            print(f"[DEBUG] Загружен указанный тип: {self.start_type}")
+        else:
+            # Загружаем первый тип как тип по умолчанию
+            self.config = self._load_default_type_config()
+            print(f"[DEBUG] Загружен тип по умолчанию: {self.current_type_name}")
+
+        print(f"[DEBUG] Загруженный конфиг: {list(self.config.keys()) if self.config else 'None'}")
 
         # Проверяем оба варианта написания
         if 'spacial_animations' in self.config:
@@ -128,7 +147,7 @@ class UniversalPony:
         self.current_special_animation = []
         self.current_special_index = 0
         self.special_should_move = False
-        self.special_move_axis = None          # ← новое поле (X, Y или None)
+        self.special_move_axis = None
         self.special_animation_name = ""
         self.special_animation_timer = None
 
@@ -157,6 +176,15 @@ class UniversalPony:
 
         # ---------- Настройка окна ----------
         self._setup_window()
+
+        # Если переданы координаты - используем их
+        if self.start_x is not None and self.start_y is not None:
+            try:
+                self.root.geometry(f"{self.WIDTH}x{self.HEIGHT}+{self.start_x}+{self.start_y}")
+                print(f"[DEBUG] Установлена позиция из аргументов: {self.start_x},{self.start_y}")
+            except:
+                pass
+
         self._setup_canvas()
         self._bind_events()
 
@@ -178,6 +206,155 @@ class UniversalPony:
         self._special_animation_thread.start()
 
         self._schedule_change()
+
+    # ========== МЕТОДЫ ЗАГРУЗКИ ТИПОВ ==========
+
+    def _load_main_config(self):
+        """Загружает основной конфиг (со списком типов)"""
+        default_main_config = {
+            'pony_name': self.pony_name,
+            'pony_type': {}
+        }
+
+        try:
+            if os.path.exists(self.config_file):
+                with open(self.config_file, 'r', encoding='utf-8') as f:
+                    loaded_config = json.load(f)
+                    return loaded_config
+        except Exception as e:
+            print(f"[ERROR] Ошибка загрузки main config: {e}")
+
+        return default_main_config
+
+    def _load_available_types(self):
+        """Загружает список доступных типов из main_config"""
+        if 'pony_type' in self.main_config and isinstance(self.main_config['pony_type'], dict):
+            types_dict = self.main_config['pony_type']
+
+            for type_name, config_filename in types_dict.items():
+                # Определяем путь к конфигу типа
+                if os.path.isabs(config_filename):
+                    config_path = config_filename
+                else:
+                    # Сначала ищем в папке пони
+                    config_path = os.path.join(self.pony_folder, config_filename)
+
+                    # Если не нашли, ищем в той же папке, что и основной конфиг
+                    if not os.path.exists(config_path):
+                        config_path = os.path.join(os.path.dirname(self.config_file), config_filename)
+
+                    # Если всё ещё не нашли, ищем в текущей директории
+                    if not os.path.exists(config_path):
+                        config_path = os.path.join(os.getcwd(), config_filename)
+
+                if os.path.exists(config_path):
+                    self.available_types[type_name] = config_path
+                    print(f"[DEBUG] Найден тип {type_name}: {config_path}")
+                else:
+                    print(f"[WARNING] Файл конфига не найден: {config_path}")
+
+        # Если типов нет, создаём "тип по умолчанию" из основного конфига (для обратной совместимости)
+        if not self.available_types:
+            # Используем имя пони как название типа
+            default_type_name = self.pony_name
+            self.available_types[default_type_name] = self.config_file
+            print(f"[DEBUG] Типы не найдены, создаём тип по умолчанию: {default_type_name}")
+
+    def _load_type_config(self, type_name):
+        """Загружает конфиг для указанного типа"""
+        if type_name not in self.available_types:
+            print(f"[ERROR] Тип {type_name} не найден в available_types")
+            return None
+
+        # Проверяем кэш
+        if type_name in self.type_configs:
+            print(f"[DEBUG] Загружаем тип {type_name} из кэша")
+            return self.type_configs[type_name]
+
+        config_path = self.available_types[type_name]
+        print(f"[DEBUG] Загружаем конфиг для типа {type_name} из {config_path}")
+
+        try:
+            if os.path.exists(config_path):
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                    self.type_configs[type_name] = config
+                    return config
+            else:
+                print(f"[ERROR] Файл не существует: {config_path}")
+        except Exception as e:
+            print(f"[ERROR] Ошибка загрузки {config_path}: {e}")
+
+        return None
+
+    def _load_default_type_config(self):
+        """Загружает конфиг для типа по умолчанию (первый в списке)"""
+        if self.available_types:
+            # Берём первый тип как тип по умолчанию
+            first_type = list(self.available_types.keys())[0]
+            self.current_type_name = first_type
+            print(f"[DEBUG] Тип по умолчанию: {first_type}")
+            config = self._load_type_config(first_type)
+            if config:
+                return config
+            else:
+                print(f"[ERROR] Не удалось загрузить конфиг для типа {first_type}")
+
+        # Если ничего не загрузилось, возвращаем пустой конфиг
+        print("[WARNING] Возвращаем пустой конфиг")
+        return {}
+
+    # ========== МЕТОД ПЕРЕКЛЮЧЕНИЯ ТИПА ==========
+
+    def _switch_pony_type_new_window(self, type_name):
+        """Переключает тип создавая новое окно"""
+        print(f"[DEBUG] Переключение на тип: {type_name}")
+
+        if type_name == self.current_type_name:
+            print("[DEBUG] Уже используется этот тип")
+            return
+
+        # Получаем текущую позицию
+        try:
+            current_x = self.root.winfo_x()
+            current_y = self.root.winfo_y()
+            print(f"[DEBUG] Текущая позиция: {current_x},{current_y}")
+        except:
+            current_x, current_y = 200, 200
+            print(f"[DEBUG] Используем позицию по умолчанию: {current_x},{current_y}")
+
+        # Формируем команду
+        script_path = os.path.abspath(__file__)
+        cmd = [
+            sys.executable,
+            script_path,
+            self.pony_name,
+            str(self.current_scale),
+            type_name,
+            str(current_x),
+            str(current_y)
+        ]
+        print(f"[DEBUG] Команда: {' '.join(cmd)}")
+
+        # Запускаем новый процесс
+        try:
+            subprocess.Popen(cmd)
+            print("[DEBUG] Новый процесс запущен")
+        except Exception as e:
+            print(f"[ERROR] Не удалось запустить новый процесс: {e}")
+            return
+
+        # Закрываем текущее окно
+        print("[DEBUG] Закрываю текущее окно")
+        self.root.after(100, self._force_exit)
+
+    def _force_exit(self):
+        """Принудительное завершение"""
+        try:
+            self.root.quit()
+            self.root.destroy()
+        except:
+            pass
 
     # ==============================================================
     # ========== МОНИТОР ДОПОЛНИТЕЛЬНЫХ АНИМАЦИЙ ================
@@ -227,15 +404,15 @@ class UniversalPony:
                         gif_paths = []
                         flag_items = []
 
-                        for item in anim_cfg[:-1]:      # всё, кроме вероятности
+                        for item in anim_cfg[:-1]:  # всё, кроме вероятности
                             if isinstance(item, str) and item.lower().endswith('.gif'):
                                 gif_paths.append(item)
                             else:
                                 flag_items.append(item)
 
                         # ----------------- разбор флагов -----------------
-                        should_move = False               # по‑умолчанию «не двигаться»
-                        move_axis   = None                # None – свободно, 'X' – только по X, 'Y' – только по Y
+                        should_move = False  # по‑умолчанию «не двигаться»
+                        move_axis = None  # None – свободно, 'X' – только по X, 'Y' – только по Y
 
                         for token in flag_items:
                             if not isinstance(token, str):
@@ -282,7 +459,7 @@ class UniversalPony:
         self.current_special_animation = gif_paths
         self.current_special_index = 0
         self.special_should_move = should_move
-        self.special_move_axis = move_axis          # <-- сохраняем ограничение оси
+        self.special_move_axis = move_axis
         self.special_animation_name = anim_name
 
         # Сохраняем текущее состояние, чтобы потом вернуть его
@@ -350,7 +527,7 @@ class UniversalPony:
         self.current_special_animation = []
         self.current_special_index = 0
         self.special_should_move = False
-        self.special_move_axis = None                     # <-- сбрасываем ограничение
+        self.special_move_axis = None
 
         # Отключаем таймер
         if self.special_animation_timer:
@@ -367,7 +544,7 @@ class UniversalPony:
             self._load_stand_gif(self.current_direction)
 
     # ==============================================================
-    # ========== МЕТОДЫ ДВИЖЕНИЯ (добавлен параметр move_axis) ====
+    # ========== МЕТОДЫ ДВИЖЕНИЯ ===================================
     # ==============================================================
 
     def _safe_move_loop(self):
@@ -387,7 +564,7 @@ class UniversalPony:
 
                     if self._just_woke_up:
                         time.sleep(1)
-                    self._pick_target()                     # <-- свободное перемещение
+                    self._pick_target()
                     self._safe_move_to_target()
 
                 if self._threads_running and not self._shutdown_flag.is_set():
@@ -443,7 +620,8 @@ class UniversalPony:
 
                 # Ориентируемся на цель
                 new_direction = "right" if self.target_x > current_x else "left"
-                if (new_direction != self.current_direction or self.current_state == "idle") and not self.is_in_special_animation:
+                if (
+                        new_direction != self.current_direction or self.current_state == "idle") and not self.is_in_special_animation:
                     self.current_direction = new_direction
                     self._load_direction_gif(new_direction)
 
@@ -487,7 +665,7 @@ class UniversalPony:
                 break
 
     # -------------------------------------------------------------
-    # ----  (остальная часть файла без изменений) ------------------
+    # ----  DRAG METHODS  ----------------------------------------
     # -------------------------------------------------------------
 
     def _start_drag(self, event):
@@ -978,7 +1156,10 @@ class UniversalPony:
     def _create_context_menu(self):
         """Создает контекстное меню"""
         if self.context_menu:
-            self.context_menu.destroy()
+            try:
+                self.context_menu.destroy()
+            except:
+                pass
 
         self.context_menu = tk.Menu(
             self.root,
@@ -992,6 +1173,29 @@ class UniversalPony:
             activeforeground=self.menu_active_fg
         )
 
+        # ---- МЕНЮ ВЫБОРА ТИПА ----
+        if len(self.available_types) > 1:
+            type_menu = tk.Menu(self.context_menu, tearoff=0,
+                                bg=self.menu_bg_color, fg=self.menu_fg_color,
+                                activebackground=self.menu_active_bg,
+                                activeforeground=self.menu_active_fg)
+
+            for type_name in self.available_types.keys():
+                # Добавляем галочку к текущему типу
+                label = f"✓ {type_name}" if type_name == self.current_type_name else f"  {type_name}"
+                # ВАЖНО: Используем новый метод с созданием окна
+                type_menu.add_command(
+                    label=label,
+                    command=lambda tn=type_name: self._switch_pony_type_new_window(tn),
+                    background=self.menu_bg_color,
+                    foreground=self.menu_fg_color
+                )
+
+            self.context_menu.add_cascade(label="🔄 Сменить тип", menu=type_menu)
+            self.context_menu.add_separator()
+        else:
+            print(f"[DEBUG] Меню типов не создано: доступно типов {len(self.available_types)}")
+
         # Кнопка сна/пробуждения
         if self._is_sleep_enabled():
             label = "💤 Sleep" if not self.is_sleeping else "🌅 Wake Up"
@@ -1003,7 +1207,7 @@ class UniversalPony:
             )
             self.context_menu.add_separator()
 
-        # НОВАЯ КНОПКА: Остановить всех пони
+        # Кнопка остановки всех пони
         self.context_menu.add_command(
             label="🛑 Stop All Ponies",
             command=self._stop_all_ponies,
@@ -1028,7 +1232,7 @@ class UniversalPony:
         self.context_menu.add_separator()
 
         # Информация о состоянии
-        state_info = f"{self.pony_name}: {'Sleeping' if self.is_sleeping else 'Active'}"
+        state_info = f"{self.pony_name} [{self.current_type_name}]: {'Sleeping' if self.is_sleeping else 'Active'}"
         if self._forced_sleep:
             state_info += " (Forced)"
         if not self._is_sleep_enabled():
@@ -1040,6 +1244,8 @@ class UniversalPony:
             background=self.menu_bg_color,
             foreground='#666666'
         )
+
+        print(f"[DEBUG] Контекстное меню создано, типов: {len(self.available_types)}")
 
     def _stop_all_ponies(self):
         """Останавливает всех активных пони в системе"""
@@ -1586,61 +1792,6 @@ class UniversalPony:
         default_config = os.path.join(default_folder, "config.json")
         return default_folder, default_config
 
-    def _load_config(self):
-        """Загружает конфигурацию из JSON файла"""
-        default_config = {
-            'pony_name': self.pony_name,
-            'base_width': 160,
-            'base_height': 160,
-            'base_sleep_width': 160,
-            'base_sleep_height': 160,
-            'min_distance': 200,
-            'max_distance': 600,
-            'frame_duration_ms': 90,
-            'sleep_frame_duration_ms': 700,
-            'move_interval_min': 3,
-            'move_interval_max': 15,
-            'move_speed': 2,
-            'move_step_delay': 0.06,
-            'screen_margin': 1,
-            'bottom_margin': 10,
-            'sleep_timeout': 100,
-            'push_zone_size': 1,
-            'push_force': 5,
-            'gif_paths': {
-                "stand_right": "stand_right.gif",
-                "stand_left": "stand_left.gif",
-                "move_right": "move_right.gif",
-                "move_left": "move_left.gif",
-                "sleep_right": "sleep_right.gif",
-                "sleep_left": "sleep_left.gif",
-                "drag": "drag.gif"
-            },
-            'special_animations': {},
-            'sleep_enabled': True,
-            'menu_bg_color': '#2d2d2d',
-            'menu_fg_color': '#ffffff',
-            'menu_active_bg': '#0078d7',
-            'menu_active_fg': '#ffffff'
-        }
-
-        try:
-            if os.path.exists(self.config_file):
-                with open(self.config_file, 'r', encoding='utf-8') as f:
-                    loaded_config = json.load(f)
-
-                # Объединяем с дефолтными значениями
-                for key, value in default_config.items():
-                    if key not in loaded_config:
-                        loaded_config[key] = value
-                return loaded_config
-            else:
-                return default_config
-        except json.JSONDecodeError:
-            return default_config
-        except Exception:
-            return default_config
-
     def _check_pony_folder(self):
         """Проверяем и создаём папку с гифками если нужно"""
         if not os.path.exists(self.pony_folder):
@@ -1662,49 +1813,66 @@ class UniversalPony:
         """Создаёт пример конфигурационного файла"""
         sample_config = {
             "pony_name": self.pony_name,
-            "base_width": 160,
-            "base_height": 160,
-            "base_sleep_width": 160,
-            "base_sleep_height": 160,
-            "min_distance": 200,
-            "max_distance": 600,
-            "frame_duration_ms": 90,
-            "sleep_frame_duration_ms": 700,
-            "move_interval_min": 3,
-            "move_interval_max": 15,
-            "move_speed": 2,
-            "move_step_delay": 0.06,
-            "screen_margin": 1,
-            "bottom_margin": 10,
-            "sleep_timeout": 100,
-            "push_zone_size": 1,
-            "push_force": 5,
-            "gif_paths": {
-                "stand_right": "stand_right.gif",
-                "stand_left": "stand_left.gif",
-                "move_right": "move_right.gif",
-                "move_left": "move_left.gif",
-                "sleep_right": "sleep/sleep_right.gif",
-                "sleep_left": "sleep/sleep_left.gif",
-                "drag": "drag/drag.gif"
-            },
-            "special_animations": {
-                "dance_seq": [
-                    ["./dance/dance_left.gif", "./dance/dance_middle.gif", "./dance/dance_right.gif",
-                     "true", "0.05"]
-                ]
-            },
-            "sleep_enabled": True,
-            "menu_bg_color": "#2d2d2d",
-            "menu_fg_color": "#ffffff",
-            "menu_active_bg": "#0078d7",
-            "menu_active_fg": "#ffffff"
+            "pony_type": {
+                "Default": "default.json",
+                "Alternate": "alternate.json"
+            }
         }
 
         try:
             os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(sample_config, f, indent=4, ensure_ascii=False)
+
+            # Создаём примеры конфигов типов
+            default_config = {
+                "base_width": 160,
+                "base_height": 160,
+                "base_sleep_width": 160,
+                "base_sleep_height": 160,
+                "min_distance": 200,
+                "max_distance": 600,
+                "frame_duration_ms": 90,
+                "sleep_frame_duration_ms": 700,
+                "move_interval_min": 3,
+                "move_interval_max": 15,
+                "move_speed": 2,
+                "move_step_delay": 0.06,
+                "screen_margin": 1,
+                "bottom_margin": 10,
+                "sleep_timeout": 100,
+                "push_zone_size": 1,
+                "push_force": 5,
+                "gif_paths": {
+                    "stand_right": "stand_right.gif",
+                    "stand_left": "stand_left.gif",
+                    "move_right": "move_right.gif",
+                    "move_left": "move_left.gif",
+                    "sleep_right": "sleep/sleep_right.gif",
+                    "sleep_left": "sleep/sleep_left.gif",
+                    "drag": "drag/drag.gif"
+                },
+                "special_animations": {
+                    "dance_seq": [
+                        ["./dance/dance_left.gif", "./dance/dance_middle.gif", "./dance/dance_right.gif",
+                         "true", "0.05"]
+                    ]
+                },
+                "sleep_enabled": True,
+                "menu_bg_color": "#2d2d2d",
+                "menu_fg_color": "#ffffff",
+                "menu_active_bg": "#0078d7",
+                "menu_active_fg": "#ffffff"
+            }
+
+            default_path = os.path.join(self.pony_folder, "default.json")
+            with open(default_path, 'w', encoding='utf-8') as f:
+                json.dump(default_config, f, indent=4, ensure_ascii=False)
+
+            alternate_path = os.path.join(self.pony_folder, "alternate.json")
+            with open(alternate_path, 'w', encoding='utf-8') as f:
+                json.dump(default_config, f, indent=4, ensure_ascii=False)
+
         except Exception:
             pass
 
@@ -1734,6 +1902,11 @@ class PonyDiscovery:
 
                     pony_name = config.get('pony_name', os.path.basename(root))
 
+                    # Получаем список типов из конфига
+                    pony_types = []
+                    if 'pony_type' in config and isinstance(config['pony_type'], dict):
+                        pony_types = list(config['pony_type'].keys())
+
                     gif_files = []
                     for item in os.listdir(root):
                         if item.lower().endswith('.gif'):
@@ -1745,8 +1918,6 @@ class PonyDiscovery:
                             if item.lower().endswith('.gif'):
                                 gif_files.append(os.path.join(subdir, item))
 
-                    has_special = 'special_animations' in config and bool(config['special_animations'])
-
                     ponies.append({
                         'name': pony_name,
                         'folder': root,
@@ -1754,7 +1925,7 @@ class PonyDiscovery:
                         'gifs': gif_files,
                         'display_name': pony_name,
                         'has_gifs': len(gif_files) > 0,
-                        'has_special_animations': has_special
+                        'pony_types': pony_types
                     })
                 except (json.JSONDecodeError, UnicodeDecodeError):
                     continue
@@ -1779,7 +1950,7 @@ class PonyDiscovery:
                     'name': name,
                     'display_name': name,
                     'has_gifs': False,
-                    'has_special_animations': False,
+                    'pony_types': [],
                     'folder': os.path.join(start_path, name.replace(" ", "_")),
                     'config': os.path.join(start_path, name.replace(" ", "_"), "config.json"),
                     'gifs': []
@@ -1796,7 +1967,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) < 2:
         print("❌ Ошибка: не указано имя пони")
-        print("Использование: python UniversalPony.py <имя_по́ни> [масштаб]")
+        print("Использование: python pony.py <имя_пони> [масштаб] [тип] [x] [y]")
         sys.exit(1)
 
     pony_name = sys.argv[1]
@@ -1808,6 +1979,29 @@ if __name__ == "__main__":
         except ValueError:
             pass
 
+    type_name = None
+    if len(sys.argv) > 3:
+        type_name = sys.argv[3]
+        print(f"[DEBUG] Запуск с типом: {type_name}")
+
+    start_x = None
+    start_y = None
+
+    # Парсим координаты
+    if len(sys.argv) > 4:
+        try:
+            start_x = int(sys.argv[4])
+        except ValueError:
+            pass
+    if len(sys.argv) > 5:
+        try:
+            start_y = int(sys.argv[5])
+        except ValueError:
+            pass
+
+    if start_x is not None and start_y is not None:
+        print(f"[DEBUG] Стартовая позиция: {start_x},{start_y}")
+
     root = tk.Tk()
-    app = UniversalPony(root, pony_name, scale)
+    app = UniversalPony(root, pony_name, scale, type_name, start_x, start_y)
     root.mainloop()
