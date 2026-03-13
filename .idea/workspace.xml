@@ -5,15 +5,75 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/TwilightSparkle_prn.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilightsparkle.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/game_logic.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/game_logic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/fly_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/fly_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/i missed you so much.mp3" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/i'm so sorry.mp3" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/luna_abacus.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/luna_happy_jump_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/luna_happy_jump_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/magic_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/magic_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/pony.ini" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/sleeping_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/sleeping_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/stand_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/stand_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/walking_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/walking_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/walking_wing_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/walking_wing_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/breezie-twilight-left.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/breezie-twilight-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/breezie-twilight-right.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/breezie-twilight-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-flight-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-flight-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-gallop-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-gallop-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-idle-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-idle-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-dress-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-dress-left1.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-dress-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-dress-right1.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-left1.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trans-right1.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trot-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trot-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trot-wings-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/p-twi-trot-wings-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-flight-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-flight-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-idle-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-idle-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-trot-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-trot-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-trot-wings-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-trot-wings-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-zoom-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/princess-twilight-zoom-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/sparkle.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/sparkle.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/starburst-big.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/starburst-big.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twi-crystal-left.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twi-crystal-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twi-crystal-right.art" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twi-crystal-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twilight-starswirl-left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Princess Twilight Sparkle/twilight-starswirl-right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/theme_config.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,6 +93,19 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <favorite-branches>
+      <branch-storage>
+        <map>
+          <entry type="LOCAL">
+            <value>
+              <list>
+                <branch-info repo="$PROJECT_DIR$" source="dungeon" />
+              </list>
+            </value>
+          </entry>
+        </map>
+      </branch-storage>
+    </favorite-branches>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -102,8 +175,8 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main (1)">
-    <configuration name="DPP2Launcher" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.DPP2">
+    <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Desktop-ponies-2-" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -116,7 +189,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2Launcher.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -215,11 +288,11 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.main (1)" />
+        <item itemvalue="Python.DPP2" />
+        <item itemvalue="Python.server_core" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.main (2)" />
-        <item itemvalue="Python.server_core" />
-        <item itemvalue="Python.DPP2Launcher" />
+        <item itemvalue="Python.main (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -238,6 +311,8 @@
       <option name="presentableId" value="Default" />
       <updated>1768132895178</updated>
       <workItem from="1768132896474" duration="73000" />
+      <workItem from="1773331149716" duration="11000" />
+      <workItem from="1773331169675" duration="1000" />
     </task>
     <servers />
   </component>
@@ -258,11 +333,6 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/DPP2.py</url>
-          <line>19</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py</url>
           <line>5</line>
