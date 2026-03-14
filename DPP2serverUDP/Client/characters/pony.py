@@ -306,8 +306,8 @@ class UniversalPony:
 
     # ========== МЕТОД ПЕРЕКЛЮЧЕНИЯ ТИПА ==========
 
-    def _switch_pony_type_new_window(self, type_name):
-        """Переключает тип создавая новое окно"""
+    def _switch_pony_type(self, type_name):
+        """Переключает тип персонажа (перезагружает текущее окно)"""
         print(f"[DEBUG] Переключение на тип: {type_name}")
 
         if type_name == self.current_type_name:
@@ -318,43 +318,98 @@ class UniversalPony:
         try:
             current_x = self.root.winfo_x()
             current_y = self.root.winfo_y()
-            print(f"[DEBUG] Текущая позиция: {current_x},{current_y}")
         except:
             current_x, current_y = 200, 200
-            print(f"[DEBUG] Используем позицию по умолчанию: {current_x},{current_y}")
 
-        # Формируем команду
-        script_path = os.path.abspath(__file__)
-        cmd = [
-            sys.executable,
-            script_path,
-            self.pony_name,
-            str(self.current_scale),
-            type_name,
-            str(current_x),
-            str(current_y)
-        ]
-        print(f"[DEBUG] Команда: {' '.join(cmd)}")
+        # Останавливаем потоки
+        self._shutdown_flag.set()
+        self._threads_running = False
+        time.sleep(0.1)  # Даем потокам время завершиться
 
-        # Запускаем новый процесс
-        try:
-            subprocess.Popen(cmd)
-            print("[DEBUG] Новый процесс запущен")
-        except Exception as e:
-            print(f"[ERROR] Не удалось запустить новый процесс: {e}")
-            return
+        # Очищаем всё
+        self._clear_canvas_completely()
 
-        # Закрываем текущее окно
-        print("[DEBUG] Закрываю текущее окно")
-        self.root.after(100, self._force_exit)
+        # Загружаем новый конфиг
+        self.config = self._load_type_config(type_name)
+        self.current_type_name = type_name
 
-    def _force_exit(self):
-        """Принудительное завершение"""
-        try:
-            self.root.quit()
-            self.root.destroy()
-        except:
-            pass
+        # Обновляем настройки из нового конфига
+        self.base_width = self.config.get('base_width', 160)
+        self.base_height = self.config.get('base_height', 160)
+        self.base_sleep_width = self.config.get('base_sleep_width', 160)
+        self.base_sleep_height = self.config.get('base_sleep_height', 160)
+
+        # Пересчитываем размеры
+        self.WIDTH = int(self.base_width * self.current_scale)
+        self.HEIGHT = int(self.base_height * self.current_scale)
+        self.SLEEP_WIDTH = int(self.base_sleep_width * self.current_scale)
+        self.SLEEP_HEIGHT = int(self.base_sleep_height * self.current_scale)
+
+        # Обновляем остальные параметры
+        self.MIN_DISTANCE = self.config.get('min_distance', 200)
+        self.MAX_DISTANCE = self.config.get('max_distance', 600)
+        self.FRAME_DURATION_MS = self.config.get('frame_duration_ms', 90)
+        self.SLEEP_FRAME_DURATION_MS = self.config.get('sleep_frame_duration_ms', 700)
+        self.MOVE_INTERVAL_MIN = self.config.get('move_interval_min', 3)
+        self.MOVE_INTERVAL_MAX = self.config.get('move_interval_max', 15)
+        self.MOVE_SPEED_PX_PER_STEP = max(1, int(self.config.get('move_speed', 2) * self.current_scale))
+        self.MOVE_STEP_DELAY_SEC = self.config.get('move_step_delay', 0.06)
+        self.SCREEN_MARGIN = self.config.get('screen_margin', 1)
+        self.BOTTOM_MARGIN = self.config.get('bottom_margin', 10)
+        self.SLEEP_TIMEOUT = self.config.get('sleep_timeout', 100)
+        self.PUSH_ZONE_SIZE = int(self.config.get('push_zone_size', 1) * self.current_scale)
+        self.PUSH_FORCE = int(self.config.get('push_force', 5) * self.current_scale)
+
+        # Обновляем пути к GIF
+        self.GIF_PATHS = self.config.get('gif_paths', {
+            "stand_right": "stand_right.gif",
+            "stand_left": "stand_left.gif",
+            "move_right": "move_right.gif",
+            "move_left": "move_left.gif",
+            "sleep_right": "sleep_right.gif",
+            "sleep_left": "sleep_left.gif",
+            "drag": "drag.gif"
+        })
+
+        # Обновляем специальные анимации
+        self.SPECIAL_ANIMATIONS = self.config.get('special_animations', {})
+
+        # Обновляем настройки меню
+        self.menu_bg_color = self.config.get('menu_bg_color', '#2d2d2d')
+        self.menu_fg_color = self.config.get('menu_fg_color', '#ffffff')
+        self.menu_active_bg = self.config.get('menu_active_bg', '#0078d7')
+        self.menu_active_fg = self.config.get('menu_active_fg', '#ffffff')
+
+        # Сбрасываем флаги
+        self._shutdown_flag.clear()
+        self._threads_running = True
+        self.is_dragging = False
+        self.animating = True
+        self.moving = True
+        self.is_sleeping = False
+        self._just_woke_up = False
+        self._forced_sleep = False
+        self.is_in_special_animation = False
+
+        # Обновляем размер окна
+        self.root.geometry(f"{self.WIDTH}x{self.HEIGHT}+{current_x}+{current_y}")
+        self.canvas.config(width=self.WIDTH, height=self.HEIGHT)
+
+        # Загружаем новую анимацию
+        self._load_stand_gif("right")
+
+        # Перезапускаем потоки
+        self._animation_thread = threading.Thread(target=self._safe_animate, daemon=True)
+        self._move_thread = threading.Thread(target=self._safe_move_loop, daemon=True)
+        self._sleep_thread = threading.Thread(target=self._safe_sleep_monitor, daemon=True)
+        self._special_animation_thread = threading.Thread(target=self._safe_special_animation_monitor, daemon=True)
+
+        self._animation_thread.start()
+        self._move_thread.start()
+        self._sleep_thread.start()
+        self._special_animation_thread.start()
+
+        print(f"[DEBUG] Тип успешно изменен на {type_name}")
 
     # ==============================================================
     # ========== МОНИТОР ДОПОЛНИТЕЛЬНЫХ АНИМАЦИЙ ================
@@ -1183,10 +1238,10 @@ class UniversalPony:
             for type_name in self.available_types.keys():
                 # Добавляем галочку к текущему типу
                 label = f"✓ {type_name}" if type_name == self.current_type_name else f"  {type_name}"
-                # ВАЖНО: Используем новый метод с созданием окна
+                # ИСПРАВЛЕНИЕ: Используем новый метод переключения без создания нового окна
                 type_menu.add_command(
                     label=label,
-                    command=lambda tn=type_name: self._switch_pony_type_new_window(tn),
+                    command=lambda tn=type_name: self._switch_pony_type(tn),
                     background=self.menu_bg_color,
                     foreground=self.menu_fg_color
                 )
