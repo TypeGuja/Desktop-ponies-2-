@@ -351,6 +351,10 @@ class DynamicPonySelector(QMainWindow):
         # Словарь запущенных процессов: имя → (Popen‑объект, pid)
         self.running_processes: dict[str, tuple[subprocess.Popen, int]] = {}
 
+        # Флаг для отслеживания смены типа
+        self._is_switching_type = False
+        self._last_switch_time = 0
+
         # Флаги UI
         self.main_window_hidden = False
 
@@ -724,8 +728,15 @@ class DynamicPonySelector(QMainWindow):
         for name in dead:
             self.running_processes.pop(name, None)
 
-        # Если не осталось процессов - показываем окно
+        # ИСПРАВЛЕНИЕ: Если не осталось процессов - проверяем, не было ли смены типа
         if not self.running_processes:
+            current_time = time.time()
+
+            # Проверяем, была ли недавняя смена типа (последние 3 секунды)
+            if current_time - self._last_switch_time < 3.0:
+                print("[DEBUG] Недавно была смена типа, ждем 3 секунды...")
+                return
+
             print("[DEBUG] Все процессы завершены, показываем окно")
             self.main_window_hidden = False
             self.show()
@@ -766,76 +777,75 @@ class DynamicPonySelector(QMainWindow):
             import shutil
 
             script_dir = os.path.abspath(os.path.dirname(__file__))
-            meipass = getattr(sys, "_MEIPASS", None)
-            exe_dir = os.path.abspath(os.path.dirname(sys.executable)) if getattr(sys, "executable", None) else None
 
-            search_paths = [script_dir]
-            if meipass:
-                search_paths.append(meipass)
-            if exe_dir and exe_dir not in search_paths:
-                search_paths.append(exe_dir)
+            # Правильный путь к pony.py
+            pony_script = os.path.join(script_dir, "DPP2serverUDP", "Client", "characters", "pony.py")
 
-            rel_candidates = [
-                "pony.py",
-                os.path.join("DPP2serverUDP", "Client", "characters", "pony.py"),
-                os.path.join("characters", "pony.py"),
-            ]
-
-            pony_script = None
-            for base in search_paths:
-                for rel in rel_candidates:
-                    candidate = os.path.join(base, rel)
-                    if os.path.isfile(candidate):
-                        pony_script = os.path.abspath(candidate)
+            if not os.path.isfile(pony_script):
+                # Если не нашли, пробуем другие варианты
+                alt_paths = [
+                    os.path.join(script_dir, "pony.py"),
+                    os.path.join(script_dir, "characters", "pony.py"),
+                ]
+                for alt in alt_paths:
+                    if os.path.isfile(alt):
+                        pony_script = alt
                         break
-                if pony_script:
-                    break
 
-            if not pony_script:
+            if not pony_script or not os.path.isfile(pony_script):
                 QMessageBox.critical(
                     self,
                     "Ошибка",
-                    "Не найден файл pony.py. Поместите его рядом с DPP2.py "
-                    "или в одну из поисковых папок.",
+                    f"Не найден файл pony.py!\nИскал в:\n{pony_script}",
                 )
                 return
 
-            exe_name = os.path.basename(sys.executable or "").lower()
-            if "python" in exe_name:
-                python_bin = sys.executable
-            else:
-                python_bin = shutil.which("pythonw") or shutil.which("python") or shutil.which("python3")
-                if not python_bin:
-                    QMessageBox.critical(self, "Ошибка", "Не найден интерпретатор Python для запуска pony.py.")
-                    return
+            # Рабочая директория должна быть там, где лежит pony.py
+            work_dir = os.path.dirname(pony_script)
 
-            cmd = [python_bin, pony_script, pony_name, str(self.current_scale)]
+            cmd = [
+                sys.executable,
+                pony_script,
+                pony_name,
+                str(self.current_scale)
+            ]
+
             print(f"[DEBUG] Запуск {pony_name}: {' '.join(cmd)}")
+            print(f"[DEBUG] Рабочая директория: {work_dir}")
 
             if os.name == "nt":
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-                creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0) | subprocess.CREATE_NEW_PROCESS_GROUP
                 proc = subprocess.Popen(
                     cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    cwd=script_dir,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=work_dir,
                     startupinfo=startupinfo,
-                    creationflags=creation_flags,
+                    text=True
                 )
             else:
                 proc = subprocess.Popen(
                     cmd,
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    cwd=script_dir,
-                    preexec_fn=os.setsid,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    cwd=work_dir,
+                    text=True
                 )
 
             pid = proc.pid
             self.running_processes[pony_name] = (proc, pid)
             print(f"[DEBUG] Процесс {pony_name} (pid={pid}) запущен")
+
+            # Запускаем поток для чтения вывода процесса (для отладки)
+            def read_output():
+                stdout, stderr = proc.communicate()
+                if stdout:
+                    print(f"[{pony_name} STDOUT]: {stdout}")
+                if stderr:
+                    print(f"[{pony_name} STDERR]: {stderr}")
+
+            threading.Thread(target=read_output, daemon=True).start()
 
             threading.Thread(
                 target=self._monitor_process,
@@ -845,6 +855,8 @@ class DynamicPonySelector(QMainWindow):
 
         except Exception as exc:
             print(f"[ERROR] Не удалось запустить пони {pony_name}: {exc}")
+            import traceback
+            traceback.print_exc()
             QMessageBox.critical(self, "Ошибка", f"Не удалось стартовать {pony_name}:\n{exc}")
 
     def _monitor_process(self, pony_name: str, proc: subprocess.Popen):
