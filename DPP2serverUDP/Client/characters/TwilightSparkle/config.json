@@ -2,6 +2,7 @@
     "pony_name": "TwilightSparkle",
     "pony_type": {
         "TwilightSparkle": "TwilightSparkle.json",
-        "TwilightSparkle_prn": "TwilightSparkle_prn.json"
+        "TwilightSparkle_prn": "TwilightSparkle_prn.json",
+        "TwilightSparkle_f": "TwilightSparkle_f.json"
     }
 }
