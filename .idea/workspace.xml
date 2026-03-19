@@ -5,11 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_af.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_f.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/TwilightSparkle_f.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/fly_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/fly_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/pony.ini" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/sleep_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/sleep_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/stand_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/stand_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/walking_left.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia (Alternate Filly)/walking_right.gif" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/config.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Princess Luna (Season 1)/pony.ini" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" afterPath="$PROJECT_DIR$/theme_config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/config.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,6 +75,9 @@
   &quot;associatedIndex&quot;: 5
 }</component>
   <component name="ProjectId" id="386va5gcA4PgAyAh82BA2bGYnft" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -106,6 +121,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\SunsetShommer" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\Celestia" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
