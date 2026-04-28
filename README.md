@@ -1,6 +1,7 @@
 because of a better version in Python, this option can be closed, and we switch to Rust (I'm very sorry)
 in the Rust version, multiplayer will finally go away (Russia is not in the best position and my connecting server was blocked due to the locks), only the clean version will remain and after the Rust census, the gifs will be redrawn (not immediately)(the configuration format of the personages will be as in the original (my version performed poorly (but it was readable)))
 
+all subsequent builds with Rust will be unstable (introduction of a new language, it is being mastered)
 
 
 
