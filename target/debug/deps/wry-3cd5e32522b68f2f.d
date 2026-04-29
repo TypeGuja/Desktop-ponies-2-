@@ -1,0 +1,11 @@
+C:\Users\user\Documents\GitHub\Desktop-ponies-2-\target\debug\deps\wry-3cd5e32522b68f2f.d: C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\lib.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\error.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\proxy.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\web_context.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\mod.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\drag_drop.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\util.rs
+
+C:\Users\user\Documents\GitHub\Desktop-ponies-2-\target\debug\deps\libwry-3cd5e32522b68f2f.rmeta: C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\lib.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\error.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\proxy.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\web_context.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\mod.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\drag_drop.rs C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\util.rs
+
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\lib.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\error.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\proxy.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\web_context.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\mod.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\drag_drop.rs:
+C:\Users\user\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wry-0.50.5\src\webview2\util.rs:
