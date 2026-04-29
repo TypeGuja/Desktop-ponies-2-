@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Ponies</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-container">
+    <header class="app-header">
+        <h1>🦄 Desktop Ponies</h1>
+        <div class="header-controls">
+            <button class="icon-btn" onclick="window.__TAURI__.window.close()" title="Close">✕</button>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="browse">Browse Ponies</button>
+        <button class="tab-btn" data-tab="spawn">Spawn Pony</button>
+        <button class="tab-btn" data-tab="active">Active Ponies</button>
+    </nav>
+
+    <!-- Tab: Browse -->
+    <section id="tab-browse" class="tab-content active">
+        <input type="text" id="search" placeholder="Search ponies..." oninput="filterPonies()">
+        <div id="pony-list" class="pony-list">Loading ponies...</div>
+    </section>
+
+    <!-- Tab: Spawn -->
+    <section id="tab-spawn" class="tab-content">
+        <div class="card">
+            <h2>Spawn Pony</h2>
+            <div class="form-group">
+                <label>Pony Name</label>
+                <input type="text" id="spawn-name" placeholder="Twilight Sparkle" list="pony-datalist">
+                <datalist id="pony-datalist"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Behavior</label>
+                <select id="spawn-behavior"><option value="idle">Idle</option></select>
+            </div>
+            <div class="form-group">
+                <label>Position</label>
+                <div class="position-inputs">
+                    <input type="number" id="spawn-x" placeholder="X" value="400">
+                    <input type="number" id="spawn-y" placeholder="Y" value="300">
+                </div>
+            </div>
+            <button class="btn-primary" onclick="spawnPony()">✨ Spawn!</button>
+        </div>
+    </section>
+
+    <!-- Tab: Active -->
+    <section id="tab-active" class="tab-content">
+        <div class="card">
+            <h2>Active Ponies</h2>
+            <div id="active-list"><p class="empty-state">Not implemented yet</p></div>
+            <button class="btn-danger" onclick="removeAll()">Remove All</button>
+        </div>
+    </section>
+
+    <footer class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="pony-count">0 ponies</span>
+    </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
