@@ -1,8 +1,0 @@
-{
-    "pony_name": "Celestia",
-    "pony_type": {
-        "Celestia": "Celestia.json",
-        "Celestia_f": "Celestia_f.json",
-        "Celestia_af": "Celestia_af.json"
-    }
-}
