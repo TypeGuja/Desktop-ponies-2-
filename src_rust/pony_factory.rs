@@ -2,7 +2,7 @@
 use glam::Vec2;
 use std::collections::HashMap;
 use crate::loader::PonyConfig;
-use crate::pony::{PonyEntity, SkeletalVisuals}; // SkeletalVisuals теперь из pony
+use crate::pony::{PonyEntity, SkeletalVisuals};
 
 pub struct PonyFactory {
     next_id: u64,
@@ -59,8 +59,9 @@ impl PonyFactory {
         let id = self.next_id;
         self.next_id += 1;
 
+        // ИСПРАВЛЕНО: было duration_right, стало max_duration
         let frame_duration = if *frame_count > 0 {
-            behavior.duration_right / *frame_count as f32
+            behavior.max_duration / *frame_count as f32
         } else {
             0.1
         };

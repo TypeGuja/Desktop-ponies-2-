@@ -1,5 +1,7 @@
 // src_rust/loader.rs
 // src_rust/loader.rs
+// src_rust/loader.rs
+
 use std::fs;
 use std::path::{Path, PathBuf};
 use serde::Serialize;
@@ -15,30 +17,32 @@ pub enum MovementType {
     Sleep,
     Dragged,
 }
+
 #[derive(Clone, Debug, Serialize)]
 pub struct Behavior {
     pub name: String,
-    pub speed: f32,
-    pub duration_right: f32,
-    pub duration_left: f32,
-    pub delay: f32,
-    pub sprite_right: String,
-    pub sprite_left: String,
-    pub movement_type: String,
-    pub next_animation: String,
-    pub effect: String,
-    pub sound: String,
-    pub repeat: bool,
-    pub offset_x: f32,
-    pub offset_y: f32,
-    pub target_pony: String,
-    pub draggable: bool,
-    pub transition: String,
-    pub next_after: String,
-    pub location_right: (f32, f32),
-    pub location_left: (f32, f32),
-    pub freeze_time: bool,
-    pub frequency: f32,
+    pub probability: f32,          // "Chance"
+    pub max_duration: f32,         // "Max Duration"
+    pub min_duration: f32,         // "Min Duration"
+    pub speed: f32,                // "Speed"
+    pub sprite_right: String,      // "Right Image"
+    pub sprite_left: String,       // "Left Image"
+    pub movement: String,          // "Movement"
+    pub linked_behavior: String,   // "Linked Behavior"
+    pub start_speech: String,      // "Start Speech"
+    pub end_speech: String,        // "End Speech"
+    pub skip: bool,                // "Skip"
+    pub target_x: f32,             // "Target X"
+    pub target_y: f32,             // "Target Y"
+    pub follow_target: bool,       // "Follow Target"
+    pub auto_select_follow: bool,  // "Auto Select Follow Images"
+    pub follow_stopped: String,    // "Follow Stopped Behavior"
+    pub follow_moving: String,     // "Follow Moving Behavior"
+    pub right_image_center: (f32, f32), // "Right Image Center"
+    pub left_image_center: (f32, f32),  // "Left Image Center"
+    pub prevent_loop: bool,        // "Prevent Animation Loop"
+    pub group: String,             // "Group"
+    pub follow_offset: String,     // "Follow Offset Type"
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -107,14 +111,15 @@ impl MovementType {
 fn split_csv(line: &str) -> Vec<String> {
     let mut fields = vec![];
     let mut cur = String::new();
-    let mut q = false;
-    let mut b: i32 = 0;
+    let mut in_quotes = false;
+    let mut brace_depth: i32 = 0;
+
     for c in line.chars() {
         match c {
-            '"' if b == 0 => q = !q,
-            '{' => b += 1,
-            '}' => b = b.saturating_sub(1),
-            ',' if !q && b == 0 => {
+            '"' if brace_depth == 0 => in_quotes = !in_quotes,
+            '{' => brace_depth += 1,
+            '}' => brace_depth = brace_depth.saturating_sub(1),
+            ',' if !in_quotes && brace_depth == 0 => {
                 fields.push(cur.trim().to_string());
                 cur.clear();
                 continue;
@@ -129,17 +134,27 @@ fn split_csv(line: &str) -> Vec<String> {
 
 fn unquote(s: &str) -> String {
     let s = s.trim();
-    if s.starts_with('"') && s.ends_with('"') { s[1..s.len()-1].into() } else { s.into() }
+    if s.starts_with('"') && s.ends_with('"') {
+        s[1..s.len()-1].to_string()
+    } else {
+        s.to_string()
+    }
 }
 
-fn parse_f32(s: &str) -> f32 { unquote(s).parse().unwrap_or(0.0) }
-fn parse_bool(s: &str) -> bool { matches!(unquote(s).to_lowercase().as_str(), "true" | "1" | "yes") }
+fn parse_f32(s: &str) -> f32 {
+    unquote(s).parse().unwrap_or(0.0)
+}
+
+fn parse_bool(s: &str) -> bool {
+    matches!(unquote(s).to_lowercase().as_str(), "true" | "1" | "yes")
+}
 
 fn parse_pair(s: &str) -> (f32, f32) {
     let s = unquote(s);
-    let p: Vec<&str> = s.split(',').collect();
-    if p.len() >= 2 {
-        (p[0].trim().parse().unwrap_or(0.0), p[1].trim().parse().unwrap_or(0.0))
+    let parts: Vec<&str> = s.split(',').collect();
+    if parts.len() >= 2 {
+        (parts[0].trim().parse().unwrap_or(0.0),
+         parts[1].trim().parse().unwrap_or(0.0))
     } else {
         (0.0, 0.0)
     }
@@ -163,27 +178,63 @@ fn parse_list(s: &str) -> Vec<String> {
 // ── Loader ──────────────────────────────────────────────────
 impl DesktopPoniesLoader {
     pub fn new<P: AsRef<Path>>(base_path: P) -> Self {
+        let base = base_path.as_ref();
+
+        // Нормализуем базовый путь
+        let current_dir = if base == Path::new(".") || base == Path::new("") {
+            std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        } else {
+            base.to_path_buf()
+        };
+
+        // Список папок для проверки (по порядку)
+        let candidates = vec![
+            current_dir.join("..").join("Ponies"),
+            current_dir.join("Ponies"),
+            PathBuf::from("../Ponies"),
+            PathBuf::from("./Ponies"),
+        ];
+
+        // Ищем первую существующую папку
+        let ponies_dir = candidates
+            .into_iter()
+            .find(|p| p.exists())
+            .unwrap_or_else(|| {
+                eprintln!("WARNING: No Ponies folder found, using ../Ponies as fallback");
+                current_dir.join("..").join("Ponies")
+            });
+
+        println!("Ponies folder: {:?}", ponies_dir);
+
         Self {
-            ponies_dir: base_path.as_ref().join("Content").join("Ponies"),
+            ponies_dir,
             configs: Vec::new(),
         }
     }
 
     pub fn load_all(&mut self) -> Result<(), String> {
-        let dir = self.ponies_dir.clone(); // клонируем путь
+        if !self.ponies_dir.exists() {
+            return Err(format!("Ponies dir not found: {:?}", self.ponies_dir));
+        }
 
-        if !dir.exists() {
-            return Err(format!("Ponies dir not found: {:?}", dir));
+        if !self.ponies_dir.is_dir() {
+            return Err(format!("Path is not a directory: {:?}", self.ponies_dir));
         }
 
         self.configs.clear();
-        self.scan_dir(&dir)?; // передаём клон, а не self.ponies_dir
+        println!("Scanning for ponies in: {:?}", self.ponies_dir);
+        self.scan_dir(&self.ponies_dir.clone())?;
 
         if self.configs.is_empty() {
-            return Err("No pony.ini files found".to_string());
+            return Err(format!("No pony.ini files found in {:?}", self.ponies_dir));
         }
 
         self.configs.sort_by(|a, b| a.name.cmp(&b.name));
+        println!("Successfully loaded {} ponies:", self.configs.len());
+        for pony in &self.configs {
+            println!("  - {} ({} behaviors, {} speaks)",
+                     pony.name, pony.behaviors.len(), pony.speaks.len());
+        }
         Ok(())
     }
 
@@ -195,10 +246,8 @@ impl DesktopPoniesLoader {
             let path = entry.path();
 
             if path.is_dir() {
-                // Заходим в подпапку
                 self.scan_dir(&path)?;
             } else if path.file_name().and_then(|n| n.to_str()) == Some("pony.ini") {
-                // Нашли pony.ini — парсим папку, в которой он лежит
                 let parent = path.parent().unwrap();
                 match Self::parse_config(parent, &path) {
                     Ok(cfg) => self.configs.push(cfg),
@@ -228,36 +277,39 @@ impl DesktopPoniesLoader {
             let fields = split_csv(line);
 
             match row_type {
-                "Name" => { /* name уже взят из папки */ }
-
                 "Categories" => {
-                    categories = fields[1..].iter().map(|f| unquote(f)).filter(|s| !s.is_empty()).collect();
+                    categories = fields[1..].iter()
+                        .map(|f| unquote(f))
+                        .filter(|s| !s.is_empty())
+                        .collect();
                 }
 
-                "Behavior" if fields.len() >= 22 => {
+                // Новый формат Behavior с 24 полями
+                "Behavior" if fields.len() >= 24 => {
                     behaviors.push(Behavior {
-                        name: unquote(&fields[1]),
-                        speed: parse_f32(&fields[2]),
-                        duration_right: parse_f32(&fields[3]),
-                        duration_left: parse_f32(&fields[4]),
-                        delay: parse_f32(&fields[5]),
-                        sprite_right: unquote(&fields[6]),
-                        sprite_left: unquote(&fields[7]),
-                        movement_type: unquote(&fields[8]),
-                        next_animation: unquote(&fields[9]),
-                        effect: unquote(&fields[10]),
-                        sound: unquote(&fields[11]),
-                        repeat: parse_bool(&fields[12]),
-                        offset_x: parse_f32(&fields[13]),
-                        offset_y: parse_f32(&fields[14]),
-                        target_pony: unquote(&fields[15]),
-                        draggable: parse_bool(&fields[16]),
-                        transition: unquote(&fields[17]),
-                        next_after: unquote(&fields[18]),
-                        location_right: parse_pair(&fields[19]),
-                        location_left: parse_pair(&fields[20]),
-                        freeze_time: parse_bool(&fields[21]),
-                        frequency: fields.get(22).map(|f| parse_f32(f)).unwrap_or(0.0),
+                        name: unquote(&fields[1]),                    // "Identifier"
+                        probability: parse_f32(&fields[2]),           // "Chance"
+                        max_duration: parse_f32(&fields[3]),          // "Max Duration"
+                        min_duration: parse_f32(&fields[4]),          // "Min Duration"
+                        speed: parse_f32(&fields[5]),                 // "Speed"
+                        sprite_right: unquote(&fields[6]),            // "Right Image"
+                        sprite_left: unquote(&fields[7]),             // "Left Image"
+                        movement: unquote(&fields[8]),                // "Movement"
+                        linked_behavior: unquote(&fields[9]),         // "Linked Behavior"
+                        start_speech: unquote(&fields[10]),           // "Start Speech"
+                        end_speech: unquote(&fields[11]),             // "End Speech"
+                        skip: parse_bool(&fields[12]),                // "Skip"
+                        target_x: parse_f32(&fields[13]),             // "Target X"
+                        target_y: parse_f32(&fields[14]),             // "Target Y"
+                        follow_target: parse_bool(&fields[15]),       // "Follow Target"
+                        auto_select_follow: parse_bool(&fields[16]),  // "Auto Select Follow Images"
+                        follow_stopped: unquote(&fields[17]),         // "Follow Stopped Behavior"
+                        follow_moving: unquote(&fields[18]),          // "Follow Moving Behavior"
+                        right_image_center: parse_pair(&fields[19]),  // "Right Image Center"
+                        left_image_center: parse_pair(&fields[20]),   // "Left Image Center"
+                        prevent_loop: parse_bool(&fields[21]),        // "Prevent Animation Loop"
+                        group: unquote(&fields[22]),                  // "Group"
+                        follow_offset: unquote(&fields[23]),          // "Follow Offset Type"
                     });
                 }
 
@@ -298,6 +350,14 @@ impl DesktopPoniesLoader {
             }
         }
 
-        Ok(PonyConfig { name, categories, directory: dir.to_path_buf(), behaviors, speaks, interactions, effects })
+        Ok(PonyConfig {
+            name,
+            categories,
+            directory: dir.to_path_buf(),
+            behaviors,
+            speaks,
+            interactions,
+            effects,
+        })
     }
 }

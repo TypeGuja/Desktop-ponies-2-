@@ -1,6 +1,6 @@
 // src_rust/renderer.rs (полностью исправленный)
 use wgpu::*;
-use winit::window::Window;
+use  tao::window::Window;
 use glam::Mat4;
 use std::sync::Arc;
 use bytemuck::{Pod, Zeroable};
@@ -76,12 +76,12 @@ impl Renderer {
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
-        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
-            CompositeAlphaMode::PostMultiplied
-        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
+        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
             CompositeAlphaMode::PreMultiplied
+        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
+            CompositeAlphaMode::PostMultiplied
         } else {
-            eprintln!("Warning: no alpha mode with transparency supported, ponies will have black background");
+            eprintln!("Warning: no alpha mode with transparency supported");
             CompositeAlphaMode::Opaque
         };
 
@@ -430,19 +430,18 @@ impl Renderer {
             ],
         });
 
-        let instances: Vec<SpriteInstance> = sprite_ponies
-            .iter()
-            .map(|pony| {
-                let (frame, scale) = match &pony.render_type {
-                    PonyRenderType::Sprite { current_frame, .. } => (*current_frame as f32, pony.scale),
-                    _ => (0.0, 1.0),
-                };
-                SpriteInstance {
-                    position: [pony.position.x, pony.position.y],
-                    frame_and_scale: [frame, scale],
+        let instances: Vec<SpriteInstance> = sprite_ponies.iter().map(|pony| {
+            let (frame, frame_count) = match &pony.render_type {
+                PonyRenderType::Sprite { current_frame, frame_count, .. } => {
+                    (*current_frame as f32, *frame_count as f32)
                 }
-            })
-            .collect();
+                _ => (0.0, 1.0),
+            };
+            SpriteInstance {
+                position: [pony.position.x, pony.position.y],
+                frame_and_scale: [frame, 100.0], // размер спрайта 100px
+            }
+        }).collect();
 
         if !instances.is_empty() {
             self.queue.write_buffer(
