@@ -17,983 +17,248 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/btc.task" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/build.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/icon.ico" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src-ui/style.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/ai_server.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/btcx.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/emotion_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/llm_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/pony_personalities.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/python_bridge.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/rule_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/server.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/stt_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/tts_engine.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_py/utils.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/ai_controller.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/animation.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/btcx.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/interaction.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/math.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/mesh.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/pony.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/pony_factory.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/pose_generator.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/python_bridge.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/renderer.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/shaders.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/skeleton.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/texture.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/ui.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/verlet.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/window_manager.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/world.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tauri.conf.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/(It's BSOD).py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Desktop-ponies-2-.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Desktop-ponies-2-.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/1с.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2Launcher.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2Launcher1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/character_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/characters.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/graphic_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Client/network_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/client_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/database.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/game_logic.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/game_server_db.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/gui_controller.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/network.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Server/server_core.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Shared/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/Shared/protocol.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverTCP(no used)(reserve)/server.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/animated_character.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/AppleJack/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/AppleJack/stand_aj_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/AppleJack/stand_aj_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/AppleJack/trotcycle_aj_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/AppleJack/trotcycle_aj_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Cadance/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Cadance/cadance-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Cadance/cadance-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Cadance/cadance_stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Cadance/cadance_stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Celestia/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Celestia/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Celestia/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Celestia/walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Celestia/walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/stand_fs_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Fluttershy/trotcycle_fs_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Luna/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Luna/luna_idle_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Luna/luna_idle_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Luna/luna_walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Luna/luna_walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/PinkiePie/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/PinkiePie/stand_pp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/PinkiePie/stand_pp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/PinkiePie/trotcycle_pp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/PinkiePie/trotcycle_pp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/RainbowDash/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/RainbowDash/stand_rd_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/RainbowDash/stand_rd_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/RainbowDash/trotcycle_rd_wing_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/RainbowDash/trotcycle_rd_wing_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Rarity/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Rarity/stand_r_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Rarity/stand_r_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Rarity/trotcycle_r_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Rarity/trotcycle_r_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/starlightglimmer-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/starlightglimmer-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/starlightglimmer-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/StarlightGlimmer/starlightglimmer-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShimmer/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShimmer/sunsetshimmer-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShimmer/sunsetshimmer-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShimmer/sunsetshimmer-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/SunsetShimmer/sunsetshimmer-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Trixie/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Trixie/trixie_naked_stand_lefts.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Trixie/trixie_naked_stand_rights.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Trixie/trixie_naked_trot_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/Trixie/trixie_naked_trot_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/TwilightSparkle/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/TwilightSparkle/stand_ts_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/TwilightSparkle/stand_ts_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/TwilightSparkle/trotcycle_ts_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/assets/characters/TwilightSparkle/trotcycle_ts_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/character_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack (type shortened).py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/drag-aj/aj-drag-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/drag-aj/aj-drag-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/lasso-aj/aj_lasso_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/lasso-aj/aj_lasso_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/lasso-aj/lasso2_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/lasso-aj/lasso2_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/pose-aj/aj_pose_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/pose-aj/aj_pose_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/sleep-aj/sleep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/sleep-aj/sleep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/stand_aj_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/stand_aj_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/trotcycle_aj_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct/trotcycle_aj_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj-banjo.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj-gallop-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj-gallop-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_galla_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_galla_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_idle_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_idle_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_lasso_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_lasso_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_pose_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_pose_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_trot_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/aj_trot_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/apple_drop.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/breezie-applejack-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/breezie-applejack-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/congaapplejack_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/congaapplejack_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/crystal-applejack-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/crystal-applejack-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/gallop_jump_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/gallop_jump_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/gallop_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/gallop_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/hurdle_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/tree.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/truck_drive_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Gifct2/truck_drive_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/all yours partner.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/be ready for a ride.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/can you ever forgive me.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/can't hear you, i'm asleep.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/cock-a-doodle-doo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/don't you use your fancy mathematics to muddle the issue.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/geronimo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/helping the ponyfolks.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/hint hint.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/hmmmm, nah.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/hoho there lover boy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/i told you so.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/i'm applejack.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/no can do sugar cube.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/oooohoooo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/oops, sry.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/soups on everypony.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/thats what all the fuss is about.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/we don't normally wear clothes.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/what in tarnation.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/what in the hay is that supposed to mean.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/who are you calling a baby.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/yeehaw.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/AppleJack_Soundct/you're welcome.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/art (no used/breezie-applejack-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/art (no used/breezie-applejack-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/art (no used/crystal-applejack-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/art (no used/crystal-applejack-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/art (no used/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Applejack/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/Cadance.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance-flight-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance-flight-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance_stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct/cadance_stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct2 (no used)/cadance-dance-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/MCadance_Gifct2 (no used)/cadance-dance-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Cadance/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct/walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct/walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct2 (no used)/fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct2 (no used)/fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct2 (no used)/scroll_arrive_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_Gifct2 (no used)/scroll_arrive_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_af.json" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Celestia_f.json" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/flap_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/flap_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/sit_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/sit_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/sleep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/sleep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_af_Gifct/walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/sleep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/sleep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/walking_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/Princess Celestia_f_Gifct/walking_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/gotcha.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/i knew you could do it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/i princess celestia hereby decree.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/i'm so proud of you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/run.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/these creatures are adorable.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/want you by my side.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Celestia/sounds (no used)/will you accept my friendship.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/drag-fs/fs_drag_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/drag-fs/fs_drag_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/sleep-fs/sleeping_fs_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/sleep-fs/sleeping_fs_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/stand_fs_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/stand_fs_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/trotcycle_fs_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct/trotcycle_fs_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/breezie-fluttershy-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/breezie-fluttershy-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/congafluttershy_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/congafluttershy_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/critter_catch_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/critter_catch_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/critter_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/critter_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/crystal-fluttershy-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/crystal-fluttershy-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/cuddles.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/flutter_mouseover_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/flutter_mouseover_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/flutters_gallop_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/flutters_gallop_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fluttershy_stare_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fluttershy_stare_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fly_fluttershy_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fly_fluttershy_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fly_fluttershy_updown_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/fly_fluttershy_updown_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_stand_left_wings.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_stand_right_wings.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_trot_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_trot_left_wings.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_trot_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fluttershy_trot_right_wings.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/gala_fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/Fluttershy_Gifct2 (no used)/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/art (no used)/breezie-fluttershy-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/art (no used)/breezie-fluttershy-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/art (no used)/crystal-fluttershy-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/art (no used)/crystal-fluttershy-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/art (no used)/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/rr.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/(crying).mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/(grin).mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/and then, out of nowhere.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/aww boo hoo hoo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/come out.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/crazy laugh.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/how dare you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i am so frustrated.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i don't wanna talk about it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i'll catch you yeat my pretties.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i'm fluttershy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i'm so sry to have scared you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/i'm the world champ you know.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/id like to be a tree.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/im a year older than you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/kick something.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/oh, my.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/oopsie.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/pretty please.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/wait.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/way to go.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/yay.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/you rock, woohoo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/you're going to love me.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/you're such a loudmouth.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Fluttershy/sounds (no used)/you're the cutest thing ever.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna-flight-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna-flight-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna_idle_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna_idle_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna_walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_Gifct/luna_walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/Fly/fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/Fly/fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/i missed you so much.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/i'm so sorry.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/luna_abacus.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/luna_happy_jump_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/luna_happy_jump_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/magic_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/magic_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/sleep/sleeping_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/sleep/sleeping_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/stand/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/stand/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/walking/walking_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/walking/walking_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/walking_wing/walking_wing_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/Luna_ss1_Gifct/walking_wing/walking_wing_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna-flight-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna-flight-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna_idle_left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna_idle_right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna_walk_left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/art (no used)/luna_walk_right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/forgive me if i withhold my enthusiasm.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/fun  what is this fun thou speakest of.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/huzzah!.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/most wonderful of nights.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/the fun has been doubled!.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/very well then, be that way.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/we could not be happier. is that not clear.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Luna/sounds/what is the matter with you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/drag-pp/drag_pp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/drag-pp/drag_pp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/sleep-pp/pp-sleep-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/sleep-pp/pp-sleep-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/stand_pp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/stand_pp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/trotcycle_pinkiepie_left_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/trotcycle_pinkiepie_right_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/trotcycle_pp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct/trotcycle_pp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/backtrack_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/backtrack_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bite_pinkie_gummy_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bite_pinkie_gummy_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_left_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_right_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_up_down_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounce_pinkiepie_up_down_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounceturn_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/bounceturn_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/breezie-pinkiepie-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/breezie-pinkiepie-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannoncake2_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannoncake2_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannoncake_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannoncake_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonfull_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonfull_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonshoot_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonshoot_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonstart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cannonstart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cartwheel_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cartwheel_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/chicken2_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/chicken2_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/chicken_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/chicken_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_start_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_start_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_stop_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_stop_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_unfold_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/choppa_unfold_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/congapinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/congapinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/crystal-pinkie-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/crystal-pinkie-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cupcake_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/cupcake_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/epic_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/epic_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower1_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower1_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower2_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower2_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower3_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower3_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower4mix_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower4mix_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower5mix_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower5mix_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower6_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower6_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower7_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/flower7_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/fluttercuddles_links.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/fluttercuddles_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_end_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_end_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_salto_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_salto_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_start_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/front_flip_full_twist_start_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_bounce_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_bounce_left_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_bounce_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_bounce_right_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_idle_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_idle_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_trot_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_trot_left_n_n_.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_trot_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/gala_pinkie_trot_right_n_n.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/giggle_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/giggle_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/goovy_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/goovy_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/haters_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/haters_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hatersstart_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hatersstart_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hatersstop_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hatersstop_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup2_start_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup2_start_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup_start_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup_start_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup_stop_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/hickup_stop_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/jumpy_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/jumpy_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/mouse_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/mouse_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oink_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oink_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkend_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkend_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkoinkoinktail_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkoinkoinktail_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkstart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/oinkstart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/parasoloff_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/parasoloff_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/parasolon_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/parasolon_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/paraspritestart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/paraspritestart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/paraspritestop_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/paraspritestop_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/partycannon_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/partycannon_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkacopter_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkacopter_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkie-dance-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkie-dance-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkie_galopp_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pinkie_galopp_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pose_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/pose_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/princess_pinkie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/princess_pinkie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl2_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl2_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup2mix_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup2mix_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup3_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup3_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofl_hickup_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2start_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2start_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2stop_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rofls2stop_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/roflsit_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/roflsit_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollend_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollend_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollfinish_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollfinish_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rolljump_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rolljump_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollsequence_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollsequence_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollstart_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rollstart_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rolltransition_pinkiepie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/rolltransition_pinkiepie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/run_twitchy_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/run_twitchy_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/salto_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/salto_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/saltoend_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/saltoend_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/saltostart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/saltostart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sit_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sit_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sittinggiggle_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sittinggiggle_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sleep1_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sleep1_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sleep2_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sleep2_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezecute_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezecute_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezefly_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezefly_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezestart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezestart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezestop_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sneezestop_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sonic_pinksneeze2_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sonic_pinksneeze2_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sonic_pinksneeze_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sonic_pinksneeze_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/teleporreapear_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/teleporreapear_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/teleportmove_pinkie_pie.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/teleportstart_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/teleportstart_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/tom.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/tongue_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/tongue_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/tonguedance_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/tonguedance_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/trotcycle_parade_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/trotcycle_parade_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/twitchytail_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/twitchytail_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/walk_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/walk_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/wink_pinkie_pie_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/Pinkie Pie_Gifct2 (no used)/wink_pinkie_pie_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/PinkiePie.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/art (no used)/breezie-pinkiepie-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/art (no used)/breezie-pinkiepie-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/art (no used)/crystal-pinkie-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/art (no used)/crystal-pinkie-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/art (no used)/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/and you know what that means.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/are you loco in the coco.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/boring.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/chocolate rain.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/forever.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/gasp.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/giggle.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/help.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/hey that's what i said.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/hi, i'm pinkie pie...mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/how equestria was made.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/i never felt joy like that before.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/lets go.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/oatmeal, are you craz....mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/oh no.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/oki doki loki.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/pinkie pie style.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/pinkie pie swear.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/that's so not rue.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/this calls for extreme measures.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/this may look like fun but its not.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/twitcha twitch.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/you know what this calls for.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/PinkiePie/sounds (no used)/you really need to get out more.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/drag-rd/rd_drag_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/drag-rd/rd_dragged_right1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/sleep-rd/cloud_sleep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/sleep-rd/cloud_sleep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/stand_rd_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/stand_rd_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/trotcycle_rd_wing_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct/trotcycle_rd_wing_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/beep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/beep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/breezie-rainbowdash-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/breezie-rainbowdash-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/cloud_jump_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/cloud_jump_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/congarainbowdash_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/congarainbowdash_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/crystallizedrainbow_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/crystallizedrainbow_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/dashing_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/dashing_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/dinodash3_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/dinodash3_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/fly_dizzy.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/fly_dizzy_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/fly_rainbow_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/fly_rainbow_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/flyzoom_rainbow_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/flyzoom_rainbow_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/hoverupdown_rainbow_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/hoverupdown_rainbow_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainboomtest.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainboomtest_trail_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainboomtest_trail_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainbow_dash_motivate_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainbow_dash_motivate_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rainbow_dash_salute.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rd-swim-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rd-swim-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rd_galla_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/rd_galla_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/trotcycle_rainbow_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/Rainbow Dash_Gifct2 (no used)/trotcycle_rainbow_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/RainbowDash.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/art (no used)/breezie-rainbowdash-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/art (no used)/breezie-rainbowdash-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/art (no used)/crystallizedrainbow_left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/art (no used)/crystallizedrainbow_right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/art (no used)/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/10 seconds flat.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/are you a spy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/best day ever.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/booo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/fangirl squeal.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/get off there and put em up.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/i am the iron pony.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/i hate losing.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/i know it's gonna be so awesome.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/i love fun things.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/i'm on it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/it needs to be about 20% cooler.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/it's all true.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/laughing.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/louder.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/morning warmup.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/my life is ruined.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/not cool.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/omgomgomg.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/pinkie u so random.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/sounds like sour apples to me.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/time to take out the adorable trash.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/what do you have in mind.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/who are you calling a chump.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/you dont wanna know.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/RainbowDash/sounds (no used)/you wanna do this the hard way.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/drag-rt/rt_drag-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/drag-rt/rt_drag-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/sleep-rt/sleep_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/sleep-rt/sleep_left_cover.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/sleep-rt/sleep_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/sleep-rt/sleep_right_cover.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/stand_r_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/stand_r_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/trotcycle_r_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct/trotcycle_r_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/OhPleaseBehaveRarara_L.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/OhPleaseBehaveRarara_R.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/breezie-rarity-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/breezie-rarity-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/congararity_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/congararity_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/crystal-rarity-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/crystal-rarity-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fashion_show_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fashion_show_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly1-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly1-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly2-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly2-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/fly_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/horn_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/horn_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/ponder_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/ponder_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-drag-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-drag-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-scratch-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-scratch-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity-c-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_dramacouch_left1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_dramacouch_right1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_galla_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_galla_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_tantrum_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/rarity_tantrum_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/Rarity_Gifct2 (no used)/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/breezie-rarity-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/breezie-rarity-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/crystal-rarity-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/crystal-rarity-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/fly1-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/fly1-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/fly2-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/fly2-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/art (no used)/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/afraid to get dirty.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/but i thought you wanted whining.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/crime against fabulosity.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/doesn't even make sense.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/gently please.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/how can you be so insensitive.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/how could you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/i'm so pathetic.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/idea.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/it is on.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/leave me alone.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/mama's coming.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/oooooooooooooooo.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/please.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/pruney hooves.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/some of us do have standards.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/take that you ruffian.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/tell me.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/thank you.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/thing at the place.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/this is whining.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/try it punk.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/wahahaha.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/what ever shall we do.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/you look smashing.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/you must.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Rarity/sounds (no used)/you're just saying that.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight Glimmer (Season 5)/starlightglimmer-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight Glimmer (Season 5)/starlightglimmer-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight Glimmer (Season 5)/starlightglimmer-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight Glimmer (Season 5)/starlightglimmer-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-popcorn-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-popcorn-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/Starlight_Gifct/starlightglimmer-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/StarlightGlimmer/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct/sunsetshimmer-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct/sunsetshimmer-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct/sunsetshimmer-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct/sunsetshimmer-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunset-teleport-end-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunset-teleport-end-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunset-teleport-start-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunset-teleport-start-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunsetshimmer-gallop-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/sunsetshimmer-gallop-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/Sunset_Gifct2 (no used)/transit.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/sounds (no used)/first impression.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/sounds (no used)/impressive.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/sounds (no used)/she-demon.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/sounds (no used)/sleep.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/SunsetShimmer/sounds (no used)/whipped cream.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct/trixie_naked_stand_lefts.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct/trixie_naked_stand_rights.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct/trixie_naked_trot_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct/trixie_naked_trot_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/fireworks.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/sit_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/sit_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/trixie-flowers-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/trixie-flowers-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/trixie_fireworks_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/trixie_fireworks_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/walking_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/Trixie_Gifct2 (no used)/walking_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/anything you can do, i can do better.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/fanfare.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/it seems we have some neighsayers in the audience.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/it's true.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/show trixie what you've got.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/the g and p t.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/was there ever any doubt.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/Trixie/sounds (no used)/watch in awe.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/drag-ts/ts_drag_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/drag-ts/ts_drag_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/sleep-ts/read.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/stand_ts_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/stand_ts_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/trotcycle_ts_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct/trotcycle_ts_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/arrive_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/arrive_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/breakdown_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/breakdown_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/congatwilight_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/congatwilight_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/crystallizedtwilight_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/crystallizedtwilight_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/discorded_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/discorded_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/magic_twilight_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/magic_twilight_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/teleport_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/teleport_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/transit.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-balloon-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-balloon-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-owl-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-owl-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-starswirl-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi-starswirl-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi_rage_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twi_rage_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_galla_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_galla_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_gallop_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_gallop_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_partyhard_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/twilight_partyhard_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/windblown_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_Gifct2 (no used)/windblown_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_dance_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_dance_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_stand_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_stand_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_walk_left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_f_Gifct/twilightfilly_walk_right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/crystal/twi-crystal-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/crystal/twi-crystal-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/fly/p-twi-flight-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/fly/p-twi-flight-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/breezie-twilight-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/breezie-twilight-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/breezie-twilight-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/breezie-twilight-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-gallop-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-gallop-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-dress-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-dress-left1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-dress-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-dress-right1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-left1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/p-twi-trans-right1.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-flight-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-flight-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-trot-wings-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-trot-wings-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-zoom-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/princess-twilight-zoom-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/sparkle.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/starburst-big.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/starburst-big.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/twi-crystal-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/twi-crystal-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/twilight-starswirl-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/no_used/twilight-starswirl-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/stand/p-twi-idle-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/stand/p-twi-idle-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/walk/p-twi-trot-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/walk/p-twi-trot-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/walk_wing/p-twi-trot-wings-left.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilight Sparkle_prn_Gifct/walk_wing/p-twi-trot-wings-right.gif" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/TwilightSparkle.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/TwilightSparkle_f.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/TwilightSparkle_prn.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/Twilightsparkle.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/art (no used)/crystallizedtwilight_left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/art (no used)/crystallizedtwilight_right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/art (no used)/sparkle.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/art (no used)/twi-balloon-left.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/art (no used)/twi-balloon-right.art" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/ah, hello.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/all the ponies in this town are crazy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/are you crazy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/dear princess celestia.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/do everything by the book.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/doesn't that hurt.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/good afternoon, my name....mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/i don't get it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/i think i hear my laundry calling, sry gotta go.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/it's the perfect plan.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/look out here comes tom.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/more.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/my little ponies.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/no excuses.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/no rly.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/oh no, this is bad.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/old pony tale.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/pardon me princess.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/pls dont hate me.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/prove it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/this is my book and im gonna read it.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/this is no joke.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/tough love, baby.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/wow catchy.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/yesyesyes.mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/TwilightSparkle/sounds (no used)/your faithful student....mp3" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/characters/pony.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/graphic_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/network_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/animated_character.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/assets/characters/Cadance/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/assets/characters/Celestia/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/assets/characters/Luna/animations.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/character_manager.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Client/reserve/network_client.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/client_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/config.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/database.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/game_logic.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/game_server_db.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/gui_controller.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/network.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/client_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/database.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/game_logic.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/gui_controller.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/main.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/network.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/reserve/server_core.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/Server/server_core.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/DPP2serverUDP/toon.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/launcher_settings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/theme_config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/pony_factory.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/pony_factory.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/renderer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/window_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/window_manager.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/CACHEDIR.TAG" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.cargo-lock" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/dep-lib-bitflags" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/lib-bitflags" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/lib-bitflags.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/dep-lib-cfg_if" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/lib-cfg_if" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/lib-cfg_if.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/dep-lib-cfg_aliases" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/lib-cfg_aliases" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/lib-cfg_aliases.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-4d4dee00ff37ab25/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-4d4dee00ff37ab25/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/dep-lib-crossbeam_utils" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/lib-crossbeam_utils" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/lib-crossbeam_utils.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-679742ccc1340cf6/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-679742ccc1340cf6/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-26b716d92451b2ae/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-26b716d92451b2ae/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-b20a946a3a5f7c90/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-b20a946a3a5f7c90/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-c170e20c1cf2d052/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-cdea548fb4516a7c/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-cdea548fb4516a7c/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde-f6f0c42f3bbd9f93/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-96577866738ab514/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-eb5b876ea58b9ad6/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-eb5b876ea58b9ad6/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/shlex-4cef7448b830be1b/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/dep-lib-smallvec" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/lib-smallvec" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/lib-smallvec.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/dep-lib-stable_deref_trait" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/lib-stable_deref_trait" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/lib-stable_deref_trait.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/syn-c25fe31d3a31e49e/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/dep-lib-unicode_ident" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/lib-unicode_ident" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/lib-unicode_ident.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/dep-lib-version_check" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/lib-version_check" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/lib-version_check.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-23bf00df1e7f8970/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-23bf00df1e7f8970/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-aa656f216e79304a/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/dep-lib-windows_link" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/lib-windows_link" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/lib-windows_link.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/dep-lib-windows_link" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/lib-windows_link" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/lib-windows_link.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/dep-lib-windows_result" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/lib-windows_result" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/lib-windows_result.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/dep-lib-windows_strings" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/lib-windows_strings" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/lib-windows_strings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-sys-811355f84400322c/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-targets-aef7a650ffb98306/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/dep-lib-windows_x86_64_msvc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/lib-windows_x86_64_msvc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/lib-windows_x86_64_msvc.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-fb4c1bcb69087e24/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-fb4c1bcb69087e24/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/dep-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-195359ea3e8d23f0/run-build-script-build-script-build" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-195359ea3e8d23f0/run-build-script-build-script-build.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/out/webgl_exts.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/out/private.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/syn-c25fe31d3a31e49e/build_script_build-c25fe31d3a31e49e.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build-script-build.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build.pdb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/invoked.timestamp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/root-output" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/stderr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/bitflags-17854968389f290d.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/cfg_aliases-e97b4e6bef39948a.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/cfg_if-971371d481ffa182.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/crossbeam_utils-7d1dd64969ab8c23.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libbitflags-17854968389f290d.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_aliases-e97b4e6bef39948a.rlib" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_aliases-e97b4e6bef39948a.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_if-971371d481ffa182.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcrossbeam_utils-7d1dd64969ab8c23.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libsmallvec-2177f0e6f500cfd4.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libstable_deref_trait-021fe3b3f42f5833.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libunicode_ident-da8aef692e2e7be3.rlib" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libunicode_ident-da8aef692e2e7be3.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libversion_check-09678914587011bc.rlib" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libversion_check-09678914587011bc.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_link-3842c44045075457.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_link-74ba99be96a4d120.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_result-3ed89c23e77e7a45.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_strings-5b69621470485289.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_x86_64_msvc-379096645015bcd6.rmeta" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/proc_macro2-c170e20c1cf2d052.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/smallvec-2177f0e6f500cfd4.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/stable_deref_trait-021fe3b3f42f5833.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/unicode_ident-da8aef692e2e7be3.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/version_check-09678914587011bc.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_link-3842c44045075457.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_link-74ba99be96a4d120.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_result-3ed89c23e77e7a45.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_strings-5b69621470485289.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_sys-811355f84400322c.d" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_x86_64_msvc-379096645015bcd6.d" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -1118,7 +383,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Cargo.Run desktop-ponies-rs">
+  <component name="RunManager" selected="Python.DPP2">
     <configuration name="Run desktop-ponies-rs" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="run --package desktop-ponies-rs --bin desktop-ponies-rs" />
@@ -1211,7 +476,6 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Cargo.Run desktop-ponies-rs" />
         <item itemvalue="Python.main (1)" />
         <item itemvalue="Python.DPP2Launcher" />
         <item itemvalue="Python.DPP2" />
@@ -1250,6 +514,9 @@
       <workItem from="1777395509142" duration="200000" />
       <workItem from="1777476136067" duration="2372000" />
       <workItem from="1777479081849" duration="2427000" />
+      <workItem from="1777564885692" duration="27000" />
+      <workItem from="1777632980249" duration="5193000" />
+      <workItem from="1777746329044" duration="16000" />
     </task>
     <servers />
   </component>
