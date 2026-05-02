@@ -11,7 +11,7 @@
     <header class="app-header">
         <h1>🦄 Desktop Ponies</h1>
         <div class="header-controls">
-            <button class="icon-btn" onclick="window.__TAURI__.window.close()" title="Close">✕</button>
+            <button class="icon-btn" onclick="window.close()" title="Close">✕</button>
         </div>
     </header>
 
@@ -33,21 +33,21 @@
             <h2>Spawn Pony</h2>
             <div class="form-group">
                 <label>Pony Name</label>
-                <input type="text" id="spawn-name" placeholder="Twilight Sparkle" list="pony-datalist">
-                <datalist id="pony-datalist"></datalist>
+                <input type="text" id="pony-name" placeholder="Twilight Sparkle" list="pony-list-datalist" oninput="onPonyNameInput(this.value)">
+                <datalist id="pony-list-datalist"></datalist>
             </div>
             <div class="form-group">
                 <label>Behavior</label>
-                <select id="spawn-behavior"><option value="idle">Idle</option></select>
+                <select id="pony-behavior"><option value="idle">Idle</option></select>
             </div>
             <div class="form-group">
                 <label>Position</label>
                 <div class="position-inputs">
-                    <input type="number" id="spawn-x" placeholder="X" value="400">
-                    <input type="number" id="spawn-y" placeholder="Y" value="300">
+                    <input type="number" id="pos-x" placeholder="X" value="400">
+                    <input type="number" id="pos-y" placeholder="Y" value="300">
                 </div>
             </div>
-            <button class="btn-primary" onclick="spawnPony()">✨ Spawn!</button>
+            <button class="btn-primary" id="btn-spawn">✨ Spawn!</button>
         </div>
     </section>
 
@@ -56,7 +56,7 @@
         <div class="card">
             <h2>Active Ponies</h2>
             <div id="active-list"><p class="empty-state">Not implemented yet</p></div>
-            <button class="btn-danger" onclick="removeAll()">Remove All</button>
+            <button class="btn-danger" id="btn-remove-all">Remove All</button>
         </div>
     </section>
 
