@@ -1,8 +1,8 @@
-// src_rust/texture.rs (исправленный)
+// src_rust/texture.rs
 use wgpu::*;
 use std::collections::HashMap;
 
-pub struct Texture {
+pub struct TextureData {
     pub texture: wgpu::Texture,
     pub view: TextureView,
     pub sampler: Sampler,
@@ -13,7 +13,7 @@ pub struct Texture {
 }
 
 pub struct TextureManager {
-    pub textures: Vec<Texture>,
+    pub textures: Vec<TextureData>,
     default_sampler: Sampler,
     name_to_id: HashMap<String, usize>,
 }
@@ -45,17 +45,30 @@ impl TextureManager {
         bytes: &[u8],
         frame_count: u32,
     ) -> usize {
-        // Пробуем загрузить из памяти
         let img = match image::load_from_memory(bytes) {
             Ok(img) => img.to_rgba8(),
             Err(_) => {
-                // Если не получилось — создаём белую текстуру 2x2
                 eprintln!("Warning: failed to decode '{}', creating white fallback", name);
                 image::RgbaImage::from_pixel(2, 2, image::Rgba([255, 255, 255, 255]))
             }
         };
 
         let (width, height) = img.dimensions();
+        let rgba_data = img.into_raw();
+
+        self.load_texture_raw(device, queue, name, &rgba_data, width, height, frame_count)
+    }
+
+    pub fn load_texture_raw(
+        &mut self,
+        device: &Device,
+        queue: &Queue,
+        name: &str,
+        rgba_data: &[u8],
+        width: u32,
+        height: u32,
+        frame_count: u32,
+    ) -> usize {
         let frame_width = width / frame_count.max(1);
 
         let size = Extent3d {
@@ -82,7 +95,7 @@ impl TextureManager {
                 origin: Origin3d::ZERO,
                 aspect: TextureAspect::All,
             },
-            &img,
+            rgba_data,
             ImageDataLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * width),
@@ -104,7 +117,7 @@ impl TextureManager {
         });
 
         let id = self.textures.len();
-        self.textures.push(Texture {
+        self.textures.push(TextureData {
             texture,
             view,
             sampler,
@@ -114,14 +127,17 @@ impl TextureManager {
             frame_width,
         });
         self.name_to_id.insert(name.to_string(), id);
+
+        println!("Texture '{}' loaded (id={}, {}x{}, frames={}, frame_w={})",
+                 name, id, width, height, frame_count, frame_width);
         id
     }
 
-    pub fn get(&self, id: usize) -> Option<&Texture> {
+    pub fn get(&self, id: usize) -> Option<&TextureData> {
         self.textures.get(id)
     }
 
-    pub fn get_by_name(&self, name: &str) -> Option<&Texture> {
+    pub fn get_by_name(&self, name: &str) -> Option<&TextureData> {
         self.name_to_id.get(name).and_then(|&id| self.textures.get(id))
     }
 }

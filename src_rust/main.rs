@@ -8,6 +8,8 @@ extern "C" {}
 
 use std::fs;
 use std::sync::{Arc, Mutex};
+use std::net::TcpListener;
+use std::io::{Read, Write};
 use serde::Serialize;
 use tao::{
     event::{Event, WindowEvent},
@@ -62,7 +64,6 @@ fn main() {
     let css = include_str!("../src-ui/style.css");
     let js = include_str!("../src-ui/app.js");
 
-    // Вставляем данные прямо в начало JS
     let patched_js = format!(
         "const PONIES_DATA = {{ ponies: {ponies_json} }};\n{js}"
     );
@@ -71,13 +72,32 @@ fn main() {
         .replace("<link rel=\"stylesheet\" href=\"style.css\">", &format!("<style>{css}</style>"))
         .replace("<script src=\"app.js\"></script>", &format!("<script>{patched_js}</script>"));
 
-    let temp_dir = std::env::temp_dir();
-    let html_path = temp_dir.join("desktop_ponies_ui.html");
-    fs::write(&html_path, &full_html).expect("Failed to write temp HTML");
+    // Мини-HTTP сервер
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind");
+    let port = listener.local_addr().unwrap().port();
+
+    let html_data = Arc::new(full_html);
+    let html_clone = html_data.clone();
+
+    std::thread::spawn(move || {
+        for mut stream in listener.incoming().flatten() {
+            let mut buffer = [0u8; 4096];
+            let _ = stream.read(&mut buffer); // Читаем запрос
+
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                html_clone.len(),
+                html_clone.as_str()
+            );
+            let _ = stream.write_all(response.as_bytes());
+        }
+    });
+
+    let url = format!("http://127.0.0.1:{}", port);
+    println!("Server: {}", url);
 
     let event_loop = EventLoop::new();
 
-    // Главное окно-меню
     let window = WindowBuilder::new()
         .with_title("Desktop Ponies")
         .with_inner_size(tao::dpi::LogicalSize::new(420.0, 720.0))
@@ -85,35 +105,34 @@ fn main() {
         .build(&event_loop)
         .unwrap();
 
-    let url = format!("file:///{}", html_path.to_string_lossy().replace('\\', "/"));
-    println!("Loading menu: {}", url);
+    let mut pony_window = PonyWindow::new();
+    pony_window.create_window(&event_loop);
+    if let Some(w) = &pony_window.window {
+        w.set_visible(false);
+    }
 
-    // Очередь спавна
-    let spawn_queue: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
-    let spawn_queue_clone = spawn_queue.clone();
+    let pony_window = Arc::new(Mutex::new(pony_window));
+    let pony_window_clone = pony_window.clone();
 
     let _webview = WebViewBuilder::new()
         .with_url(&url)
         .with_ipc_handler(move |request| {
-            let msg = request.body();
-            if let Ok(cmd) = serde_json::from_str::<serde_json::Value>(msg) {
-                if cmd["action"] == "spawn" {
-                    let name = cmd["name"].as_str().unwrap_or("").to_string();
-                    println!("IPC: spawn {}", name);
-                    if let Ok(mut q) = spawn_queue_clone.lock() {
-                        q.push(name);
+            let body = request.body();
+            println!("IPC: {}", body);
+
+            if let Some(name) = body.strip_prefix("spawn:") {
+                if let Ok(mut pw) = pony_window_clone.lock() {
+                    if let Some(w) = &pw.window {
+                        w.set_visible(true);
                     }
+                    pw.spawn_pony(name);
                 }
             }
         })
         .build(&window)
         .unwrap();
 
-    // Окно с пони — создаём ПОСЛЕ главного окна
-    let mut pony_window = PonyWindow::new();
-    pony_window.create_window(&event_loop);
-
-    println!("Both windows ready!");
+    println!("Ready! Select a pony and click Spawn.");
 
     event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Poll;
@@ -121,21 +140,16 @@ fn main() {
         match event {
             Event::WindowEvent {
                 event: WindowEvent::CloseRequested,
-                window_id, .. } => {
-                // Закрываем всё при закрытии главного окна
+                window_id, ..
+            } => {
                 if window_id == window.id() {
                     *control_flow = ControlFlow::Exit;
                 }
             }
             Event::RedrawRequested(_) | Event::MainEventsCleared => {
-                // Обрабатываем очередь спавна
-                if let Ok(mut q) = spawn_queue.lock() {
-                    for name in q.drain(..) {
-                        pony_window.spawn_pony(&name);
-                    }
+                if let Ok(mut pw) = pony_window.lock() {
+                    pw.update_and_render();
                 }
-                // Обновляем пони
-                pony_window.update_and_render();
             }
             _ => {}
         }

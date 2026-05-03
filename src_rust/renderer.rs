@@ -1,6 +1,6 @@
-// src_rust/renderer.rs (полностью исправленный)
+// src_rust/renderer.rs
 use wgpu::*;
-use  tao::window::Window;
+use tao::window::Window;
 use glam::Mat4;
 use std::sync::Arc;
 use bytemuck::{Pod, Zeroable};
@@ -55,7 +55,7 @@ impl Renderer {
         let (device, queue) = adapter
             .request_device(
                 &DeviceDescriptor {
-                    required_features: Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+                    required_features: Features::empty(),
                     required_limits: Limits {
                         max_bind_groups: 4,
                         max_storage_buffers_per_shader_stage: 4,
@@ -76,14 +76,16 @@ impl Renderer {
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
-        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
-            CompositeAlphaMode::PreMultiplied
-        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
+        // Выбираем лучший доступный alpha mode для прозрачности
+        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
             CompositeAlphaMode::PostMultiplied
+        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
+            CompositeAlphaMode::PreMultiplied
         } else {
-            eprintln!("Warning: no alpha mode with transparency supported");
             CompositeAlphaMode::Opaque
         };
+        println!("Available alpha modes: {:?}", surface_caps.alpha_modes);
+        println!("Selected alpha mode: {:?}", alpha_mode);
 
         let config = SurfaceConfiguration {
             usage: TextureUsages::RENDER_ATTACHMENT,
@@ -381,65 +383,28 @@ impl Renderer {
         let skeletal_ponies: Vec<_> = ponies.iter().filter(|p| p.is_skeletal()).collect();
         let sprite_ponies: Vec<_> = ponies.iter().filter(|p| !p.is_skeletal()).collect();
 
-        // Если текстур нет — создаём заглушку
         if self.texture_manager.textures.is_empty() {
             return Ok(());
         }
 
-        let dummy_texture = &self.texture_manager.textures[0];
-
-        let skeletal_bind_group = self.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("skeletal bind group"),
-            layout: &self.skeletal_bind_group_layout,
-            entries: &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: self.uniform_buffer.as_entire_binding(),
-                },
-                BindGroupEntry {
-                    binding: 1,
-                    resource: self.bone_buffer.as_entire_binding(),
-                },
-                BindGroupEntry {
-                    binding: 2,
-                    resource: BindingResource::Sampler(&dummy_texture.sampler),
-                },
-                BindGroupEntry {
-                    binding: 3,
-                    resource: BindingResource::TextureView(&dummy_texture.view),
-                },
-            ],
-        });
-
-        let sprite_bind_group = self.device.create_bind_group(&BindGroupDescriptor {
-            label: Some("sprite bind group"),
-            layout: &self.sprite_bind_group_layout,
-            entries: &[
-                BindGroupEntry {
-                    binding: 0,
-                    resource: self.uniform_buffer.as_entire_binding(),
-                },
-                BindGroupEntry {
-                    binding: 1,
-                    resource: BindingResource::Sampler(&dummy_texture.sampler),
-                },
-                BindGroupEntry {
-                    binding: 2,
-                    resource: BindingResource::TextureView(&dummy_texture.view),
-                },
-            ],
-        });
-
+        // Собираем инстансы спрайтов
         let instances: Vec<SpriteInstance> = sprite_ponies.iter().map(|pony| {
-            let (frame, frame_count) = match &pony.render_type {
-                PonyRenderType::Sprite { current_frame, frame_count, .. } => {
-                    (*current_frame as f32, *frame_count as f32)
+            let (frame, tex_id) = match &pony.render_type {
+                PonyRenderType::Sprite { current_frame, texture_id, .. } => {
+                    (*current_frame as f32, *texture_id)
                 }
-                _ => (0.0, 1.0),
+                _ => (0.0, 0usize),
             };
+
+            let scale = if let Some(tex) = self.texture_manager.get(tex_id) {
+                tex.height as f32 * 3.0
+            } else {
+                200.0
+            };
+
             SpriteInstance {
-                position: [pony.position.x, pony.position.y],
-                frame_and_scale: [frame, 100.0], // размер спрайта 100px
+                position: [pony.position.x - scale / 2.0, pony.position.y - scale / 2.0],
+                frame_and_scale: [frame, scale],
             }
         }).collect();
 
@@ -450,6 +415,40 @@ impl Renderer {
                 bytemuck::cast_slice(&instances),
             );
         }
+
+        // Bind groups для спрайтов
+        let mut sprite_bind_groups: Vec<BindGroup> = Vec::new();
+        for pony in &sprite_ponies {
+            let tex_id = match &pony.render_type {
+                PonyRenderType::Sprite { texture_id, .. } => *texture_id,
+                _ => 0,
+            };
+            if let Some(tex) = self.texture_manager.get(tex_id) {
+                let bg = self.device.create_bind_group(&BindGroupDescriptor {
+                    label: Some("sprite bind group"),
+                    layout: &self.sprite_bind_group_layout,
+                    entries: &[
+                        BindGroupEntry { binding: 0, resource: self.uniform_buffer.as_entire_binding() },
+                        BindGroupEntry { binding: 1, resource: BindingResource::Sampler(&tex.sampler) },
+                        BindGroupEntry { binding: 2, resource: BindingResource::TextureView(&tex.view) },
+                    ],
+                });
+                sprite_bind_groups.push(bg);
+            }
+        }
+
+        // Skeletal bind group
+        let fallback_tex = &self.texture_manager.textures[0];
+        let skeletal_bind_group = self.device.create_bind_group(&BindGroupDescriptor {
+            label: Some("skeletal bind group"),
+            layout: &self.skeletal_bind_group_layout,
+            entries: &[
+                BindGroupEntry { binding: 0, resource: self.uniform_buffer.as_entire_binding() },
+                BindGroupEntry { binding: 1, resource: self.bone_buffer.as_entire_binding() },
+                BindGroupEntry { binding: 2, resource: BindingResource::Sampler(&fallback_tex.sampler) },
+                BindGroupEntry { binding: 3, resource: BindingResource::TextureView(&fallback_tex.view) },
+            ],
+        });
 
         {
             let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
@@ -462,7 +461,7 @@ impl Renderer {
                             r: 0.0,
                             g: 0.0,
                             b: 0.0,
-                            a: 0.0,
+                            a: 0.0,  // ПОЛНАЯ ПРОЗРАЧНОСТЬ
                         }),
                         store: StoreOp::Store,
                     },
@@ -472,57 +471,39 @@ impl Renderer {
                 occlusion_query_set: None,
             });
 
-            // --- Скелетные пони ---
-            render_pass.set_pipeline(&self.skeletal_pipeline);
-            render_pass.set_bind_group(0, &skeletal_bind_group, &[]);
+            // Спрайтовые пони
+            if !instances.is_empty() && !sprite_bind_groups.is_empty() {
+                render_pass.set_pipeline(&self.sprite_pipeline);
+                render_pass.set_vertex_buffer(0, self.mesh_manager.quad_mesh.vertex_buffer.slice(..));
+                render_pass.set_vertex_buffer(1, self.mesh_manager.sprite_instance_buffer.slice(..));
+                render_pass.set_index_buffer(self.mesh_manager.quad_mesh.index_buffer.slice(..), IndexFormat::Uint16);
 
-            for pony in &skeletal_ponies {
-                if let PonyRenderType::Skeletal { skeleton, .. } = &pony.render_type {
-                    let bone_matrices: Vec<[[f32; 4]; 4]> = skeleton
-                        .global_poses
-                        .iter()
-                        .map(|m| m.to_cols_array_2d())
-                        .collect();
-
-                    self.queue.write_buffer(
-                        &self.bone_buffer,
-                        0,
-                        bytemuck::cast_slice(&bone_matrices),
-                    );
-
-                    for part in &self.mesh_manager.skeletal_parts {
-                        render_pass.set_vertex_buffer(0, part.vertex_buffer.slice(..));
-                        render_pass.set_index_buffer(
-                            part.index_buffer.slice(..),
-                            IndexFormat::Uint16,
-                        );
-                        render_pass.draw_indexed(0..part.index_count, 0, 0..1);
-                    }
+                for (i, bg) in sprite_bind_groups.iter().enumerate() {
+                    render_pass.set_bind_group(0, bg, &[]);
+                    render_pass.draw_indexed(0..self.mesh_manager.quad_mesh.index_count, 0, i as u32..(i + 1) as u32);
                 }
             }
 
-            // --- Спрайтовые пони ---
-            if !instances.is_empty() {
-                render_pass.set_pipeline(&self.sprite_pipeline);
-                render_pass.set_bind_group(0, &sprite_bind_group, &[]);
-                render_pass.set_vertex_buffer(0, self.mesh_manager.quad_mesh.vertex_buffer.slice(..));
-                render_pass.set_vertex_buffer(1, self.mesh_manager.sprite_instance_buffer.slice(..));
-                render_pass.set_index_buffer(
-                    self.mesh_manager.quad_mesh.index_buffer.slice(..),
-                    IndexFormat::Uint16,
-                );
-
-                render_pass.draw_indexed(
-                    0..self.mesh_manager.quad_mesh.index_count,
-                    0,
-                    0..instances.len() as u32,
-                );
+            // Скелетные пони
+            if !skeletal_ponies.is_empty() {
+                render_pass.set_pipeline(&self.skeletal_pipeline);
+                render_pass.set_bind_group(0, &skeletal_bind_group, &[]);
+                for pony in &skeletal_ponies {
+                    if let PonyRenderType::Skeletal { skeleton, .. } = &pony.render_type {
+                        let bone_matrices: Vec<[[f32; 4]; 4]> = skeleton.global_poses.iter().map(|m| m.to_cols_array_2d()).collect();
+                        self.queue.write_buffer(&self.bone_buffer, 0, bytemuck::cast_slice(&bone_matrices));
+                        for part in &self.mesh_manager.skeletal_parts {
+                            render_pass.set_vertex_buffer(0, part.vertex_buffer.slice(..));
+                            render_pass.set_index_buffer(part.index_buffer.slice(..), IndexFormat::Uint16);
+                            render_pass.draw_indexed(0..part.index_count, 0, 0..1);
+                        }
+                    }
+                }
             }
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
-
         Ok(())
     }
 }
