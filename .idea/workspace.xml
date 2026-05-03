@@ -9,256 +9,19 @@
         <feature name="default" enabled="true" />
       </package>
     </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/src-tauri/Cargo.toml">
-      <package file="$PROJECT_DIR$/src-tauri">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Ponies/Applejack/pony.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Ponies/Applejack/pony.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/pony_factory.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/pony_factory.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/renderer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/texture.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/texture.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/window_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/window_manager.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/CACHEDIR.TAG" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.cargo-lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/dep-lib-bitflags" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/lib-bitflags" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/bitflags-17854968389f290d/lib-bitflags.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/dep-lib-cfg_if" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/lib-cfg_if" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg-if-971371d481ffa182/lib-cfg_if.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/dep-lib-cfg_aliases" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/lib-cfg_aliases" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/cfg_aliases-e97b4e6bef39948a/lib-cfg_aliases.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-4d4dee00ff37ab25/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-4d4dee00ff37ab25/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/dep-lib-crossbeam_utils" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/lib-crossbeam_utils" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-7d1dd64969ab8c23/lib-crossbeam_utils.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/crossbeam-utils-9b3f1c7c8e98ddc5/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-679742ccc1340cf6/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-679742ccc1340cf6/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/khronos_api-fea31c3c6cac92a6/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-26b716d92451b2ae/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-26b716d92451b2ae/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/libc-512d74f219661d08/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-14c436feccda2a72/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-b20a946a3a5f7c90/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-b20a946a3a5f7c90/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/proc-macro2-c170e20c1cf2d052/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-880138076a3cb7cd/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-cdea548fb4516a7c/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/quote-cdea548fb4516a7c/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde-f6f0c42f3bbd9f93/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-0065990d19f7f46a/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-96577866738ab514/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-eb5b876ea58b9ad6/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/serde_core-eb5b876ea58b9ad6/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/shlex-4cef7448b830be1b/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/dep-lib-smallvec" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/lib-smallvec" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/smallvec-2177f0e6f500cfd4/lib-smallvec.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/dep-lib-stable_deref_trait" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/lib-stable_deref_trait" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/stable_deref_trait-021fe3b3f42f5833/lib-stable_deref_trait.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/syn-c25fe31d3a31e49e/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/dep-lib-unicode_ident" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/lib-unicode_ident" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/unicode-ident-da8aef692e2e7be3/lib-unicode_ident.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/dep-lib-version_check" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/lib-version_check" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/version_check-09678914587011bc/lib-version_check.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-23bf00df1e7f8970/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-23bf00df1e7f8970/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-aa656f216e79304a/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/winapi-dd0dbb85d315837f/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/dep-lib-windows_link" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/lib-windows_link" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-3842c44045075457/lib-windows_link.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/dep-lib-windows_link" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/lib-windows_link" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-link-74ba99be96a4d120/lib-windows_link.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/dep-lib-windows_result" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/lib-windows_result" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-result-3ed89c23e77e7a45/lib-windows_result.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/dep-lib-windows_strings" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/lib-windows_strings" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-strings-5b69621470485289/lib-windows_strings.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-sys-811355f84400322c/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows-targets-aef7a650ffb98306/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/dep-lib-windows_x86_64_msvc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/lib-windows_x86_64_msvc" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-379096645015bcd6/lib-windows_x86_64_msvc.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-757516019e19758b/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-fb4c1bcb69087e24/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/windows_x86_64_msvc-fb4c1bcb69087e24/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/dep-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-0d11f907f4c8ab8c/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-195359ea3e8d23f0/run-build-script-build-script-build" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/.fingerprint/zerocopy-195359ea3e8d23f0/run-build-script-build-script-build.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-4d4dee00ff37ab25/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build-9b3f1c7c8e98ddc5.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/crossbeam-utils-9b3f1c7c8e98ddc5/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/out/webgl_exts.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-679742ccc1340cf6/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build-fea31c3c6cac92a6.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/khronos_api-fea31c3c6cac92a6/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-26b716d92451b2ae/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build-512d74f219661d08.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/libc-512d74f219661d08/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build-14c436feccda2a72.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-14c436feccda2a72/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/proc-macro2-b20a946a3a5f7c90/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build-880138076a3cb7cd.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-880138076a3cb7cd/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/quote-cdea548fb4516a7c/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde-f6f0c42f3bbd9f93/build_script_build-f6f0c42f3bbd9f93.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build-0065990d19f7f46a.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-0065990d19f7f46a/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/out/private.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/serde_core-eb5b876ea58b9ad6/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/syn-c25fe31d3a31e49e/build_script_build-c25fe31d3a31e49e.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-23bf00df1e7f8970/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build-dd0dbb85d315837f.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/winapi-dd0dbb85d315837f/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build-757516019e19758b.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-757516019e19758b/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/windows_x86_64_msvc-fb4c1bcb69087e24/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build-script-build.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.exe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build-0d11f907f4c8ab8c.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-0d11f907f4c8ab8c/build_script_build.pdb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/invoked.timestamp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/root-output" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/build/zerocopy-195359ea3e8d23f0/stderr" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/bitflags-17854968389f290d.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/cfg_aliases-e97b4e6bef39948a.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/cfg_if-971371d481ffa182.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/crossbeam_utils-7d1dd64969ab8c23.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libbitflags-17854968389f290d.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_aliases-e97b4e6bef39948a.rlib" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_aliases-e97b4e6bef39948a.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcfg_if-971371d481ffa182.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libcrossbeam_utils-7d1dd64969ab8c23.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libsmallvec-2177f0e6f500cfd4.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libstable_deref_trait-021fe3b3f42f5833.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libunicode_ident-da8aef692e2e7be3.rlib" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libunicode_ident-da8aef692e2e7be3.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libversion_check-09678914587011bc.rlib" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libversion_check-09678914587011bc.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_link-3842c44045075457.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_link-74ba99be96a4d120.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_result-3ed89c23e77e7a45.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_strings-5b69621470485289.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/libwindows_x86_64_msvc-379096645015bcd6.rmeta" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/proc_macro2-c170e20c1cf2d052.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/smallvec-2177f0e6f500cfd4.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/stable_deref_trait-021fe3b3f42f5833.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/unicode_ident-da8aef692e2e7be3.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/version_check-09678914587011bc.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_link-3842c44045075457.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_link-74ba99be96a4d120.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_result-3ed89c23e77e7a45.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_strings-5b69621470485289.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_sys-811355f84400322c.d" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/debug/deps/windows_x86_64_msvc-379096645015bcd6.d" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -327,47 +90,48 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Cargo.Run desktop-ponies-rs.executor&quot;: &quot;Debug&quot;,
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2Launcher.executor&quot;: &quot;Run&quot;,
-    &quot;Python.Fluttershy.executor&quot;: &quot;Run&quot;,
-    &quot;Python.Luna.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gui_controller.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.main (2).executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.server_core.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-&quot;,
-    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs&quot;: &quot;true&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Cargo.Run desktop-ponies-rs.executor": "Debug",
+    "DefaultHtmlFileTemplate": "HTML File",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.Cadance.executor": "Run",
+    "Python.DPP2.executor": "Run",
+    "Python.DPP2Launcher.executor": "Run",
+    "Python.Fluttershy.executor": "Run",
+    "Python.Luna.executor": "Debug",
+    "Python.RainbowDash.executor": "Run",
+    "Python.gui_controller.executor": "Run",
+    "Python.main (1).executor": "Run",
+    "Python.main (2).executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.pony (1).executor": "Run",
+    "Python.pony.executor": "Run",
+    "Python.pony1 (1).executor": "Run",
+    "Python.pony2.executor": "Run",
+    "Python.server_core.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "dungeon",
+    "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs": "true",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\reserve\assets" />
@@ -383,7 +147,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.DPP2">
+  <component name="RunManager" selected="Cargo.Run desktop-ponies-rs">
     <configuration name="Run desktop-ponies-rs" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
       <option name="buildProfileId" value="dev" />
       <option name="command" value="run --package desktop-ponies-rs --bin desktop-ponies-rs" />
@@ -476,9 +240,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Cargo.Run desktop-ponies-rs" />
         <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.DPP2Launcher" />
         <item itemvalue="Python.DPP2" />
+        <item itemvalue="Python.DPP2Launcher" />
+        <item itemvalue="Node.js.app.js" />
       </list>
     </recent_temporary>
   </component>
@@ -517,6 +283,16 @@
       <workItem from="1777564885692" duration="27000" />
       <workItem from="1777632980249" duration="5193000" />
       <workItem from="1777746329044" duration="16000" />
+      <workItem from="1777790203449" duration="5568000" />
+      <workItem from="1777795850378" duration="190000" />
+      <workItem from="1777796426015" duration="11000" />
+      <workItem from="1777796471783" duration="211000" />
+      <workItem from="1777797927633" duration="142000" />
+      <workItem from="1777798082330" duration="152000" />
+      <workItem from="1777798259986" duration="498000" />
+      <workItem from="1777798771471" duration="1060000" />
+      <workItem from="1777799862701" duration="70000" />
+      <workItem from="1777799953725" duration="4678000" />
     </task>
     <servers />
   </component>
@@ -544,6 +320,10 @@
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="github-copilot-workspace">
     <instructionFileLocations>
