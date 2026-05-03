@@ -88,13 +88,11 @@ function populateDatalist() {
 function initSpawnForm() {
     document.getElementById('btn-spawn')?.addEventListener('click', () => {
         const name = document.getElementById('pony-name').value;
-        const behavior = document.getElementById('pony-behavior').value;
-        const x = document.getElementById('pos-x').value;
-        const y = document.getElementById('pos-y').value;
         if (!name) {
             document.getElementById('status-text').textContent = 'Select a pony first!';
             return;
         }
-        document.getElementById('status-text').textContent = `Spawning ${name} (${behavior}) at (${x},${y}) — coming soon`;
+        window.ipc.postMessage('spawn:' + name);
+        document.getElementById('status-text').textContent = 'Spawning ' + name + '...';
     });
 }
