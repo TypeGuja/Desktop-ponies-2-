@@ -15,11 +15,10 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Ponies/Applejack/pony.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Ponies/Applejack/pony.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/renderer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/shaders.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/shaders.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/texture.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/texture.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/window_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/window_manager.rs" afterDir="false" />
     </list>
@@ -90,48 +89,48 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "Cargo.Run desktop-ponies-rs.executor": "Debug",
-    "DefaultHtmlFileTemplate": "HTML File",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.Cadance.executor": "Run",
-    "Python.DPP2.executor": "Run",
-    "Python.DPP2Launcher.executor": "Run",
-    "Python.Fluttershy.executor": "Run",
-    "Python.Luna.executor": "Debug",
-    "Python.RainbowDash.executor": "Run",
-    "Python.gui_controller.executor": "Run",
-    "Python.main (1).executor": "Run",
-    "Python.main (2).executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.pony (1).executor": "Run",
-    "Python.pony.executor": "Run",
-    "Python.pony1 (1).executor": "Run",
-    "Python.pony2.executor": "Run",
-    "Python.server_core.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.rust.reset.selective.auto.import": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "dungeon",
-    "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-",
-    "list.type.of.created.stylesheet": "CSS",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
-    "org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Cargo.Run desktop-ponies-rs.executor&quot;: &quot;Debug&quot;,
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
+    &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.DPP2Launcher.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Fluttershy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Luna.executor&quot;: &quot;Debug&quot;,
+    &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gui_controller.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.main (2).executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony1 (1).executor&quot;: &quot;Run&quot;,
+    &quot;Python.pony2.executor&quot;: &quot;Run&quot;,
+    &quot;Python.server_core.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-&quot;,
+    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs&quot;: &quot;true&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\reserve\assets" />
@@ -293,6 +292,12 @@
       <workItem from="1777798771471" duration="1060000" />
       <workItem from="1777799862701" duration="70000" />
       <workItem from="1777799953725" duration="4678000" />
+      <workItem from="1777914408986" duration="19000" />
+      <workItem from="1777918068561" duration="2000" />
+      <workItem from="1777989005367" duration="3332000" />
+      <workItem from="1777993038449" duration="1126000" />
+      <workItem from="1777994195700" duration="4693000" />
+      <workItem from="1777998960560" duration="36000" />
     </task>
     <servers />
   </component>
@@ -320,6 +325,11 @@
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="CargoCommandRunConfiguration">
+        <watch expression="// src_rust/main.rs&#10;use winit::{&#10;    event::WindowEvent,&#10;    event_loop::EventLoop,&#10;    application::ApplicationHandler,&#10;    window::{WindowAttributes, WindowId},&#10;    dpi::LogicalSize,&#10;};&#10;use wry::WebViewBuilder;&#10;use std::sync::{Arc, Mutex};&#10;use serde::Serialize;&#10;&#10;mod loader;&#10;mod window_manager;&#10;mod pony;&#10;mod pony_factory;&#10;mod world;&#10;mod renderer;&#10;mod mesh;&#10;mod texture;&#10;mod shaders;&#10;mod skeleton;&#10;mod animation;&#10;mod verlet;&#10;mod math;&#10;mod interaction;&#10;&#10;use loader::DesktopPoniesLoader;&#10;use window_manager::PonyWindow;&#10;&#10;##[derive(Serialize)]&#10;struct PonyMenuEntry {&#10;    name: String,&#10;    behaviors: Vec&lt;String&gt;,&#10;    speaks_count: usize,&#10;}&#10;&#10;fn main() {&#10;    let event_loop = EventLoop::new().unwrap();&#10;&#10;    let mut loader = DesktopPoniesLoader::new(&quot;.&quot;);&#10;    let menu_entries: Vec&lt;PonyMenuEntry&gt; = match loader.load_all() {&#10;        Ok(()) =&gt; loader.configs.iter().map(|c| PonyMenuEntry {&#10;            name: c.name.clone(),&#10;            behaviors: c.behaviors.iter().map(|b| b.name.clone()).collect(),&#10;            speaks_count: c.speaks.len(),&#10;        }).collect(),&#10;        Err(e) =&gt; {&#10;            eprintln!(&quot;Loader error: {}&quot;, e);&#10;            vec![]&#10;        }&#10;    };&#10;    println!(&quot;Total ponies: {}&quot;, menu_entries.len());&#10;&#10;    let ponies_json = serde_json::to_string(&amp;menu_entries).unwrap();&#10;    let html = build_html(&amp;ponies_json);&#10;&#10;    let mut app = App {&#10;        ui_window_id: None,&#10;        ui_window: None,&#10;        webview: None,&#10;        pony_window: None,&#10;        html: Some(html),&#10;        spawn_queue: Arc::new(Mutex::new(Vec::new())),&#10;    };&#10;&#10;    event_loop.run_app(&amp;mut app).unwrap();&#10;}&#10;&#10;fn build_html(ponies_json: &amp;str) -&gt; String {&#10;    let css = include_str!(&quot;../src-ui/style.css&quot;);&#10;    let js = include_str!(&quot;../src-ui/app.js&quot;);&#10;    let html = include_str!(&quot;../src-ui/index.html&quot;);&#10;&#10;    let patched_js = format!(&#10;        &quot;const PONIES_DATA = {{ ponies: {ponies_json} }};\n{js}&quot;&#10;    );&#10;&#10;    html.replace(&quot;&lt;link rel=\&quot;stylesheet\&quot; href=\&quot;style.css\&quot;&gt;&quot;,&#10;                 &amp;format!(&quot;&lt;style&gt;{css}&lt;/style&gt;&quot;))&#10;        .replace(&quot;&lt;script src=\&quot;app.js\&quot;&gt;&lt;/script&gt;&quot;,&#10;                 &amp;format!(&quot;&lt;script&gt;{patched_js}&lt;/script&gt;&quot;))&#10;}&#10;&#10;struct App {&#10;    ui_window_id: Option&lt;WindowId&gt;,&#10;    ui_window: Option&lt;Arc&lt;winit::window::Window&gt;&gt;,&#10;    webview: Option&lt;wry::WebView&gt;,&#10;    pony_window: Option&lt;Arc&lt;Mutex&lt;PonyWindow&gt;&gt;&gt;,&#10;    html: Option&lt;String&gt;,&#10;    spawn_queue: Arc&lt;Mutex&lt;Vec&lt;String&gt;&gt;&gt;,&#10;}&#10;&#10;impl ApplicationHandler for App {&#10;    fn resumed(&amp;mut self, event_loop: &amp;winit::event_loop::ActiveEventLoop) {&#10;        // Создаём UI окно&#10;        if self.ui_window_id.is_none() {&#10;            let ui_attrs = WindowAttributes::default()&#10;                .with_title(&quot;Desktop Ponies&quot;)&#10;                .with_inner_size(LogicalSize::new(420.0, 720.0))&#10;                .with_transparent(false)&#10;                .with_decorations(true);&#10;&#10;            let ui_window = Arc::new(event_loop.create_window(ui_attrs).unwrap());&#10;            self.ui_window_id = Some(ui_window.id());&#10;&#10;            ui_window.set_visible(true);&#10;&#10;            let spawn_q = self.spawn_queue.clone();&#10;            let html = self.html.take().unwrap();&#10;&#10;            let webview = WebViewBuilder::new()&#10;                .with_html(&amp;html)&#10;                .with_ipc_handler(move |msg| {&#10;                    let body = msg.body();&#10;                    if let Some(name) = body.strip_prefix(&quot;spawn:&quot;) {&#10;                        spawn_q.lock().unwrap().push(name.to_string());&#10;                    }&#10;                })&#10;                .build(&amp;*ui_window)&#10;                .unwrap();&#10;&#10;            // Сохраняем и окно и webview чтобы они не дропнулись&#10;            self.ui_window = Some(ui_window);&#10;            self.webview = Some(webview);&#10;&#10;            println!(&quot;UI ready. Select a pony and click Spawn.&quot;);&#10;        }&#10;    }&#10;&#10;    fn window_event(&#10;        &amp;mut self,&#10;        event_loop: &amp;winit::event_loop::ActiveEventLoop,&#10;        window_id: WindowId,&#10;        event: WindowEvent,&#10;    ) {&#10;        match event {&#10;            WindowEvent::CloseRequested =&gt; {&#10;                if Some(window_id) == self.ui_window_id {&#10;                    println!(&quot;UI window closed, exiting...&quot;);&#10;                    event_loop.exit();&#10;                }&#10;            }&#10;            WindowEvent::RedrawRequested =&gt; {&#10;                // Окно пони — создаём при первом спавне&#10;                let names: Vec&lt;String&gt; = self.spawn_queue.lock().unwrap().drain(..).collect();&#10;&#10;                if !names.is_empty() {&#10;                    if self.pony_window.is_none() {&#10;                        // Создаём окно пони&#10;                        let mut pw = PonyWindow::new();&#10;                        pw.create_window(event_loop);&#10;                        if let Some(w) = &amp;pw.window {&#10;                            w.set_visible(true);&#10;                        }&#10;                        self.pony_window = Some(Arc::new(Mutex::new(pw)));&#10;                        println!(&quot;Pony window created!&quot;);&#10;                    }&#10;&#10;                    if let Some(pw) = &amp;self.pony_window {&#10;                        if let Ok(mut pw) = pw.lock() {&#10;                            for name in names {&#10;                                pw.spawn_pony(&amp;name);&#10;                            }&#10;                        }&#10;                    }&#10;                }&#10;&#10;                // Рендерим если окно есть&#10;                if let Some(pw) = &amp;self.pony_window {&#10;                    if let Ok(mut pw) = pw.lock() {&#10;                        pw.update_and_render();&#10;                        if let Some(w) = &amp;pw.window {&#10;                            w.request_redraw();&#10;                        }&#10;                    }&#10;                }&#10;            }&#10;            _ =&gt; {}&#10;        }&#10;    }&#10;}" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
