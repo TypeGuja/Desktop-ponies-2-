@@ -1,6 +1,6 @@
 // src_rust/renderer.rs
 use wgpu::*;
-use tao::window::Window;
+use winit::window::Window;
 use glam::Mat4;
 use std::sync::Arc;
 use bytemuck::{Pod, Zeroable};
@@ -76,14 +76,19 @@ impl Renderer {
             .find(|f| f.is_srgb())
             .unwrap_or(surface_caps.formats[0]);
 
-        // Выбираем лучший доступный alpha mode для прозрачности
+        // ИСПРАВЛЕНО: Правильный порядок выбора alpha_mode
         let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
             CompositeAlphaMode::PostMultiplied
         } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
             CompositeAlphaMode::PreMultiplied
         } else {
-            CompositeAlphaMode::Opaque
+            // Ищем любой не-opaque режим
+            surface_caps.alpha_modes.iter()
+                .find(|&&m| m != CompositeAlphaMode::Opaque)
+                .copied()
+                .unwrap_or(CompositeAlphaMode::Opaque)
         };
+
         println!("Available alpha modes: {:?}", surface_caps.alpha_modes);
         println!("Selected alpha mode: {:?}", alpha_mode);
 
@@ -94,7 +99,7 @@ impl Renderer {
             height: size.height,
             present_mode: PresentMode::AutoVsync,
             alpha_mode,
-            view_formats: vec![],
+            view_formats: vec![surface_format],
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
@@ -358,7 +363,11 @@ impl Renderer {
         &mut self,
         ponies: &[&crate::pony::PonyEntity],
     ) -> Result<(), SurfaceError> {
-        let output = self.surface.get_current_texture()?;
+        let output = match self.surface.get_current_texture() {
+            Ok(t) => t,
+            Err(SurfaceError::Timeout) => return Ok(()),
+            Err(e) => return Err(e),
+        };
         let view = output
             .texture
             .create_view(&TextureViewDescriptor::default());
@@ -461,7 +470,7 @@ impl Renderer {
                             r: 0.0,
                             g: 0.0,
                             b: 0.0,
-                            a: 0.0,  // ПОЛНАЯ ПРОЗРАЧНОСТЬ
+                            a: 0.0,  // ПОЛНАЯ ПРОЗРАЧНОСТЬ - это правильно
                         }),
                         store: StoreOp::Store,
                     },

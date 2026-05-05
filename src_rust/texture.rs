@@ -71,6 +71,15 @@ impl TextureManager {
     ) -> usize {
         let frame_width = width / frame_count.max(1);
 
+        // Для прозрачности нужно premultiply alpha
+        let mut premultiplied = rgba_data.to_vec();
+        for pixel in premultiplied.chunks_exact_mut(4) {
+            let a = pixel[3] as f32 / 255.0;
+            pixel[0] = (pixel[0] as f32 * a) as u8;
+            pixel[1] = (pixel[1] as f32 * a) as u8;
+            pixel[2] = (pixel[2] as f32 * a) as u8;
+        }
+
         let size = Extent3d {
             width,
             height,
@@ -95,7 +104,7 @@ impl TextureManager {
                 origin: Origin3d::ZERO,
                 aspect: TextureAspect::All,
             },
-            rgba_data,
+            &premultiplied,  // Используем premultiplied данные
             ImageDataLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * width),

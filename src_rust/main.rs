@@ -1,22 +1,14 @@
 // src_rust/main.rs
-#[cfg(windows)]
-#[link(name = "advapi32")]
-#[link(name = "ole32")]
-#[link(name = "user32")]
-#[link(name = "shell32")]
-extern "C" {}
-
-use std::fs;
-use std::sync::{Arc, Mutex};
-use std::net::TcpListener;
-use std::io::{Read, Write};
-use serde::Serialize;
-use tao::{
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+use winit::{
+    event::WindowEvent,
+    event_loop::EventLoop,
+    application::ApplicationHandler,
+    window::{WindowAttributes, WindowId},
+    dpi::LogicalSize,
 };
 use wry::WebViewBuilder;
+use std::sync::{Arc, Mutex};
+use serde::Serialize;
 
 mod loader;
 mod window_manager;
@@ -44,6 +36,8 @@ struct PonyMenuEntry {
 }
 
 fn main() {
+    let event_loop = EventLoop::new().unwrap();
+
     let mut loader = DesktopPoniesLoader::new(".");
     let menu_entries: Vec<PonyMenuEntry> = match loader.load_all() {
         Ok(()) => loader.configs.iter().map(|c| PonyMenuEntry {
@@ -59,99 +53,139 @@ fn main() {
     println!("Total ponies: {}", menu_entries.len());
 
     let ponies_json = serde_json::to_string(&menu_entries).unwrap();
+    let html = build_html(&ponies_json);
 
-    let html_template = include_str!("../src-ui/index.html");
+    let mut app = App {
+        ui_window: None,
+        webview: None,
+        pony_window: None,
+        html: Some(html),
+        spawn_queue: Arc::new(Mutex::new(Vec::new())),
+    };
+
+    event_loop.run_app(&mut app).unwrap();
+}
+
+fn build_html(ponies_json: &str) -> String {
     let css = include_str!("../src-ui/style.css");
     let js = include_str!("../src-ui/app.js");
+    let html = include_str!("../src-ui/index.html");
 
     let patched_js = format!(
         "const PONIES_DATA = {{ ponies: {ponies_json} }};\n{js}"
     );
 
-    let full_html = html_template
-        .replace("<link rel=\"stylesheet\" href=\"style.css\">", &format!("<style>{css}</style>"))
-        .replace("<script src=\"app.js\"></script>", &format!("<script>{patched_js}</script>"));
+    html.replace("<link rel=\"stylesheet\" href=\"style.css\">",
+                 &format!("<style>{css}</style>"))
+        .replace("<script src=\"app.js\"></script>",
+                 &format!("<script>{patched_js}</script>"))
+}
 
-    // Мини-HTTP сервер
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind");
-    let port = listener.local_addr().unwrap().port();
+struct App {
+    ui_window: Option<Arc<winit::window::Window>>,
+    webview: Option<wry::WebView>,
+    pony_window: Option<Arc<Mutex<PonyWindow>>>,
+    html: Option<String>,
+    spawn_queue: Arc<Mutex<Vec<String>>>,
+}
 
-    let html_data = Arc::new(full_html);
-    let html_clone = html_data.clone();
+impl ApplicationHandler for App {
+    fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        // Создаём UI окно только если его ещё нет и нет окна пони
+        if self.ui_window.is_none() && self.pony_window.is_none() {
+            let ui_attrs = WindowAttributes::default()
+                .with_title("Desktop Ponies — Select Pony")
+                .with_inner_size(LogicalSize::new(420.0, 720.0))
+                .with_transparent(false)
+                .with_decorations(true)
+                .with_resizable(false);
 
-    std::thread::spawn(move || {
-        for mut stream in listener.incoming().flatten() {
-            let mut buffer = [0u8; 4096];
-            let _ = stream.read(&mut buffer); // Читаем запрос
+            let ui_window = Arc::new(event_loop.create_window(ui_attrs).unwrap());
+            ui_window.set_visible(true);
 
-            let response = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
-                html_clone.len(),
-                html_clone.as_str()
-            );
-            let _ = stream.write_all(response.as_bytes());
+            let spawn_q = self.spawn_queue.clone();
+            let ui_window_clone = ui_window.clone();
+            let html = self.html.take().unwrap();
+
+            let webview = WebViewBuilder::new()
+                .with_html(&html)
+                .with_ipc_handler(move |msg| {
+                    let body = msg.body().to_string();
+                    println!("IPC: '{}'", body);
+                    if let Some(name) = body.strip_prefix("spawn:") {
+                        spawn_q.lock().unwrap().push(name.to_string());
+                        ui_window_clone.request_redraw();
+                    }
+                })
+                .build(&*ui_window)
+                .unwrap();
+
+            self.ui_window = Some(ui_window);
+            self.webview = Some(webview);
+            println!("UI ready. Select a pony and click Spawn.");
         }
-    });
-
-    let url = format!("http://127.0.0.1:{}", port);
-    println!("Server: {}", url);
-
-    let event_loop = EventLoop::new();
-
-    let window = WindowBuilder::new()
-        .with_title("Desktop Ponies")
-        .with_inner_size(tao::dpi::LogicalSize::new(420.0, 720.0))
-        .with_resizable(true)
-        .build(&event_loop)
-        .unwrap();
-
-    let mut pony_window = PonyWindow::new();
-    pony_window.create_window(&event_loop);
-    if let Some(w) = &pony_window.window {
-        w.set_visible(false);
     }
 
-    let pony_window = Arc::new(Mutex::new(pony_window));
-    let pony_window_clone = pony_window.clone();
-
-    let _webview = WebViewBuilder::new()
-        .with_url(&url)
-        .with_ipc_handler(move |request| {
-            let body = request.body();
-            println!("IPC: {}", body);
-
-            if let Some(name) = body.strip_prefix("spawn:") {
-                if let Ok(mut pw) = pony_window_clone.lock() {
-                    if let Some(w) = &pw.window {
-                        w.set_visible(true);
-                    }
-                    pw.spawn_pony(name);
-                }
-            }
-        })
-        .build(&window)
-        .unwrap();
-
-    println!("Ready! Select a pony and click Spawn.");
-
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Poll;
-
+    fn window_event(
+        &mut self,
+        event_loop: &winit::event_loop::ActiveEventLoop,
+        window_id: WindowId,
+        event: WindowEvent,
+    ) {
         match event {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                window_id, ..
-            } => {
-                if window_id == window.id() {
-                    *control_flow = ControlFlow::Exit;
+            WindowEvent::CloseRequested => {
+                // Закрытие UI окна = выход
+                if self.ui_window.as_ref().map(|w| w.id()) == Some(window_id) {
+                    println!("UI closed, exiting...");
+                    event_loop.exit();
                 }
             }
-            Event::RedrawRequested(_) | Event::MainEventsCleared => {
-                if let Ok(mut pw) = pony_window.lock() {
-                    pw.update_and_render();
+            WindowEvent::RedrawRequested => {
+                let ui_id = self.ui_window.as_ref().map(|w| w.id());
+
+                if Some(window_id) == ui_id {
+                    // Redraw от UI окна — проверяем спавн
+                    let names: Vec<String> = self.spawn_queue.lock().unwrap().drain(..).collect();
+
+                    if !names.is_empty() {
+                        // Закрываем UI окно
+                        println!("Closing UI window...");
+                        self.webview = None; // Дропаем WebView первым
+                        self.ui_window = None; // Потом окно
+
+                        // Создаём прозрачное окно с пони
+                        let mut pw = PonyWindow::new();
+                        pw.create_window(event_loop);
+
+                        if let Some(w) = &pw.window {
+                            w.set_visible(true);
+                        }
+
+                        for name in names {
+                            pw.spawn_pony(&name);
+                        }
+
+                        pw.update_and_render();
+                        if let Some(w) = &pw.window {
+                            w.request_redraw();
+                        }
+
+                        self.pony_window = Some(Arc::new(Mutex::new(pw)));
+                        println!("Pony window created! UI closed.");
+                    }
+                }
+
+                // Рендерим окно пони
+                if let Some(pw) = &self.pony_window {
+                    if let Ok(mut pw) = pw.lock() {
+                        pw.update_and_render();
+                        if let Some(w) = &pw.window {
+                            w.request_redraw();
+                        }
+                    }
                 }
             }
             _ => {}
         }
-    });
+    }
 }

@@ -1,5 +1,47 @@
-// src_rust/shaders.rs — полностью исправленный
+// src_rust/shaders.rs - обновленный SPRITE_VERTEX_SHADER
+pub const SPRITE_VERTEX_SHADER: &str = r#"
+struct Uniforms {
+    view_proj: mat4x4<f32>,
+}
 
+@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var tex_sampler: sampler;
+@group(0) @binding(2) var tex: texture_2d<f32>;
+
+struct VertexInput {
+    @location(0) position: vec2<f32>,
+    @location(1) tex_coords: vec2<f32>,
+    @location(2) instance_data: vec4<f32>,
+}
+
+struct VertexOutput {
+    @builtin(position) position: vec4<f32>,
+    @location(0) tex_coords: vec2<f32>,
+}
+
+@vertex
+fn vs_main(in: VertexInput) -> VertexOutput {
+    let world_pos = vec4<f32>(
+        in.position * in.instance_data.w + in.instance_data.xy,
+        0.0,
+        1.0
+    );
+
+    var out: VertexOutput;
+    out.position = uniforms.view_proj * world_pos;
+    out.tex_coords = in.tex_coords + vec2<f32>(in.instance_data.z, 0.0);
+    return out;
+}
+
+@fragment
+fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    let color = textureSample(tex, tex_sampler, in.tex_coords);
+    // Не делаем discard для прозрачных пикселей чтобы избежать артефактов
+    return color;
+}
+"#;
+
+// Аналогично для SKELETAL_VERTEX_SHADER
 pub const SKELETAL_VERTEX_SHADER: &str = r#"
 struct Uniforms {
     view_proj: mat4x4<f32>,
@@ -54,55 +96,6 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let color = textureSample(tex, tex_sampler, in.tex_coords);
-    if color.a < 0.1 {
-        discard;
-    }
-    return color;
-}
-"#;
-
-pub const SPRITE_VERTEX_SHADER: &str = r#"
-struct Uniforms {
-    view_proj: mat4x4<f32>,
-}
-
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var tex_sampler: sampler;
-@group(0) @binding(2) var tex: texture_2d<f32>;
-
-struct VertexInput {
-    @location(0) position: vec2<f32>,
-    @location(1) tex_coords: vec2<f32>,
-    @location(2) instance_data: vec4<f32>,
-}
-
-struct VertexOutput {
-    @builtin(position) position: vec4<f32>,
-    @location(0) tex_coords: vec2<f32>,
-    @location(1) @interpolate(flat) frame_index: u32,
-}
-
-@vertex
-fn vs_main(in: VertexInput) -> VertexOutput {
-    let world_pos = vec4<f32>(
-        in.position * in.instance_data.w + in.instance_data.xy,
-        0.0,
-        1.0
-    );
-
-    var out: VertexOutput;
-    out.position = uniforms.view_proj * world_pos;
-    out.tex_coords = in.tex_coords + vec2<f32>(in.instance_data.z, 0.0);
-    out.frame_index = u32(in.instance_data.z);
-    return out;
-}
-
-@fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    let color = textureSample(tex, tex_sampler, in.tex_coords);
-    if color.a < 0.1 {
-        discard;
-    }
-    return color;
+    return color;  // Не делаем discard
 }
 "#;
