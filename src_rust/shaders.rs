@@ -36,7 +36,13 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let color = textureSample(tex, tex_sampler, in.tex_coords);
-    // Не делаем discard для прозрачных пикселей чтобы избежать артефактов
+    
+    // Отбрасываем почти чёрные пиксели - они становятся прозрачными
+    // Это моделирует колор-ключ прозрачность как в оригинальном Desktop Ponies
+    if color.a < 0.1 {
+        discard;
+    }
+    
     return color;
 }
 "#;
@@ -96,6 +102,12 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let color = textureSample(tex, tex_sampler, in.tex_coords);
-    return color;  // Не делаем discard
+    
+    // Отбрасываем прозрачные пиксели
+    if color.a < 0.1 {
+        discard;
+    }
+    
+    return color;
 }
 "#;
