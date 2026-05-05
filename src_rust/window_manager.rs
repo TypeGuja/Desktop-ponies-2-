@@ -36,11 +36,11 @@ impl PonyWindow {
         let attributes = WindowAttributes::default()
             .with_title("Desktop Ponies Overlay")
             .with_decorations(false)
-            .with_transparent(true)
+            .with_transparent(false)  // FALSE - Windows не поддерживает layered window с wgpu
             .with_inner_size(LogicalSize::new(size.width as f64, size.height as f64))
             .with_visible(false)
             .with_window_level(winit::window::WindowLevel::AlwaysOnTop)
-            .with_skip_taskbar(true);  // Чтобы не мешало в таскбаре
+            .with_skip_taskbar(true);
 
         let window = Arc::new(event_loop.create_window(attributes).unwrap());
 
@@ -214,19 +214,6 @@ fn load_gif_frames(
                     atlas[dst_idx + 2] = frame_data[src_idx + 2];
                     atlas[dst_idx + 3] = frame_data[src_idx + 3];
                 }
-            }
-        }
-    }
-
-    // Заменяем светлый фон на чёрный (для LWA_COLORKEY если используется)
-    for i in (0..atlas.len()).step_by(4) {
-        if i + 3 < atlas.len() && atlas[i + 3] > 200 {
-            let sum = atlas[i] as f32 + atlas[i + 1] as f32 + atlas[i + 2] as f32;
-            if sum > 500.0 {
-                atlas[i] = 0;
-                atlas[i + 1] = 0;
-                atlas[i + 2] = 0;
-                atlas[i + 3] = 255;
             }
         }
     }
