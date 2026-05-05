@@ -1,7 +1,6 @@
 // src-ui/app.js
 let allPonies = [];
 
-// Данные вставятся из Rust перед этим скриптом
 document.addEventListener('DOMContentLoaded', () => {
     if (typeof PONIES_DATA !== 'undefined' && PONIES_DATA.ponies) {
         allPonies = PONIES_DATA.ponies;
@@ -32,7 +31,6 @@ function initBrowse() {
     const list = document.getElementById('pony-list');
     if (!list) return;
 
-    // Показываем всех пони
     let html = '';
     allPonies.forEach(p => {
         html += `<div class="pony-item" onclick="selectPony('${p.name.replace(/'/g, "\\'")}')">
@@ -47,7 +45,6 @@ function initBrowse() {
     });
     list.innerHTML = html || '<p class="empty-state">No ponies found</p>';
 
-    // Поиск
     document.getElementById('search')?.addEventListener('input', e => {
         const q = e.target.value.toLowerCase();
         const filtered = allPonies.filter(p => p.name.toLowerCase().includes(q));
@@ -67,14 +64,7 @@ function initBrowse() {
 
 function selectPony(name) {
     document.getElementById('pony-name').value = name;
-    // Обновляем список поведений
-    const pony = allPonies.find(p => p.name === name);
-    const sel = document.getElementById('pony-behavior');
-    if (pony && sel) {
-        sel.innerHTML = pony.behaviors.map(b => `<option value="${b}">${b}</option>`).join('');
-    }
     document.getElementById('status-text').textContent = 'Selected: ' + name;
-    // Переключаем на вкладку Spawn
     document.querySelector('.tab-btn[data-tab="spawn"]')?.click();
 }
 
@@ -92,7 +82,30 @@ function initSpawnForm() {
             document.getElementById('status-text').textContent = 'Select a pony first!';
             return;
         }
-        window.ipc.postMessage('spawn:' + name);
-        document.getElementById('status-text').textContent = 'Spawning ' + name + '...';
+
+        // Пробуем разные варианты IPC
+        try {
+            // Вариант 1: новый wry
+            if (typeof window.ipc !== 'undefined' && window.ipc.postMessage) {
+                window.ipc.postMessage('spawn:' + name);
+            }
+            // Вариант 2: старый wry
+            else if (typeof window.external !== 'undefined' && window.external.ipc) {
+                window.external.ipc.postMessage('spawn:' + name);
+            }
+            // Вариант 3: window.webkit
+            else if (typeof window.webkit !== 'undefined' && window.webkit.messageHandlers) {
+                window.webkit.messageHandlers.ipc.postMessage('spawn:' + name);
+            }
+            else {
+                console.error('IPC not available');
+                document.getElementById('status-text').textContent = 'Error: IPC not available';
+                return;
+            }
+            document.getElementById('status-text').textContent = 'Spawning ' + name + '...';
+        } catch(e) {
+            console.error('IPC error:', e);
+            document.getElementById('status-text').textContent = 'Error: ' + e.message;
+        }
     });
 }
