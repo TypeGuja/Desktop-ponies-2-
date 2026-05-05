@@ -69,26 +69,33 @@ impl Renderer {
             .unwrap();
 
         let surface_caps = surface.get_capabilities(&adapter);
+        
+        // ИСПРАВЛЕНИЕ: Выбираем формат с alpha поддержкой
         let surface_format = surface_caps
             .formats
             .iter()
             .copied()
-            .find(|f| f.is_srgb())
+            .find(|f| matches!(f, TextureFormat::Rgba8UnormSrgb | TextureFormat::Bgra8UnormSrgb))
+            .or_else(|| {
+                surface_caps
+                    .formats
+                    .iter()
+                    .copied()
+                    .find(|f| f.is_srgb())
+            })
             .unwrap_or(surface_caps.formats[0]);
 
-        // ИСПРАВЛЕНО: Правильный порядок выбора alpha_mode
-        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
-            CompositeAlphaMode::PostMultiplied
-        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
+        // ИСПРАВЛЕНИЕ: Выбираем правильный alpha mode
+        let alpha_mode = if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PreMultiplied) {
             CompositeAlphaMode::PreMultiplied
+        } else if surface_caps.alpha_modes.contains(&CompositeAlphaMode::PostMultiplied) {
+            CompositeAlphaMode::PostMultiplied
         } else {
-            // Ищем любой не-opaque режим
-            surface_caps.alpha_modes.iter()
-                .find(|&&m| m != CompositeAlphaMode::Opaque)
-                .copied()
-                .unwrap_or(CompositeAlphaMode::Opaque)
+            CompositeAlphaMode::Auto
         };
 
+        println!("Available formats: {:?}", surface_caps.formats);
+        println!("Selected format: {:?}", surface_format);
         println!("Available alpha modes: {:?}", surface_caps.alpha_modes);
         println!("Selected alpha mode: {:?}", alpha_mode);
 
@@ -99,7 +106,7 @@ impl Renderer {
             height: size.height,
             present_mode: PresentMode::AutoVsync,
             alpha_mode,
-            view_formats: vec![surface_format],
+            view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &config);
@@ -259,7 +266,7 @@ impl Renderer {
                     module: &skeletal_shader,
                     entry_point: "fs_main",
                     targets: &[Some(ColorTargetState {
-                        format: config.format,
+                        format: surface_format,
                         blend: Some(BlendState::ALPHA_BLENDING),
                         write_mask: ColorWrites::ALL,
                     })],
@@ -319,7 +326,7 @@ impl Renderer {
                     module: &sprite_shader,
                     entry_point: "fs_main",
                     targets: &[Some(ColorTargetState {
-                        format: config.format,
+                        format: surface_format,
                         blend: Some(BlendState::ALPHA_BLENDING),
                         write_mask: ColorWrites::ALL,
                     })],
@@ -470,7 +477,7 @@ impl Renderer {
                             r: 0.0,
                             g: 0.0,
                             b: 0.0,
-                            a: 0.0,  // ПОЛНАЯ ПРОЗРАЧНОСТЬ - это правильно
+                            a: 0.0,  // ПОЛНОСТЬЮ ПРОЗРАЧНЫЙ ФОН
                         }),
                         store: StoreOp::Store,
                     },
