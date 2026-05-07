@@ -12,15 +12,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src_rust/monitor_manager.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/settings.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/style.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/renderer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/renderer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/shaders.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/shaders.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/texture.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/texture.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/window_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/window_manager.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/mesh.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/renderer.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/shaders.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/ui.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/window_manager.rs" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -125,7 +131,9 @@
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
+    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/main.rs&quot;: &quot;true&quot;,
     &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs&quot;: &quot;true&quot;,
+    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/main.rs&quot;: &quot;true&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -140,6 +148,7 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\SunsetShommer" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_rust" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\Celestia" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP" />
@@ -298,6 +307,11 @@
       <workItem from="1777993038449" duration="1126000" />
       <workItem from="1777994195700" duration="4693000" />
       <workItem from="1777998960560" duration="36000" />
+      <workItem from="1778088654891" duration="867000" />
+      <workItem from="1778131825269" duration="13000" />
+      <workItem from="1778150326178" duration="4211000" />
+      <workItem from="1778154599842" duration="616000" />
+      <workItem from="1778178365035" duration="32000" />
     </task>
     <servers />
   </component>
