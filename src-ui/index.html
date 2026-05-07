@@ -16,25 +16,28 @@
     </header>
 
     <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="browse">Browse Ponies</button>
-        <button class="tab-btn" data-tab="spawn">Spawn Pony</button>
-        <button class="tab-btn" data-tab="active">Active Ponies</button>
+        <button class="tab-btn active" data-tab="browse">Ponies</button>
+        <button class="tab-btn" data-tab="spawn">Spawn</button>
+        <button class="tab-btn" data-tab="active">Active</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
     </nav>
 
-    <!-- Tab: Browse -->
+    <!-- Browse Ponies -->
     <section id="tab-browse" class="tab-content active">
-        <input type="text" id="search" placeholder="Search ponies..." oninput="filterPonies()">
-        <div id="pony-list" class="pony-list">Loading ponies...</div>
+        <input type="text" id="search" class="search-input" placeholder="Search ponies... (Ctrl+K)">
+        <div id="pony-list" class="pony-list">
+            <div class="empty-state">Loading ponies...</div>
+        </div>
     </section>
 
-    <!-- Tab: Spawn -->
+    <!-- Spawn Pony -->
     <section id="tab-spawn" class="tab-content">
         <div class="card">
-            <h2>Spawn Pony</h2>
+            <h2>Spawn a Pony</h2>
             <div class="form-group">
                 <label>Pony Name</label>
-                <input type="text" id="pony-name" placeholder="Twilight Sparkle" list="pony-list-datalist" oninput="onPonyNameInput(this.value)">
-                <datalist id="pony-list-datalist"></datalist>
+                <input type="text" id="pony-name" placeholder="Start typing pony name..." list="ponies-datalist" autocomplete="off">
+                <datalist id="ponies-datalist"></datalist>
             </div>
             <div class="form-group">
                 <label>Position</label>
@@ -47,18 +50,41 @@
         </div>
     </section>
 
-    <!-- Tab: Active -->
+    <!-- Active Ponies -->
     <section id="tab-active" class="tab-content">
+        <div id="active-list" class="pony-list" style="flex:1">
+            <div class="empty-state">No active ponies</div>
+        </div>
+        <button class="btn-danger" id="btn-remove-all">Remove All</button>
+    </section>
+
+    <!-- Settings -->
+    <section id="tab-settings" class="tab-content">
         <div class="card">
-            <h2>Active Ponies</h2>
-            <div id="active-list"><p class="empty-state">Not implemented yet</p></div>
-            <button class="btn-danger" id="btn-remove-all">Remove All</button>
+            <h2>Monitor Settings</h2>
+            <p class="text-muted">Select which monitors show ponies</p>
+            <div id="monitor-list" class="monitor-list">
+                <div class="empty-state">Detecting monitors...</div>
+            </div>
+            <div class="active-actions">
+                <button class="btn-secondary" id="btn-refresh-monitors">🔄 Refresh</button>
+                <button class="btn-primary" id="btn-save-monitors" style="flex:1">💾 Save</button>
+            </div>
+
+            <hr class="divider">
+
+            <h2>Theme</h2>
+            <div class="theme-selector">
+                <div class="theme-option" data-theme="light">☀️ Light</div>
+                <div class="theme-option active" data-theme="dark">🌙 Dark</div>
+                <div class="theme-option" data-theme="black">🖤 Black</div>
+            </div>
         </div>
     </section>
 
     <footer class="status-bar">
         <span id="status-text">Ready</span>
-        <span id="pony-count">0 ponies</span>
+        <span id="pony-count">Loading...</span>
     </footer>
 </div>
 <script src="app.js"></script>
