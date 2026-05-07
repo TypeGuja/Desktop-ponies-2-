@@ -1,3 +1,4 @@
+// src_rust/lib.rs
 pub mod loader;
 pub mod math;
 pub mod skeleton;
@@ -11,8 +12,6 @@ pub mod interaction;
 pub mod ai_controller;
 pub mod python_bridge;
 pub mod btcx;
-pub mod mesh;
-pub mod shaders;
 pub mod texture;
-pub mod renderer;
-pub mod window_manager;
+pub mod monitor_manager;  // <-- добавить
+pub mod settings;         // <-- добавить
