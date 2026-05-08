@@ -1,12 +1,10 @@
 // src_rust/loader.rs
-// src_rust/loader.rs
-// src_rust/loader.rs
-
 use std::fs;
 use std::path::{Path, PathBuf};
+use image::AnimationDecoder;
 use serde::Serialize;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MovementType {
     None,
     All,
@@ -21,28 +19,28 @@ pub enum MovementType {
 #[derive(Clone, Debug, Serialize)]
 pub struct Behavior {
     pub name: String,
-    pub probability: f32,          // "Chance"
-    pub max_duration: f32,         // "Max Duration"
-    pub min_duration: f32,         // "Min Duration"
-    pub speed: f32,                // "Speed"
-    pub sprite_right: String,      // "Right Image"
-    pub sprite_left: String,       // "Left Image"
-    pub movement: String,          // "Movement"
-    pub linked_behavior: String,   // "Linked Behavior"
-    pub start_speech: String,      // "Start Speech"
-    pub end_speech: String,        // "End Speech"
-    pub skip: bool,                // "Skip"
-    pub target_x: f32,             // "Target X"
-    pub target_y: f32,             // "Target Y"
-    pub follow_target: bool,       // "Follow Target"
-    pub auto_select_follow: bool,  // "Auto Select Follow Images"
-    pub follow_stopped: String,    // "Follow Stopped Behavior"
-    pub follow_moving: String,     // "Follow Moving Behavior"
-    pub right_image_center: (f32, f32), // "Right Image Center"
-    pub left_image_center: (f32, f32),  // "Left Image Center"
-    pub prevent_loop: bool,        // "Prevent Animation Loop"
-    pub group: String,             // "Group"
-    pub follow_offset: String,     // "Follow Offset Type"
+    pub probability: f32,
+    pub max_duration: f32,
+    pub min_duration: f32,
+    pub speed: f32,
+    pub sprite_right: String,
+    pub sprite_left: String,
+    pub movement: String,
+    pub linked_behavior: String,
+    pub start_speech: String,
+    pub end_speech: String,
+    pub skip: bool,
+    pub target_x: f32,
+    pub target_y: f32,
+    pub follow_target: bool,
+    pub auto_select_follow: bool,
+    pub follow_stopped: String,
+    pub follow_moving: String,
+    pub right_image_center: (f32, f32),
+    pub left_image_center: (f32, f32),
+    pub prevent_loop: bool,
+    pub group: String,
+    pub follow_offset: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -107,7 +105,7 @@ impl MovementType {
     }
 }
 
-// ── CSV splitter ────────────────────────────────────────────
+// CSV splitter
 fn split_csv(line: &str) -> Vec<String> {
     let mut fields = vec![];
     let mut cur = String::new();
@@ -175,19 +173,16 @@ fn parse_list(s: &str) -> Vec<String> {
     }
 }
 
-// ── Loader ──────────────────────────────────────────────────
 impl DesktopPoniesLoader {
     pub fn new<P: AsRef<Path>>(base_path: P) -> Self {
         let base = base_path.as_ref();
 
-        // Нормализуем базовый путь
         let current_dir = if base == Path::new(".") || base == Path::new("") {
             std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
         } else {
             base.to_path_buf()
         };
 
-        // Список папок для проверки (по порядку)
         let candidates = vec![
             current_dir.join("..").join("Ponies"),
             current_dir.join("Ponies"),
@@ -195,7 +190,6 @@ impl DesktopPoniesLoader {
             PathBuf::from("./Ponies"),
         ];
 
-        // Ищем первую существующую папку
         let ponies_dir = candidates
             .into_iter()
             .find(|p| p.exists())
@@ -284,32 +278,31 @@ impl DesktopPoniesLoader {
                         .collect();
                 }
 
-                // Новый формат Behavior с 24 полями
                 "Behavior" if fields.len() >= 24 => {
                     behaviors.push(Behavior {
-                        name: unquote(&fields[1]),                    // "Identifier"
-                        probability: parse_f32(&fields[2]),           // "Chance"
-                        max_duration: parse_f32(&fields[3]),          // "Max Duration"
-                        min_duration: parse_f32(&fields[4]),          // "Min Duration"
-                        speed: parse_f32(&fields[5]),                 // "Speed"
-                        sprite_right: unquote(&fields[6]),            // "Right Image"
-                        sprite_left: unquote(&fields[7]),             // "Left Image"
-                        movement: unquote(&fields[8]),                // "Movement"
-                        linked_behavior: unquote(&fields[9]),         // "Linked Behavior"
-                        start_speech: unquote(&fields[10]),           // "Start Speech"
-                        end_speech: unquote(&fields[11]),             // "End Speech"
-                        skip: parse_bool(&fields[12]),                // "Skip"
-                        target_x: parse_f32(&fields[13]),             // "Target X"
-                        target_y: parse_f32(&fields[14]),             // "Target Y"
-                        follow_target: parse_bool(&fields[15]),       // "Follow Target"
-                        auto_select_follow: parse_bool(&fields[16]),  // "Auto Select Follow Images"
-                        follow_stopped: unquote(&fields[17]),         // "Follow Stopped Behavior"
-                        follow_moving: unquote(&fields[18]),          // "Follow Moving Behavior"
-                        right_image_center: parse_pair(&fields[19]),  // "Right Image Center"
-                        left_image_center: parse_pair(&fields[20]),   // "Left Image Center"
-                        prevent_loop: parse_bool(&fields[21]),        // "Prevent Animation Loop"
-                        group: unquote(&fields[22]),                  // "Group"
-                        follow_offset: unquote(&fields[23]),          // "Follow Offset Type"
+                        name: unquote(&fields[1]),
+                        probability: parse_f32(&fields[2]),
+                        max_duration: parse_f32(&fields[3]),
+                        min_duration: parse_f32(&fields[4]),
+                        speed: parse_f32(&fields[5]),
+                        sprite_right: unquote(&fields[6]),
+                        sprite_left: unquote(&fields[7]),
+                        movement: unquote(&fields[8]),
+                        linked_behavior: unquote(&fields[9]),
+                        start_speech: unquote(&fields[10]),
+                        end_speech: unquote(&fields[11]),
+                        skip: parse_bool(&fields[12]),
+                        target_x: parse_f32(&fields[13]),
+                        target_y: parse_f32(&fields[14]),
+                        follow_target: parse_bool(&fields[15]),
+                        auto_select_follow: parse_bool(&fields[16]),
+                        follow_stopped: unquote(&fields[17]),
+                        follow_moving: unquote(&fields[18]),
+                        right_image_center: parse_pair(&fields[19]),
+                        left_image_center: parse_pair(&fields[20]),
+                        prevent_loop: parse_bool(&fields[21]),
+                        group: unquote(&fields[22]),
+                        follow_offset: unquote(&fields[23]),
                     });
                 }
 
@@ -359,5 +352,152 @@ impl DesktopPoniesLoader {
             interactions,
             effects,
         })
+    }
+
+    // ============ МЕТОДЫ ЗАГРУЗКИ ГИФОК ============
+
+    fn load_gif_file(&self, path: &Path) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+        if let Ok(bytes) = std::fs::read(path) {
+            if let Ok(decoder) = image::codecs::gif::GifDecoder::new(std::io::Cursor::new(&bytes)) {
+                let frames: Vec<_> = decoder.into_frames()
+                    .filter_map(|f: Result<image::Frame, _>| f.ok())
+                    .collect();
+
+                if !frames.is_empty() {
+                    let w = frames[0].buffer().width();
+                    let h = frames[0].buffer().height();
+                    let fc = frames.len() as u32;
+                    let mut delays = Vec::new();
+
+                    let bgra: Vec<Vec<u32>> = frames.iter().map(|f: &image::Frame| {
+                        let (d, _) = f.delay().numer_denom_ms();
+                        delays.push(d as f32);
+                        f.buffer().chunks(4).map(|p| {
+                            ((p[3] as u32) << 24) | ((p[0] as u32) << 16) | ((p[1] as u32) << 8) | (p[2] as u32)
+                        }).collect()
+                    }).collect();
+
+                    delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                    let median_delay = if !delays.is_empty() {
+                        delays[delays.len() / 2] / 1000.0
+                    } else {
+                        0.1
+                    };
+
+                    let frame_duration = median_delay.max(0.05).min(0.2);
+
+                    return (bgra, fc, w, h, frame_duration);
+                }
+            }
+        }
+
+        Self::fallback_sprite()
+    }
+
+    /// Загружает кадры анимации для конкретного спрайта пони
+    pub fn load_pony_frames(&self, pony_name: &str, sprite_name: &str) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+        let pony_dir = self.ponies_dir.join(pony_name);
+
+        if !pony_dir.exists() {
+            eprintln!("[Loader] Pony dir not found: {:?}", pony_dir);
+            return Self::fallback_sprite();
+        }
+
+        // 1. Точное имя файла (уже с направлением!)
+        let exact_path = pony_dir.join(sprite_name);
+        if exact_path.exists() {
+            println!("[Loader] Exact: {:?}", exact_path.file_name());
+            return self.load_gif_file(&exact_path);
+        }
+
+        // 2. Добавляем .gif
+        let with_ext = pony_dir.join(format!("{}.gif", sprite_name));
+        if with_ext.exists() {
+            println!("[Loader] With ext: {:?}", with_ext.file_name());
+            return self.load_gif_file(&with_ext);
+        }
+
+        // 3. Ищем ТОЧНОЕ совпадение имени файла (с учётом _right/_left)
+        if let Ok(entries) = std::fs::read_dir(&pony_dir) {
+            let sprite_lower = sprite_name.to_lowercase();
+
+            // Сначала ищем файл, где sprite_name ЯВЛЯЕТСЯ ЧАСТЬЮ имени
+            // НО с учётом направления!
+            let is_right = sprite_lower.contains("right");
+            let is_left = sprite_lower.contains("left");
+
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) == Some("gif") {
+                    let filename = path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("")
+                        .to_lowercase();
+
+                    // Приоритет: точное совпадение с учётом right/left
+                    let filename_match = if is_right {
+                        filename.contains(&sprite_lower) ||
+                            (filename.contains("right") && sprite_lower.contains("right"))
+                    } else if is_left {
+                        filename.contains(&sprite_lower) ||
+                            (filename.contains("left") && sprite_lower.contains("left"))
+                    } else {
+                        filename.contains(&sprite_lower)
+                    };
+
+                    if filename_match {
+                        println!("[Loader] Match: {:?} for '{}'", path.file_name(), sprite_name);
+                        return self.load_gif_file(&path);
+                    }
+                }
+            }
+
+            // 4. Если не нашли с учётом направления - ищем общее название
+            // Например "walk" без right/left
+            let base_name = sprite_lower
+                .replace("_right", "")
+                .replace("_left", "")
+                .replace("right", "")
+                .replace("left", "");
+
+            if base_name != sprite_lower {
+                if let Ok(entries) = std::fs::read_dir(&pony_dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.extension().and_then(|e| e.to_str()) == Some("gif") {
+                            let filename = path.file_name()
+                                .and_then(|n| n.to_str())
+                                .unwrap_or("")
+                                .to_lowercase();
+
+                            if filename.contains(&base_name) {
+                                // Если идём вправо - предпочитаем right
+                                if is_right && filename.contains("right") {
+                                    println!("[Loader] Fallback right: {:?}", path.file_name());
+                                    return self.load_gif_file(&path);
+                                }
+                                if is_left && filename.contains("left") {
+                                    println!("[Loader] Fallback left: {:?}", path.file_name());
+                                    return self.load_gif_file(&path);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        eprintln!("[Loader] NOT FOUND: '{}' for '{}'", sprite_name, pony_name);
+        Self::fallback_sprite()
+    }
+
+    /// Заглушка - красный квадрат
+    fn fallback_sprite() -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+        (vec![vec![0xFFFF0000u32; 32 * 32]], 1, 32, 32, 0.1)
+    }
+
+    /// Получить конфиг пони по имени
+    pub fn get_config(&self, name: &str) -> Option<&PonyConfig> {
+        self.configs.iter().find(|c| c.name == name)
     }
 }
