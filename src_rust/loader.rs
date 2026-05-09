@@ -1,6 +1,7 @@
 // src_rust/loader.rs
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::collections::HashMap;
 use image::AnimationDecoder;
 use serde::Serialize;
 
@@ -87,6 +88,7 @@ pub struct PonyConfig {
 pub struct DesktopPoniesLoader {
     pub ponies_dir: PathBuf,
     pub configs: Vec<PonyConfig>,
+    pub sprite_cache: HashMap<String, (Vec<Vec<u32>>, u32, u32, u32, f32)>,
 }
 
 impl MovementType {
@@ -105,7 +107,6 @@ impl MovementType {
     }
 }
 
-// CSV splitter
 fn split_csv(line: &str) -> Vec<String> {
     let mut fields = vec![];
     let mut cur = String::new();
@@ -203,6 +204,7 @@ impl DesktopPoniesLoader {
         Self {
             ponies_dir,
             configs: Vec::new(),
+            sprite_cache: HashMap::new(),
         }
     }
 
@@ -210,13 +212,11 @@ impl DesktopPoniesLoader {
         if !self.ponies_dir.exists() {
             return Err(format!("Ponies dir not found: {:?}", self.ponies_dir));
         }
-
         if !self.ponies_dir.is_dir() {
             return Err(format!("Path is not a directory: {:?}", self.ponies_dir));
         }
 
         self.configs.clear();
-        println!("Scanning for ponies in: {:?}", self.ponies_dir);
         self.scan_dir(&self.ponies_dir.clone())?;
 
         if self.configs.is_empty() {
@@ -224,21 +224,15 @@ impl DesktopPoniesLoader {
         }
 
         self.configs.sort_by(|a, b| a.name.cmp(&b.name));
-        println!("Successfully loaded {} ponies:", self.configs.len());
-        for pony in &self.configs {
-            println!("  - {} ({} behaviors, {} speaks)",
-                     pony.name, pony.behaviors.len(), pony.speaks.len());
-        }
+        println!("Successfully loaded {} ponies", self.configs.len());
         Ok(())
     }
 
     fn scan_dir(&mut self, dir: &Path) -> Result<(), String> {
         let entries = fs::read_dir(dir).map_err(|e| format!("Read dir {}: {}", dir.display(), e))?;
-
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
             let path = entry.path();
-
             if path.is_dir() {
                 self.scan_dir(&path)?;
             } else if path.file_name().and_then(|n| n.to_str()) == Some("pony.ini") {
@@ -266,7 +260,6 @@ impl DesktopPoniesLoader {
             if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
                 continue;
             }
-
             let row_type = line.find(',').map(|i| &line[..i]).unwrap_or("");
             let fields = split_csv(line);
 
@@ -277,7 +270,6 @@ impl DesktopPoniesLoader {
                         .filter(|s| !s.is_empty())
                         .collect();
                 }
-
                 "Behavior" if fields.len() >= 24 => {
                     behaviors.push(Behavior {
                         name: unquote(&fields[1]),
@@ -305,7 +297,6 @@ impl DesktopPoniesLoader {
                         follow_offset: unquote(&fields[23]),
                     });
                 }
-
                 "Speak" if fields.len() >= 5 => {
                     speaks.push(SpeakDef {
                         name: unquote(&fields[1]),
@@ -315,7 +306,6 @@ impl DesktopPoniesLoader {
                         frequency: fields.get(5).map(|f| parse_f32(f)).unwrap_or(0.0),
                     });
                 }
-
                 "Interaction" if fields.len() >= 7 => {
                     interactions.push(InteractionDef {
                         name: unquote(&fields[1]),
@@ -327,7 +317,6 @@ impl DesktopPoniesLoader {
                         duration: fields.get(7).map(|f| parse_f32(f)).unwrap_or(300.0),
                     });
                 }
-
                 "Effect" if fields.len() >= 7 => {
                     effects.push(EffectDef {
                         name: unquote(&fields[1]),
@@ -338,7 +327,6 @@ impl DesktopPoniesLoader {
                         delay: parse_f32(&fields[6]),
                     });
                 }
-
                 _ => {}
             }
         }
@@ -353,8 +341,6 @@ impl DesktopPoniesLoader {
             effects,
         })
     }
-
-    // ============ МЕТОДЫ ЗАГРУЗКИ ГИФОК ============
 
     fn load_gif_file(&self, path: &Path) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
         if let Ok(bytes) = std::fs::read(path) {
@@ -384,119 +370,51 @@ impl DesktopPoniesLoader {
                         0.1
                     };
 
-                    let frame_duration = median_delay.max(0.05).min(0.2);
+                    let frame_duration = median_delay.max(0.03).min(0.15);
 
                     return (bgra, fc, w, h, frame_duration);
                 }
             }
         }
-
         Self::fallback_sprite()
     }
 
-    /// Загружает кадры анимации для конкретного спрайта пони
-    pub fn load_pony_frames(&self, pony_name: &str, sprite_name: &str) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+    pub fn load_pony_frames(&mut self, pony_name: &str, sprite_name: &str) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
         let pony_dir = self.ponies_dir.join(pony_name);
-
         if !pony_dir.exists() {
-            eprintln!("[Loader] Pony dir not found: {:?}", pony_dir);
             return Self::fallback_sprite();
         }
 
-        // 1. Точное имя файла (уже с направлением!)
         let exact_path = pony_dir.join(sprite_name);
         if exact_path.exists() {
-            println!("[Loader] Exact: {:?}", exact_path.file_name());
             return self.load_gif_file(&exact_path);
         }
 
-        // 2. Добавляем .gif
         let with_ext = pony_dir.join(format!("{}.gif", sprite_name));
         if with_ext.exists() {
-            println!("[Loader] With ext: {:?}", with_ext.file_name());
             return self.load_gif_file(&with_ext);
         }
 
-        // 3. Ищем ТОЧНОЕ совпадение имени файла (с учётом _right/_left)
         if let Ok(entries) = std::fs::read_dir(&pony_dir) {
             let sprite_lower = sprite_name.to_lowercase();
-
-            // Сначала ищем файл, где sprite_name ЯВЛЯЕТСЯ ЧАСТЬЮ имени
-            // НО с учётом направления!
-            let is_right = sprite_lower.contains("right");
-            let is_left = sprite_lower.contains("left");
-
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().and_then(|e| e.to_str()) == Some("gif") {
-                    let filename = path.file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("")
-                        .to_lowercase();
-
-                    // Приоритет: точное совпадение с учётом right/left
-                    let filename_match = if is_right {
-                        filename.contains(&sprite_lower) ||
-                            (filename.contains("right") && sprite_lower.contains("right"))
-                    } else if is_left {
-                        filename.contains(&sprite_lower) ||
-                            (filename.contains("left") && sprite_lower.contains("left"))
-                    } else {
-                        filename.contains(&sprite_lower)
-                    };
-
-                    if filename_match {
-                        println!("[Loader] Match: {:?} for '{}'", path.file_name(), sprite_name);
+                    let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
+                    if filename.contains(&sprite_lower) {
                         return self.load_gif_file(&path);
                     }
                 }
             }
-
-            // 4. Если не нашли с учётом направления - ищем общее название
-            // Например "walk" без right/left
-            let base_name = sprite_lower
-                .replace("_right", "")
-                .replace("_left", "")
-                .replace("right", "")
-                .replace("left", "");
-
-            if base_name != sprite_lower {
-                if let Ok(entries) = std::fs::read_dir(&pony_dir) {
-                    for entry in entries.flatten() {
-                        let path = entry.path();
-                        if path.extension().and_then(|e| e.to_str()) == Some("gif") {
-                            let filename = path.file_name()
-                                .and_then(|n| n.to_str())
-                                .unwrap_or("")
-                                .to_lowercase();
-
-                            if filename.contains(&base_name) {
-                                // Если идём вправо - предпочитаем right
-                                if is_right && filename.contains("right") {
-                                    println!("[Loader] Fallback right: {:?}", path.file_name());
-                                    return self.load_gif_file(&path);
-                                }
-                                if is_left && filename.contains("left") {
-                                    println!("[Loader] Fallback left: {:?}", path.file_name());
-                                    return self.load_gif_file(&path);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
 
-        eprintln!("[Loader] NOT FOUND: '{}' for '{}'", sprite_name, pony_name);
         Self::fallback_sprite()
     }
 
-    /// Заглушка - красный квадрат
     fn fallback_sprite() -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
         (vec![vec![0xFFFF0000u32; 32 * 32]], 1, 32, 32, 0.1)
     }
 
-    /// Получить конфиг пони по имени
     pub fn get_config(&self, name: &str) -> Option<&PonyConfig> {
         self.configs.iter().find(|c| c.name == name)
     }

@@ -1,7 +1,7 @@
 // src_rust/main.rs
 use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex};
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use std::time::Instant;
 use std::collections::HashSet;
 use winit::{
@@ -17,17 +17,18 @@ use wry::WebViewBuilder;
 mod loader;
 mod monitor_manager;
 mod settings;
+mod performance;
 use loader::{DesktopPoniesLoader, MovementType, Behavior};
 use monitor_manager::MonitorManager;
 use settings::AppSettings;
+use performance::PerformanceMonitor;
 
 #[derive(Debug, Clone)]
 enum UserEvent {
     RequestRedraw,
     ReloadMonitors,
-    ApplySettings {
-        selected_monitors: Vec<String>,
-    },
+    ApplySettings { selected_monitors: Vec<String> },
+    SetFPS(u32),
 }
 
 struct Pony {
@@ -48,7 +49,35 @@ struct Pony {
     grabbed: bool,
 }
 
-fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager) -> String {
+struct PonyWindow {
+    window: Arc<winit::window::Window>,
+    surface: Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>,
+    monitor_id: String,
+}
+
+struct App {
+    ponies: Vec<Pony>,
+    pony_windows: Vec<PonyWindow>,
+    ui_window: Option<Arc<winit::window::Window>>,
+    _webview: Option<wry::WebView>,
+    last_frame: Instant,
+    spawn_queue: Arc<Mutex<Vec<String>>>,
+    loader: DesktopPoniesLoader,
+    proxy: EventLoopProxy<UserEvent>,
+    monitor_manager: MonitorManager,
+    settings: AppSettings,
+    settings_path: PathBuf,
+    mouse_x: f32,
+    mouse_y: f32,
+    mouse_down: bool,
+    grabbed_pony: Option<usize>,
+    perf: PerformanceMonitor,
+    frame_counter: u64,
+    fps_limit: u32,
+    frame_timer: Instant,
+}
+
+fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager, fps_limit: u32) -> String {
     let ponies: Vec<serde_json::Value> = loader.configs.iter().map(|c| {
         serde_json::json!({
             "name": c.name,
@@ -80,8 +109,8 @@ fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager) -> String
     let tpl = include_str!("../src-ui/index.html");
 
     let data_script = format!(
-        "<script>window.PONIES_DATA={};window.MONITORS_DATA={};window.SELECTED_MONITORS={};</script>",
-        ponies_json, monitors_json, selected_json
+        "<script>window.PONIES_DATA={};window.MONITORS_DATA={};window.SELECTED_MONITORS={};window.FPS_LIMIT={};</script>",
+        ponies_json, monitors_json, selected_json, fps_limit
     );
 
     let html = tpl.replace(
@@ -96,38 +125,15 @@ fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager) -> String
     html
 }
 
-struct PonyWindow {
-    window: Arc<winit::window::Window>,
-    surface: Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>,
-    monitor_id: String,
-}
-
-struct App {
-    ponies: Vec<Pony>,
-    pony_windows: Vec<PonyWindow>,
-    ui_window: Option<Arc<winit::window::Window>>,
-    _webview: Option<wry::WebView>,
-    last_frame: Instant,
-    spawn_queue: Arc<Mutex<Vec<String>>>,
-    loader: DesktopPoniesLoader,
-    proxy: EventLoopProxy<UserEvent>,
-    monitor_manager: MonitorManager,
-    settings: AppSettings,
-    settings_path: PathBuf,
-    mouse_x: f32,
-    mouse_y: f32,
-    mouse_down: bool,
-    grabbed_pony: Option<usize>,
-}
-
 impl App {
     fn spawn_pony(&mut self, name: &str, _monitor_index: Option<usize>) {
+        while self.ponies.len() >= 50 {
+            self.ponies.remove(0);
+        }
+
         let config = match self.loader.get_config(name) {
             Some(c) => c.clone(),
-            None => {
-                println!("[Spawn] Pony '{}' not found", name);
-                return;
-            }
+            None => { return; }
         };
 
         let available_behaviors: Vec<Behavior> = config.behaviors.iter()
@@ -135,10 +141,7 @@ impl App {
             .cloned()
             .collect();
 
-        if available_behaviors.is_empty() {
-            println!("[Spawn] '{}' has no behaviors", name);
-            return;
-        }
+        if available_behaviors.is_empty() { return; }
 
         let first_behavior = available_behaviors.iter()
             .find(|b| {
@@ -185,8 +188,6 @@ impl App {
             behavior_timer: first_behavior.min_duration + fastrand::f32() * (first_behavior.max_duration - first_behavior.min_duration),
             grabbed: false,
         });
-
-        println!("[Spawn] '{}' with behavior '{}' ({} total)", name, first_behavior.name, self.ponies.len());
     }
 
     fn create_pony_windows(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
@@ -199,9 +200,7 @@ impl App {
         };
 
         for monitor_info in &self.monitor_manager.monitors {
-            if !selected_ids.contains(&monitor_info.id) {
-                continue;
-            }
+            if !selected_ids.contains(&monitor_info.id) { continue; }
 
             let attrs = WindowAttributes::default()
                 .with_decorations(false)
@@ -228,6 +227,13 @@ impl App {
     }
 
     fn render_all_windows(&mut self) {
+        // Ограничение FPS
+        let frame_duration = std::time::Duration::from_secs_f64(1.0 / self.fps_limit as f64);
+        if self.frame_timer.elapsed() < frame_duration {
+            return;
+        }
+        self.frame_timer = Instant::now();
+
         let now = Instant::now();
         let dt = now.duration_since(self.last_frame).as_secs_f32().min(0.05);
         self.last_frame = now;
@@ -239,7 +245,18 @@ impl App {
             })
             .unwrap_or((1920.0, 1080.0));
 
-        update_ponies(&mut self.ponies, &self.loader, dt, default_w, default_h, self.mouse_x, self.mouse_y, self.mouse_down, &self.pony_windows, &mut self.grabbed_pony);
+        update_ponies(
+            &mut self.ponies,
+            &mut self.loader,
+            dt,
+            default_w,
+            default_h,
+            self.mouse_x,
+            self.mouse_y,
+            self.mouse_down,
+            &self.pony_windows,
+            &mut self.grabbed_pony,
+        );
 
         let ponies = &self.ponies;
         let pony_windows = &mut self.pony_windows;
@@ -284,10 +301,16 @@ impl App {
                 buffer.present().unwrap();
             }
         }
+
+        self.frame_counter += 1;
+        self.perf.update(self.ponies.len(), 0);
+        if self.frame_counter % 60 == 0 {
+            println!("[Stats] {}", self.perf.stats_string());
+        }
     }
 }
 
-fn change_pony_behavior(pony: &mut Pony, loader: &DesktopPoniesLoader) {
+fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     if pony.available_behaviors.is_empty() { return; }
 
     let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
@@ -339,7 +362,7 @@ fn change_pony_behavior(pony: &mut Pony, loader: &DesktopPoniesLoader) {
 
 fn update_ponies(
     ponies: &mut Vec<Pony>,
-    loader: &DesktopPoniesLoader,
+    loader: &mut DesktopPoniesLoader,
     dt: f32,
     screen_width: f32,
     screen_height: f32,
@@ -354,11 +377,14 @@ fn update_ponies(
 
         if p.grabbed {
             if mouse_down {
-                // Переводим глобальные координаты в локальные
                 if let Some(pw) = pony_windows.first() {
                     if let Ok(pos) = pw.window.outer_position() {
-                        p.x = mouse_x - pos.x as f32 - p.width as f32 / 2.0;
-                        p.y = mouse_y - pos.y as f32 - p.height as f32 / 2.0;
+                        p.x = (mouse_x - pos.x as f32 - p.width as f32 / 2.0)
+                            .max(0.0)
+                            .min(screen_width - p.width as f32);
+                        p.y = (mouse_y - pos.y as f32 - p.height as f32 / 2.0)
+                            .max(0.0)
+                            .min(screen_height - p.height as f32);
                     }
                 }
                 p.vx = 0.0;
@@ -396,14 +422,14 @@ fn update_ponies(
         p.x += p.vx * dt;
         p.y += p.vy * dt;
 
-        let margin = 50.0;
-        let max_x = screen_width - p.width as f32 - margin;
-        let max_y = screen_height - p.height as f32 - margin;
+        p.x = p.x.max(0.0).min(screen_width - p.width as f32);
+        p.y = p.y.max(0.0).min(screen_height - p.height as f32);
 
-        if p.x < margin { p.x = margin; p.vx = p.vx.abs(); }
-        if p.x > max_x { p.x = max_x; p.vx = -p.vx.abs(); }
-        if p.y < margin { p.y = margin; p.vy = p.vy.abs(); }
-        if p.y > max_y { p.y = max_y; p.vy = -p.vy.abs(); }
+        let margin = 50.0;
+        if p.x < margin { p.vx = p.vx.abs(); }
+        if p.x > screen_width - p.width as f32 - margin { p.vx = -p.vx.abs(); }
+        if p.y < margin { p.vy = p.vy.abs(); }
+        if p.y > screen_height - p.height as f32 - margin { p.vy = -p.vy.abs(); }
 
         if p.vx.abs() > 1.0 { p.facing_right = p.vx > 0.0; }
 
@@ -434,14 +460,12 @@ impl ApplicationHandler<UserEvent> for App {
 
             let q = self.spawn_queue.clone();
             let proxy = self.proxy.clone();
-            let html_content = build_html(&self.loader, &self.monitor_manager);
+            let html_content = build_html(&self.loader, &self.monitor_manager, self.fps_limit);
 
             let wv = WebViewBuilder::new()
                 .with_html(&html_content)
                 .with_ipc_handler(move |request| {
                     let body = request.body();
-                    println!("[IPC] {}", body);
-
                     if let Some(n) = body.strip_prefix("spawn:") {
                         q.lock().unwrap().push(n.to_string());
                         let _ = proxy.send_event(UserEvent::RequestRedraw);
@@ -457,6 +481,11 @@ impl ApplicationHandler<UserEvent> for App {
                         }
                     } else if body == "reload_monitors" {
                         let _ = proxy.send_event(UserEvent::ReloadMonitors);
+                    } else if body.starts_with("fps:") {
+                        let fps_str = &body["fps:".len()..];
+                        if let Ok(fps) = fps_str.parse::<u32>() {
+                            let _ = proxy.send_event(UserEvent::SetFPS(fps));
+                        }
                     }
                 })
                 .build(&*ui_w)
@@ -481,7 +510,6 @@ impl ApplicationHandler<UserEvent> for App {
                 event_loop.exit();
             }
             WindowEvent::CursorMoved { position, .. } if Some(window_id) == ui_id => {
-                // Мышь над UI окном
                 self.mouse_x = position.x as f32;
                 self.mouse_y = position.y as f32;
             }
@@ -489,50 +517,58 @@ impl ApplicationHandler<UserEvent> for App {
                 if state == ElementState::Pressed {
                     self.mouse_down = true;
 
-                    // Проверяем клик по пони
                     for pw in &self.pony_windows {
                         if let Ok(win_pos) = pw.window.outer_position() {
-                            // Глобальные координаты мыши = позиция UI окна + позиция мыши в UI
                             if let Some(ui_w) = &self.ui_window {
                                 if let Ok(ui_pos) = ui_w.outer_position() {
                                     let global_x = ui_pos.x as f32 + self.mouse_x;
                                     let global_y = ui_pos.y as f32 + self.mouse_y;
-
                                     let local_x = global_x - win_pos.x as f32;
                                     let local_y = global_y - win_pos.y as f32;
 
+                                    let mut grabbed_idx = None;
                                     for i in (0..self.ponies.len()).rev() {
                                         let p = &self.ponies[i];
                                         if local_x >= p.x && local_x <= p.x + p.width as f32 &&
                                             local_y >= p.y && local_y <= p.y + p.height as f32 {
-
-                                            // Загружаем drag-спрайт если есть
-                                            if let Some(config) = self.loader.get_config(&p.config_name) {
-                                                if let Some(drag_behavior) = config.behaviors.iter().find(|b| b.name == "drag") {
-                                                    let sprite_name = if !drag_behavior.sprite_right.is_empty() {
-                                                        &drag_behavior.sprite_right
-                                                    } else {
-                                                        &drag_behavior.sprite_left
-                                                    };
-                                                    let (frames, fc, w, h, delay) = self.loader.load_pony_frames(&p.config_name, sprite_name);
-                                                    let p = &mut self.ponies[i];
-                                                    p.frames = frames;
-                                                    p.frame_count = fc;
-                                                    p.width = w;
-                                                    p.height = h;
-                                                    p.frame_duration = delay;
-                                                    p.current_frame = 0;
-                                                    p.frame_timer = 0.0;
-                                                    p.current_behavior = "drag".to_string();
-                                                }
-                                            }
-
-                                            self.ponies[i].grabbed = true;
-                                            self.ponies[i].movement_type = MovementType::Dragged;
-                                            self.grabbed_pony = Some(i);
-                                            println!("[Grab] Grabbed pony {}", self.ponies[i].config_name);
+                                            grabbed_idx = Some(i);
                                             break;
                                         }
+                                    }
+
+                                    if let Some(i) = grabbed_idx {
+                                        let p = &self.ponies[i];
+                                        let pony_name = p.config_name.clone();
+
+                                        let drag_data = if let Some(config) = self.loader.get_config(&pony_name) {
+                                            if let Some(drag) = config.behaviors.iter().find(|b| b.name == "drag") {
+                                                let sprite_name = if !drag.sprite_right.is_empty() {
+                                                    drag.sprite_right.clone()
+                                                } else {
+                                                    drag.sprite_left.clone()
+                                                };
+                                                Some((sprite_name.clone(), self.loader.load_pony_frames(&pony_name, &sprite_name)))
+                                            } else {
+                                                None
+                                            }
+                                        } else {
+                                            None
+                                        };
+
+                                        let p = &mut self.ponies[i];
+                                        if let Some((_, (frames, fc, w, h, delay))) = drag_data {
+                                            p.frames = frames;
+                                            p.frame_count = fc;
+                                            p.width = w;
+                                            p.height = h;
+                                            p.frame_duration = delay;
+                                            p.current_frame = 0;
+                                            p.frame_timer = 0.0;
+                                            p.current_behavior = "drag".to_string();
+                                        }
+                                        p.grabbed = true;
+                                        p.movement_type = MovementType::Dragged;
+                                        self.grabbed_pony = Some(i);
                                     }
                                 }
                             }
@@ -583,6 +619,12 @@ impl ApplicationHandler<UserEvent> for App {
                     self.ponies.clear();
                 }
             }
+            UserEvent::SetFPS(fps) => {
+                self.fps_limit = fps.clamp(10, 120);
+                self.settings.fps_limit = self.fps_limit;
+                self.settings.save(&self.settings_path);
+                println!("[FPS] Set to {}", self.fps_limit);
+            }
         }
     }
 }
@@ -625,5 +667,9 @@ fn main() {
         mouse_y: 0.0,
         mouse_down: false,
         grabbed_pony: None,
+        perf: PerformanceMonitor::new(),
+        frame_counter: 0,
+        fps_limit: 60,
+        frame_timer: Instant::now(),
     }).unwrap();
 }

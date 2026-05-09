@@ -13,5 +13,6 @@ pub mod ai_controller;
 pub mod python_bridge;
 pub mod btcx;
 pub mod texture;
-pub mod monitor_manager;  // <-- добавить
-pub mod settings;         // <-- добавить
+pub mod monitor_manager;
+pub mod settings;
+pub mod performance;

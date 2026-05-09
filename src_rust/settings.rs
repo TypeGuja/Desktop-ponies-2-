@@ -6,9 +6,10 @@ use std::path::PathBuf;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AppSettings {
-    pub selected_monitors: HashSet<String>, // ID выбранных мониторов
+    pub selected_monitors: HashSet<String>,
     pub pony_limit: usize,
-    pub spawn_on_start: Vec<String>, // список имён пони для авто-спавна
+    pub spawn_on_start: Vec<String>,
+    pub fps_limit: u32,  // ДОБАВИТЬ
 }
 
 impl Default for AppSettings {
@@ -17,6 +18,7 @@ impl Default for AppSettings {
             selected_monitors: HashSet::new(),
             pony_limit: 50,
             spawn_on_start: vec![],
+            fps_limit: 60,  // ДОБАВИТЬ (по умолчанию 60 FPS)
         }
     }
 }
