@@ -5,6 +5,7 @@
     var monitorList = [];
     var selectedMonitors = [];
     var activePonies = [];
+    var fpsLimit = 60;
 
     function init() {
         console.log('INIT START');
@@ -20,10 +21,17 @@
         } else if (monitorList.length > 0) {
             selectedMonitors = monitorList.map(function(m) { return m.id; });
         }
+        if (window.FPS_LIMIT) {
+            fpsLimit = window.FPS_LIMIT;
+            var slider = document.getElementById('fps-limit');
+            if (slider) {
+                slider.value = fpsLimit;
+                document.getElementById('fps-value').textContent = fpsLimit + ' FPS';
+            }
+        }
 
         console.log('Ponies:', allPonies.length);
         console.log('Monitors:', monitorList.length);
-        console.log('Selected:', selectedMonitors);
 
         renderPonyList();
         renderMonitorList();
@@ -123,7 +131,6 @@
                 '</div>';
         }).join('');
 
-        // Привязываем события к чекбоксам
         var checkboxes = container.querySelectorAll('.monitor-cb');
         checkboxes.forEach(function(cb) {
             cb.addEventListener('change', function() {
@@ -137,9 +144,7 @@
                         return m !== id;
                     });
                 }
-                console.log('Monitors updated:', selectedMonitors);
                 setStatus(selectedMonitors.length + ' monitor(s) selected');
-                // Автосохранение
                 saveMonitorSettings();
             });
         });
@@ -172,8 +177,6 @@
 
     function spawnPony(name) {
         if (!name) return;
-        console.log('Spawning:', name);
-
         sendIPC('spawn:' + name);
 
         activePonies.push({ name: name, behavior: 'spawning...', time: Date.now() });
@@ -211,7 +214,6 @@
 
     function saveMonitorSettings() {
         var msg = JSON.stringify({ selected_monitors: selectedMonitors });
-        console.log('Saving settings:', msg);
         sendIPC('settings:' + msg);
         setStatus('Settings saved: ' + selectedMonitors.length + ' monitor(s)');
     }
@@ -228,41 +230,35 @@
         if (el) el.textContent = text;
     }
 
+    function updateFPS(value) {
+        fpsLimit = parseInt(value);
+        document.getElementById('fps-value').textContent = value + ' FPS';
+        sendIPC('fps:' + value);
+    }
+
     function sendIPC(msg) {
-        console.log('IPC:', msg);
         try {
             if (window.ipc && window.ipc.postMessage) {
                 window.ipc.postMessage(msg);
-                console.log('IPC sent');
                 return true;
             }
-        } catch(e) {
-            console.log('IPC error:', e);
-        }
+        } catch(e) {}
         try {
             if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.ipc) {
                 window.webkit.messageHandlers.ipc.postMessage(msg);
-                console.log('IPC sent via webkit');
                 return true;
             }
-        } catch(e) {
-            console.log('IPC webkit error:', e);
-        }
-        console.log('IPC NOT AVAILABLE');
+        } catch(e) {}
         return false;
     }
 
     function bindEvents() {
-        console.log('Binding events...');
-
-        // Табы
         document.querySelectorAll('.tab-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 switchTab(this.dataset.tab);
             });
         });
 
-        // Поиск пони
         var search = document.getElementById('search');
         if (search) {
             search.addEventListener('input', function() {
@@ -270,7 +266,6 @@
             });
         }
 
-        // Клики по списку пони
         var ponyList = document.getElementById('pony-list');
         if (ponyList) {
             ponyList.addEventListener('click', function(e) {
@@ -289,7 +284,6 @@
             });
         }
 
-        // Кнопка спавна
         var spawnBtn = document.getElementById('btn-spawn');
         if (spawnBtn) {
             spawnBtn.addEventListener('click', function() {
@@ -300,7 +294,6 @@
             });
         }
 
-        // Enter в поле ввода
         var spawnInput = document.getElementById('pony-name');
         if (spawnInput) {
             spawnInput.addEventListener('keydown', function(e) {
@@ -310,7 +303,6 @@
             });
         }
 
-        // Активные пони
         var activeList = document.getElementById('active-list');
         if (activeList) {
             activeList.addEventListener('click', function(e) {
@@ -321,38 +313,37 @@
             });
         }
 
-        // Удалить всех
         var removeAllBtn = document.getElementById('btn-remove-all');
         if (removeAllBtn) {
             removeAllBtn.addEventListener('click', removeAllPonies);
         }
 
-        // Сохранить настройки мониторов
         var saveMonitorsBtn = document.getElementById('btn-save-monitors');
         if (saveMonitorsBtn) {
             saveMonitorsBtn.addEventListener('click', saveMonitorSettings);
         }
 
-        // Обновить мониторы
         var refreshBtn = document.getElementById('btn-refresh-monitors');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', function() {
                 sendIPC('reload_monitors');
                 setStatus('Refreshing monitors...');
-                setTimeout(function() {
-                    location.reload();
-                }, 500);
+                setTimeout(function() { location.reload(); }, 500);
             });
         }
 
-        // Тема
         document.querySelectorAll('.theme-option').forEach(function(opt) {
             opt.addEventListener('click', function() {
                 applyTheme(this.dataset.theme);
             });
         });
 
-        console.log('Events bound');
+        var fpsSlider = document.getElementById('fps-limit');
+        if (fpsSlider) {
+            fpsSlider.addEventListener('input', function() {
+                updateFPS(this.value);
+            });
+        }
     }
 
     function esc(str) {
@@ -365,7 +356,6 @@
             .replace(/'/g, '&#39;');
     }
 
-    // Запуск
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

@@ -22,15 +22,13 @@
         <button class="tab-btn" data-tab="settings">Settings</button>
     </nav>
 
-    <!-- Browse Ponies -->
     <section id="tab-browse" class="tab-content active">
-        <input type="text" id="search" class="search-input" placeholder="Search ponies... (Ctrl+K)">
+        <input type="text" id="search" class="search-input" placeholder="Search ponies...">
         <div id="pony-list" class="pony-list">
             <div class="empty-state">Loading ponies...</div>
         </div>
     </section>
 
-    <!-- Spawn Pony -->
     <section id="tab-spawn" class="tab-content">
         <div class="card">
             <h2>Spawn a Pony</h2>
@@ -50,7 +48,6 @@
         </div>
     </section>
 
-    <!-- Active Ponies -->
     <section id="tab-active" class="tab-content">
         <div id="active-list" class="pony-list" style="flex:1">
             <div class="empty-state">No active ponies</div>
@@ -58,7 +55,6 @@
         <button class="btn-danger" id="btn-remove-all">Remove All</button>
     </section>
 
-    <!-- Settings -->
     <section id="tab-settings" class="tab-content">
         <div class="card">
             <h2>Monitor Settings</h2>
@@ -78,6 +74,14 @@
                 <div class="theme-option" data-theme="light">☀️ Light</div>
                 <div class="theme-option active" data-theme="dark">🌙 Dark</div>
                 <div class="theme-option" data-theme="black">🖤 Black</div>
+            </div>
+
+            <hr class="divider">
+
+            <h2>Performance</h2>
+            <div class="form-group">
+                <label>FPS Limit: <span id="fps-value">60 FPS</span></label>
+                <input type="range" id="fps-limit" min="10" max="120" value="60" step="10">
             </div>
         </div>
     </section>
