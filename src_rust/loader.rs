@@ -93,16 +93,27 @@ pub struct DesktopPoniesLoader {
 
 impl MovementType {
     pub fn parse(s: &str) -> Self {
-        match s.trim().to_lowercase().as_str() {
+        // Убираем кавычки, пробелы, приводим к нижнему регистру
+        let s = s.trim()
+            .trim_matches('"')
+            .to_lowercase()
+            .replace('_', "")
+            .replace('-', "")
+            .replace(' ', "");
+
+        match s.as_str() {
             "" | "none" => MovementType::None,
             "all" => MovementType::All,
-            "horizontal_only" | "horizontalonly" => MovementType::HorizontalOnly,
-            "vertical_only" | "verticalonly" => MovementType::VerticalOnly,
-            "diagonal_only" | "diagonalonly" => MovementType::DiagonalOnly,
-            "diagonal_horizontal" | "diagonalhorizontal" => MovementType::DiagonalHorizontal,
+            "horizontalonly" | "horizontal" | "onlyhorizontal" => MovementType::HorizontalOnly,
+            "verticalonly" | "vertical" | "onlyvertical" => MovementType::VerticalOnly,
+            "diagonalonly" | "diagonal" | "onlydiagonal" => MovementType::DiagonalOnly,
+            "diagonalhorizontal" | "horizontaldiagonal" => MovementType::DiagonalHorizontal,
             "sleep" => MovementType::Sleep,
             "dragged" => MovementType::Dragged,
-            _ => MovementType::None,
+            _ => {
+                eprintln!("[Warning] Unknown movement type: '{}'", s);
+                MovementType::None
+            }
         }
     }
 }
