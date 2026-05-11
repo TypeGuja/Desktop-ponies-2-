@@ -12,17 +12,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src_rust/performance.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/context_menu.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/pony_interaction.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/style.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/settings.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -315,6 +309,9 @@
       <workItem from="1778308014877" duration="2180000" />
       <workItem from="1778312161558" duration="2032000" />
       <workItem from="1778335545230" duration="7000" />
+      <workItem from="1778347878648" duration="3000" />
+      <workItem from="1778433285616" duration="2578000" />
+      <workItem from="1778476159293" duration="6163000" />
     </task>
     <servers />
   </component>
