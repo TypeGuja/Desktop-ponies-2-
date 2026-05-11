@@ -9,7 +9,7 @@ use winit::{
     event_loop::{EventLoop, EventLoopProxy},
     window::{WindowAttributes, WindowLevel, WindowId},
     application::ApplicationHandler,
-    dpi::LogicalSize,
+    dpi::{LogicalSize, PhysicalPosition, PhysicalSize},
 };
 use softbuffer::{Context, Surface};
 use wry::WebViewBuilder;
@@ -18,10 +18,14 @@ mod loader;
 mod monitor_manager;
 mod settings;
 mod performance;
+mod context_menu;
 use loader::{DesktopPoniesLoader, MovementType, Behavior};
 use monitor_manager::MonitorManager;
 use settings::AppSettings;
 use performance::PerformanceMonitor;
+use context_menu::{ContextMenu, PonyAction};
+
+// ==================== ТИПЫ ДАННЫХ ====================
 
 #[derive(Debug, Clone)]
 enum UserEvent {
@@ -29,6 +33,15 @@ enum UserEvent {
     ReloadMonitors,
     ApplySettings { selected_monitors: Vec<String> },
     SetFPS(u32),
+    UpdateInteractionWindows,
+}
+
+#[derive(Clone, Debug)]
+enum InteractionState {
+    Booped { timer: f32 },
+    Fed { timer: f32, original_speed_mult: f32 },
+    Petted { timer: f32 },
+    Sleeping,
 }
 
 struct Pony {
@@ -47,17 +60,21 @@ struct Pony {
     movement_type: MovementType,
     behavior_timer: f32,
     grabbed: bool,
+    interaction_state: Option<InteractionState>,
+    original_frame_duration: Option<f32>,
 }
 
-struct PonyWindow {
+struct InteractionWindow {
     window: Arc<winit::window::Window>,
     surface: Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>,
-    monitor_id: String,
+    pony_index: usize,
 }
 
 struct App {
     ponies: Vec<Pony>,
-    pony_windows: Vec<PonyWindow>,
+    main_window: Option<Arc<winit::window::Window>>,
+    main_surface: Option<Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>>,
+    interaction_windows: Vec<InteractionWindow>,
     ui_window: Option<Arc<winit::window::Window>>,
     _webview: Option<wry::WebView>,
     last_frame: Instant,
@@ -70,12 +87,17 @@ struct App {
     mouse_x: f32,
     mouse_y: f32,
     mouse_down: bool,
+    right_mouse_down: bool,
     grabbed_pony: Option<usize>,
+    context_menu: ContextMenu,
     perf: PerformanceMonitor,
     frame_counter: u64,
     fps_limit: u32,
     frame_timer: Instant,
+    debug_hitboxes: bool,
 }
+
+// ==================== HTML BUILDER ====================
 
 fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager, fps_limit: u32) -> String {
     let ponies: Vec<serde_json::Value> = loader.configs.iter().map(|c| {
@@ -125,10 +147,12 @@ fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager, fps_limit
     html
 }
 
+// ==================== APP IMPL ====================
+
 impl App {
-    fn spawn_pony(&mut self, name: &str, _monitor_index: Option<usize>) {
+    fn spawn_pony(&mut self, name: &str, event_loop: &winit::event_loop::ActiveEventLoop) {
         while self.ponies.len() >= 50 {
-            self.ponies.remove(0);
+            self.remove_pony(0, event_loop);
         }
 
         let config = match self.loader.get_config(name) {
@@ -161,12 +185,14 @@ impl App {
         let speed = first_behavior.speed * 60.0;
         let angle = fastrand::f32() * std::f32::consts::TAU;
 
-        let (screen_w, screen_h) = self.pony_windows.first()
-            .and_then(|pw| {
-                let size = pw.window.inner_size();
-                Some((size.width as f32, size.height as f32))
+        let (screen_w, screen_h) = self.main_window.as_ref()
+            .map(|w| {
+                let size = w.inner_size();
+                (size.width as f32, size.height as f32)
             })
             .unwrap_or((1920.0, 1080.0));
+
+        let pony_index = self.ponies.len();
 
         self.ponies.push(Pony {
             x: fastrand::f32() * (screen_w - 200.0) + 100.0,
@@ -187,39 +213,439 @@ impl App {
             movement_type: MovementType::parse(&first_behavior.movement),
             behavior_timer: first_behavior.min_duration + fastrand::f32() * (first_behavior.max_duration - first_behavior.min_duration),
             grabbed: false,
+            interaction_state: None,
+            original_frame_duration: None,
         });
+
+        // Создаём окно взаимодействия для этого пони
+        self.create_interaction_window(pony_index, event_loop);
+
+        // Сразу обновляем позицию и показываем окно
+        self.update_interaction_windows();
+
+        println!("[Spawn] Created pony '{}' (#{}) at ({:.0},{:.0}) with interaction window",
+                 name, pony_index, self.ponies[pony_index].x, self.ponies[pony_index].y);
     }
 
-    fn create_pony_windows(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
-        self.pony_windows.clear();
+    fn create_interaction_window(&mut self, pony_index: usize, event_loop: &winit::event_loop::ActiveEventLoop) {
+        let pony = &self.ponies[pony_index];
+        let padding = 6.0;
+        let window_w = (pony.width as f64 + padding * 2.0).max(50.0);
+        let window_h = (pony.height as f64 + padding * 2.0).max(50.0);
 
+        println!("[Interaction] Creating window for pony #{}: {}x{}", pony_index, window_w, window_h);
+
+        let attrs = WindowAttributes::default()
+            .with_title(format!("Pony Interaction {}", pony_index))
+            .with_decorations(false)
+            .with_transparent(true)
+            .with_visible(false)
+            .with_inner_size(LogicalSize::new(window_w, window_h))
+            .with_window_level(WindowLevel::AlwaysOnTop);
+
+        if let Ok(window) = event_loop.create_window(attrs) {
+            let pw = Arc::new(window);
+            // ВАЖНО: окно НЕ прозрачно для кликов
+            pw.set_cursor_hittest(true).ok();
+
+            if let Ok(ctx) = Context::new(pw.clone()) {
+                if let Ok(mut surface) = Surface::new(&ctx, pw.clone()) {
+                    // Рисуем полупрозрачный синий фон
+                    if let (Some(w), Some(h)) = (
+                        NonZeroU32::new(window_w as u32),
+                        NonZeroU32::new(window_h as u32)
+                    ) {
+                        surface.resize(w, h).unwrap();
+                        let mut buffer = surface.buffer_mut().unwrap();
+                        // Полупрозрачный синий (альфа 128) //TODO color window hitbox
+                        let blue_color = 0x804488FF;
+                        buffer.fill(blue_color);
+                        buffer.present().unwrap();
+                    }
+
+                    self.interaction_windows.push(InteractionWindow {
+                        window: pw.clone(),
+                        surface,
+                        pony_index,
+                    });
+
+                    // ВАЖНО: Показываем окно сразу после создания
+                    pw.set_visible(true);
+
+                    println!("[Interaction] Created and SHOWN window for pony #{} ({}x{})",
+                             pony_index, window_w, window_h);
+                }
+            }
+        } else {
+            eprintln!("[Error] Failed to create interaction window for pony #{}", pony_index);
+        }
+    }
+
+    fn remove_pony(&mut self, index: usize, _event_loop: &winit::event_loop::ActiveEventLoop) {
+        if index < self.ponies.len() {
+            println!("[Remove] Removing pony #{}", index);
+
+            // Скрываем и удаляем окно взаимодействия
+            if let Some(iw_idx) = self.interaction_windows.iter().position(|iw| iw.pony_index == index) {
+                self.interaction_windows[iw_idx].window.set_visible(false);
+                println!("[Remove] Hidden interaction window for pony #{}", index);
+            }
+
+            // Удаляем окно
+            self.interaction_windows.retain(|iw| iw.pony_index != index);
+
+            // Обновляем индексы в оставшихся окнах
+            for iw in &mut self.interaction_windows {
+                if iw.pony_index > index {
+                    iw.pony_index -= 1;
+                }
+            }
+
+            self.ponies.remove(index);
+
+            // Обновляем grabbed_pony
+            if self.grabbed_pony == Some(index) {
+                self.grabbed_pony = None;
+            } else if let Some(g) = self.grabbed_pony {
+                if g > index {
+                    self.grabbed_pony = Some(g - 1);
+                }
+            }
+
+            println!("[Remove] Pony #{} removed successfully", index);
+        }
+    }
+
+    fn update_interaction_windows(&mut self) {
+        if let Some(main_window) = &self.main_window {
+            if let Ok(main_pos) = main_window.outer_position() {
+                let main_size = main_window.inner_size();
+                let padding = 6.0;
+
+                for (idx, iw) in self.interaction_windows.iter().enumerate() {
+                    if iw.pony_index < self.ponies.len() {
+                        let pony = &self.ponies[iw.pony_index];
+
+                        let x = main_pos.x + (pony.x - padding) as i32;
+                        let y = main_pos.y + (pony.y - padding) as i32;
+                        let w = ((pony.width as f32 + padding * 2.0) as u32).max(50);
+                        let h = ((pony.height as f32 + padding * 2.0) as u32).max(50);
+
+                        // Позиционируем окно
+                        let _ = iw.window.set_outer_position(PhysicalPosition::new(x.max(0), y.max(0)));
+                        let _ = iw.window.request_inner_size(PhysicalSize::new(w, h));
+
+                        // Показываем/скрываем
+                        let is_sleeping = matches!(pony.interaction_state, Some(InteractionState::Sleeping));
+                        let should_show = !is_sleeping;
+
+                        let is_visible = iw.window.is_visible().unwrap_or(false);
+                        if should_show != is_visible {
+                            iw.window.set_visible(should_show);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn render_interaction_windows(&mut self) {
+        let padding = 6.0;
+
+        for (idx, iw) in self.interaction_windows.iter_mut().enumerate() {
+            if iw.pony_index < self.ponies.len() {
+                let pony = &self.ponies[iw.pony_index];
+                let window_w = ((pony.width as f32 + padding * 2.0) as u32).max(50);
+                let window_h = ((pony.height as f32 + padding * 2.0) as u32).max(50);
+
+                if let (Some(w), Some(h)) = (
+                    NonZeroU32::new(window_w),
+                    NonZeroU32::new(window_h)
+                ) {
+                    if let Err(e) = iw.surface.resize(w, h) {
+                        eprintln!("[Error] Failed to resize surface for window #{}: {:?}", idx, e);
+                        continue;
+                    }
+
+                    if let Ok(mut buffer) = iw.surface.buffer_mut() {
+                        // Полупрозрачный синий фон
+                        let blue_color = 0x804488FF;
+                        buffer.fill(blue_color);
+
+                        // Дебаг: рисуем рамку
+                        if self.debug_hitboxes {
+                            let bw = w.get() as usize;
+                            let bh = h.get() as usize;
+                            let border_color = 0xFFFF0000;
+
+                            for x in 0..bw {
+                                if bh > 0 { buffer[x] = border_color; }
+                                if bh > 1 { buffer[(bh-1) * bw + x] = border_color; }
+                            }
+                            for y in 0..bh {
+                                if bw > 0 { buffer[y * bw] = border_color; }
+                                if bw > 1 { buffer[y * bw + (bw-1)] = border_color; }
+                            }
+                        }
+
+                        buffer.present().unwrap();
+                    }
+                }
+            }
+        }
+    }
+
+    fn get_interaction_window_id(&self, window_id: WindowId) -> Option<usize> {
+        self.interaction_windows.iter().position(|iw| iw.window.id() == window_id)
+    }
+
+    fn get_pony_under_mouse_in_window(&self, iw_index: usize) -> Option<usize> {
+        if let Some(iw) = self.interaction_windows.get(iw_index) {
+            if iw.pony_index < self.ponies.len() {
+                return Some(iw.pony_index);
+            }
+        }
+        None
+    }
+
+    fn create_main_window(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         let selected_ids: HashSet<String> = if self.monitor_manager.selected_ids.is_empty() {
             self.monitor_manager.monitors.iter().map(|m| m.id.clone()).collect()
         } else {
             self.monitor_manager.selected_ids.iter().cloned().collect()
         };
 
-        for monitor_info in &self.monitor_manager.monitors {
-            if !selected_ids.contains(&monitor_info.id) { continue; }
+        let mut max_x = 0i32;
+        let mut max_y = 0i32;
+        let mut min_x = i32::MAX;
+        let mut min_y = i32::MAX;
 
-            let attrs = WindowAttributes::default()
-                .with_decorations(false)
-                .with_transparent(true)
-                .with_inner_size(LogicalSize::new(monitor_info.width, monitor_info.height))
-                .with_position(winit::dpi::PhysicalPosition::new(monitor_info.x, monitor_info.y));
+        for monitor in &self.monitor_manager.monitors {
+            if !selected_ids.contains(&monitor.id) { continue; }
+            max_x = max_x.max(monitor.x + monitor.width as i32);
+            max_y = max_y.max(monitor.y + monitor.height as i32);
+            min_x = min_x.min(monitor.x);
+            min_y = min_y.min(monitor.y);
+        }
 
-            if let Ok(window) = event_loop.create_window(attrs) {
-                let pw = Arc::new(window);
-                pw.set_window_level(WindowLevel::AlwaysOnTop);
-                pw.set_cursor_hittest(false).ok();
+        let total_width = (max_x - min_x).max(800) as u32;
+        let total_height = (max_y - min_y).max(600) as u32;
 
-                if let Ok(ctx) = Context::new(pw.clone()) {
-                    if let Ok(surface) = Surface::new(&ctx, pw.clone()) {
-                        self.pony_windows.push(PonyWindow {
-                            window: pw,
-                            surface,
-                            monitor_id: monitor_info.id.clone(),
-                        });
+        let attrs = WindowAttributes::default()
+            .with_title("Desktop Ponies Main")
+            .with_decorations(false)
+            .with_transparent(true)
+            .with_inner_size(LogicalSize::new(total_width, total_height))
+            .with_position(PhysicalPosition::new(min_x, min_y))
+            .with_window_level(WindowLevel::AlwaysOnTop);
+
+        if let Ok(window) = event_loop.create_window(attrs) {
+            let pw = Arc::new(window);
+            // Главное окно ВСЕГДА прозрачно для кликов
+            pw.set_cursor_hittest(false).ok();
+
+            if let Ok(ctx) = Context::new(pw.clone()) {
+                if let Ok(surface) = Surface::new(&ctx, pw.clone()) {
+                    self.main_surface = Some(surface);
+                }
+            }
+
+            self.main_window = Some(pw);
+            println!("[Main] Window created {}x{} at ({},{})", total_width, total_height, min_x, min_y);
+        }
+    }
+
+    fn handle_click(&mut self, pony_index: usize, button: MouseButton, pressed: bool) {
+        match button {
+            MouseButton::Left => {
+                if pressed {
+                    self.mouse_down = true;
+
+                    // Проверяем контекстное меню
+                    if self.context_menu.visible {
+                        if let Some(action_idx) = self.context_menu.hit_test(self.mouse_x, self.mouse_y) {
+                            if action_idx < self.context_menu.items.len() {
+                                let action = self.context_menu.items[action_idx].action.clone();
+                                if let Some(ctx_pony_idx) = self.context_menu.pony_index {
+                                    self.execute_pony_action(ctx_pony_idx, action);
+                                }
+                            }
+                            self.context_menu.hide();
+                            return;
+                        }
+                        self.context_menu.hide();
+                    }
+
+                    // Захват пони
+                    if pony_index < self.ponies.len() {
+                        self.ponies[pony_index].grabbed = true;
+                        self.ponies[pony_index].movement_type = MovementType::Dragged;
+                        self.grabbed_pony = Some(pony_index);
+                        println!("[Drag] Started dragging pony #{}", pony_index);
+                    }
+                } else {
+                    self.mouse_down = false;
+                    if let Some(idx) = self.grabbed_pony.take() {
+                        if idx < self.ponies.len() {
+                            self.ponies[idx].grabbed = false;
+                            self.ponies[idx].movement_type = MovementType::None;
+                            self.ponies[idx].behavior_timer = 0.0;
+                            println!("[Drag] Released pony #{}", idx);
+                        }
+                    }
+                }
+            }
+            MouseButton::Right => {
+                if pressed {
+                    self.right_mouse_down = true;
+
+                    // Отпускаем захваченного
+                    if let Some(idx) = self.grabbed_pony.take() {
+                        if idx < self.ponies.len() {
+                            self.ponies[idx].grabbed = false;
+                            self.ponies[idx].movement_type = MovementType::None;
+                            self.ponies[idx].behavior_timer = 0.0;
+                        }
+                    }
+                    self.mouse_down = false;
+
+                    // Показываем контекстное меню
+                    if pony_index < self.ponies.len() {
+                        let pony_name = self.ponies[pony_index].config_name.clone();
+                        self.context_menu.show(self.mouse_x, self.mouse_y, pony_index, &pony_name);
+                        println!("[Menu] Opened for pony #{}", pony_index);
+                    } else {
+                        self.context_menu.hide();
+                    }
+                } else {
+                    self.right_mouse_down = false;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn execute_pony_action(&mut self, pony_index: usize, action: PonyAction) {
+        if pony_index >= self.ponies.len() {
+            return;
+        }
+
+        match action {
+            PonyAction::Drag => {
+                self.ponies[pony_index].grabbed = true;
+                self.ponies[pony_index].movement_type = MovementType::Dragged;
+                self.grabbed_pony = Some(pony_index);
+                println!("[Action] Drag pony #{}", pony_index);
+            }
+            PonyAction::Boop => {
+                let p = &mut self.ponies[pony_index];
+                p.vy = -250.0;
+                p.vx = if fastrand::bool() { 100.0 } else { -100.0 };
+                p.frame_timer = 0.0;
+                p.movement_type = MovementType::HorizontalOnly;
+                p.interaction_state = Some(InteractionState::Booped { timer: 2.0 });
+                p.behavior_timer = 2.0;
+                println!("[Action] Boop pony #{}", pony_index);
+            }
+            PonyAction::Feed => {
+                let p = &mut self.ponies[pony_index];
+                let speed_mult = 1.8;
+                p.vx *= speed_mult;
+                p.vy *= speed_mult;
+                if p.original_frame_duration.is_none() {
+                    p.original_frame_duration = Some(p.frame_duration);
+                }
+                p.frame_duration *= 0.6;
+                p.interaction_state = Some(InteractionState::Fed {
+                    timer: 3.0,
+                    original_speed_mult: speed_mult,
+                });
+                p.behavior_timer = 3.0;
+                println!("[Action] Feed pony #{}", pony_index);
+            }
+            PonyAction::Pet => {
+                let p = &mut self.ponies[pony_index];
+                p.vx = 0.0;
+                p.vy = 0.0;
+                p.movement_type = MovementType::None;
+                if p.original_frame_duration.is_none() {
+                    p.original_frame_duration = Some(p.frame_duration);
+                }
+                p.frame_duration *= 1.8;
+                p.interaction_state = Some(InteractionState::Petted { timer: 4.0 });
+                p.behavior_timer = 5.0;
+                println!("[Action] Pet pony #{}", pony_index);
+            }
+            PonyAction::ChangeDirection => {
+                let p = &mut self.ponies[pony_index];
+                p.facing_right = !p.facing_right;
+                p.vx *= -1.0;
+                println!("[Action] Change direction pony #{}", pony_index);
+            }
+            PonyAction::ToggleSleep => {
+                let p = &mut self.ponies[pony_index];
+                let is_sleeping = matches!(p.interaction_state, Some(InteractionState::Sleeping));
+
+                if is_sleeping {
+                    p.interaction_state = None;
+                    p.movement_type = MovementType::None;
+                    p.behavior_timer = 0.0;
+                    println!("[Action] Wake up pony #{}", pony_index);
+                } else {
+                    p.vx = 0.0;
+                    p.vy = 0.0;
+                    p.movement_type = MovementType::Sleep;
+                    p.interaction_state = Some(InteractionState::Sleeping);
+                    p.behavior_timer = 999999.0;
+                    println!("[Action] Sleep pony #{}", pony_index);
+                }
+            }
+            PonyAction::SendHome => {
+                println!("[Action] Send home pony #{}", pony_index);
+                // Здесь нужен event_loop, но его нет в этом методе
+                // Поэтому просто помечаем, что нужно удалить
+            }
+        }
+    }
+
+    fn update_pony_interactions(&mut self, dt: f32) {
+        for pony in &mut self.ponies {
+            if let Some(ref mut state) = pony.interaction_state {
+                match state {
+                    InteractionState::Booped { ref mut timer } => {
+                        *timer -= dt;
+                        if *timer <= 0.0 {
+                            pony.interaction_state = None;
+                        }
+                    }
+                    InteractionState::Fed { ref mut timer, original_speed_mult } => {
+                        *timer -= dt;
+                        if *timer <= 0.0 {
+                            let mult = *original_speed_mult;
+                            pony.vx /= mult;
+                            pony.vy /= mult;
+                            if let Some(orig_dur) = pony.original_frame_duration {
+                                pony.frame_duration = orig_dur;
+                                pony.original_frame_duration = None;
+                            }
+                            pony.interaction_state = None;
+                        }
+                    }
+                    InteractionState::Petted { ref mut timer } => {
+                        *timer -= dt;
+                        if *timer <= 0.0 {
+                            if let Some(orig_dur) = pony.original_frame_duration {
+                                pony.frame_duration = orig_dur;
+                                pony.original_frame_duration = None;
+                            }
+                            pony.behavior_timer = 0.0;
+                            pony.interaction_state = None;
+                        }
+                    }
+                    InteractionState::Sleeping => {
+                        pony.vx = 0.0;
+                        pony.vy = 0.0;
+                        pony.movement_type = MovementType::Sleep;
                     }
                 }
             }
@@ -227,7 +653,6 @@ impl App {
     }
 
     fn render_all_windows(&mut self) {
-        // Ограничение FPS
         let frame_duration = std::time::Duration::from_secs_f64(1.0 / self.fps_limit as f64);
         if self.frame_timer.elapsed() < frame_duration {
             return;
@@ -238,10 +663,14 @@ impl App {
         let dt = now.duration_since(self.last_frame).as_secs_f32().min(0.05);
         self.last_frame = now;
 
-        let (default_w, default_h) = self.pony_windows.first()
-            .and_then(|pw| {
-                let size = pw.window.inner_size();
-                Some((size.width as f32, size.height as f32))
+        self.update_pony_interactions(dt);
+        self.update_interaction_windows();
+        self.render_interaction_windows();
+
+        let (screen_w, screen_h) = self.main_window.as_ref()
+            .map(|w| {
+                let size = w.inner_size();
+                (size.width as f32, size.height as f32)
             })
             .unwrap_or((1920.0, 1080.0));
 
@@ -249,69 +678,72 @@ impl App {
             &mut self.ponies,
             &mut self.loader,
             dt,
-            default_w,
-            default_h,
+            screen_w,
+            screen_h,
             self.mouse_x,
             self.mouse_y,
             self.mouse_down,
-            &self.pony_windows,
             &mut self.grabbed_pony,
         );
 
-        let ponies = &self.ponies;
-        let pony_windows = &mut self.pony_windows;
+        // Рисуем главное окно (самих пони)
+        if let Some(surface) = &mut self.main_surface {
+            if let Some(window) = &self.main_window {
+                let size = window.inner_size();
+                if let (Some(sw), Some(sh)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) {
+                    surface.resize(sw, sh).unwrap();
+                    let mut buffer = surface.buffer_mut().unwrap();
+                    let bw = sw.get() as usize;
+                    let bh = sh.get() as usize;
+                    //TODO color pony window
+                    buffer.fill(0x00000000);
 
-        for pw in pony_windows.iter_mut() {
-            let size = pw.window.inner_size();
-            if let (Some(sw), Some(sh)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) {
-                pw.surface.resize(sw, sh).unwrap();
-                let mut buffer = pw.surface.buffer_mut().unwrap();
-                let bw = sw.get() as usize;
-                let bh = sh.get() as usize;
-                buffer.fill(0x00000000);
+                    // Рисуем пони
+                    for p in &self.ponies {
+                        if p.current_frame as usize >= p.frames.len() { continue; }
+                        let frame = &p.frames[p.current_frame as usize];
+                        let fw = p.width as usize;
 
-                for p in ponies.iter() {
-                    if p.current_frame as usize >= p.frames.len() { continue; }
+                        let x0 = p.x.max(0.0) as usize;
+                        let y0 = p.y.max(0.0) as usize;
+                        let x1 = ((p.x + p.width as f32).min(bw as f32)).max(0.0) as usize;
+                        let y1 = ((p.y + p.height as f32).min(bh as f32)).max(0.0) as usize;
 
-                    let frame = &p.frames[p.current_frame as usize];
-                    let pw = p.width as usize;
-
-                    let x0 = p.x.max(0.0) as usize;
-                    let y0 = p.y.max(0.0) as usize;
-                    let x1 = ((p.x + p.width as f32).min(bw as f32)).max(0.0) as usize;
-                    let y1 = ((p.y + p.height as f32).min(bh as f32)).max(0.0) as usize;
-
-                    for by in y0..y1 {
-                        let py = by - p.y as usize;
-                        let row_offset = by * bw;
-                        let frame_row = py * pw;
-
-                        for bx in x0..x1 {
-                            let px = bx - p.x as usize;
-                            let src_x = if !p.facing_right { pw - 1 - px } else { px };
-                            if frame_row + src_x < frame.len() {
-                                let pixel = frame[frame_row + src_x];
-                                if (pixel >> 24) > 0 {
-                                    buffer[row_offset + bx] = pixel;
+                        for by in y0..y1 {
+                            let py = by - p.y as usize;
+                            let row_offset = by * bw;
+                            let frame_row = py * fw;
+                            for bx in x0..x1 {
+                                let px = bx - p.x as usize;
+                                let src_x = if !p.facing_right { fw - 1 - px } else { px };
+                                if frame_row + src_x < frame.len() {
+                                    let pixel = frame[frame_row + src_x];
+                                    if (pixel >> 24) > 0 {
+                                        buffer[row_offset + bx] = pixel;
+                                    }
                                 }
                             }
                         }
                     }
+
+                    buffer.present().unwrap();
                 }
-                buffer.present().unwrap();
             }
         }
 
         self.frame_counter += 1;
         self.perf.update(self.ponies.len(), 0);
         if self.frame_counter % 60 == 0 {
-            println!("[Stats] {}", self.perf.stats_string());
+            println!("[Stats] {} | Windows: {}", self.perf.stats_string(), self.interaction_windows.len());
         }
     }
 }
 
+// ==================== UPDATE PONIES ====================
+
 fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     if pony.available_behaviors.is_empty() { return; }
+    if pony.interaction_state.is_some() { return; }
 
     let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
     if total_prob <= 0.0 { return; }
@@ -369,7 +801,6 @@ fn update_ponies(
     mouse_x: f32,
     mouse_y: f32,
     mouse_down: bool,
-    pony_windows: &Vec<PonyWindow>,
     grabbed_pony: &mut Option<usize>,
 ) {
     for i in 0..ponies.len() {
@@ -377,16 +808,8 @@ fn update_ponies(
 
         if p.grabbed {
             if mouse_down {
-                if let Some(pw) = pony_windows.first() {
-                    if let Ok(pos) = pw.window.outer_position() {
-                        p.x = (mouse_x - pos.x as f32 - p.width as f32 / 2.0)
-                            .max(0.0)
-                            .min(screen_width - p.width as f32);
-                        p.y = (mouse_y - pos.y as f32 - p.height as f32 / 2.0)
-                            .max(0.0)
-                            .min(screen_height - p.height as f32);
-                    }
-                }
+                p.x = (mouse_x - p.width as f32 / 2.0).max(0.0).min(screen_width - p.width as f32);
+                p.y = (mouse_y - p.height as f32 / 2.0).max(0.0).min(screen_height - p.height as f32);
                 p.vx = 0.0;
                 p.vy = 0.0;
             } else {
@@ -395,7 +818,6 @@ fn update_ponies(
                 p.behavior_timer = 0.0;
                 *grabbed_pony = None;
             }
-
             p.frame_timer += dt;
             while p.frame_timer >= p.frame_duration {
                 p.frame_timer -= p.frame_duration;
@@ -404,9 +826,19 @@ fn update_ponies(
             continue;
         }
 
-        p.behavior_timer -= dt;
-        if p.behavior_timer <= 0.0 {
-            change_pony_behavior(p, loader);
+        let is_sleeping = matches!(p.interaction_state, Some(InteractionState::Sleeping));
+        let is_petted = matches!(p.interaction_state, Some(InteractionState::Petted { .. }));
+
+        if !is_sleeping && !is_petted {
+            p.behavior_timer -= dt;
+            if p.behavior_timer <= 0.0 {
+                change_pony_behavior(p, loader);
+            }
+        }
+
+        if is_sleeping {
+            p.vx = 0.0;
+            p.vy = 0.0;
         }
 
         match p.movement_type {
@@ -441,6 +873,8 @@ fn update_ponies(
     }
 }
 
+// ==================== APPLICATION HANDLER ====================
+
 impl ApplicationHandler<UserEvent> for App {
     fn resumed(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
         if self.monitor_manager.monitors.is_empty() {
@@ -452,6 +886,7 @@ impl ApplicationHandler<UserEvent> for App {
             }
         }
 
+        // Создаём UI окно
         if self.ui_window.is_none() {
             let attrs = WindowAttributes::default()
                 .with_title("Desktop Ponies")
@@ -496,98 +931,70 @@ impl ApplicationHandler<UserEvent> for App {
             self._webview = Some(wv);
         }
 
-        if self.pony_windows.is_empty() {
-            self.create_pony_windows(event_loop);
+        // Создаём главное окно
+        if self.main_window.is_none() {
+            self.create_main_window(event_loop);
         }
     }
 
     fn window_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
         let ui_id = self.ui_window.as_ref().map(|w| w.id());
+        let main_id = self.main_window.as_ref().map(|w| w.id());
+        let interaction_window_idx = self.get_interaction_window_id(window_id);
 
         match event {
             WindowEvent::CloseRequested if Some(window_id) == ui_id => {
+                // Сохраняем настройки перед выходом
                 self.settings.save(&self.settings_path);
                 event_loop.exit();
             }
-            WindowEvent::CursorMoved { position, .. } if Some(window_id) == ui_id => {
+
+            // Курсор в главном окне
+            WindowEvent::CursorMoved { position, .. } if Some(window_id) == main_id => {
                 self.mouse_x = position.x as f32;
                 self.mouse_y = position.y as f32;
             }
-            WindowEvent::MouseInput { state, button, .. } if button == MouseButton::Left && Some(window_id) == ui_id => {
-                if state == ElementState::Pressed {
-                    self.mouse_down = true;
 
-                    for pw in &self.pony_windows {
-                        if let Ok(win_pos) = pw.window.outer_position() {
-                            if let Some(ui_w) = &self.ui_window {
-                                if let Ok(ui_pos) = ui_w.outer_position() {
-                                    let global_x = ui_pos.x as f32 + self.mouse_x;
-                                    let global_y = ui_pos.y as f32 + self.mouse_y;
-                                    let local_x = global_x - win_pos.x as f32;
-                                    let local_y = global_y - win_pos.y as f32;
+            // Клики в окнах взаимодействия
+            WindowEvent::MouseInput { state, button, .. } if interaction_window_idx.is_some() => {
+                let pressed = state == ElementState::Pressed;
+                let iw_idx = interaction_window_idx.unwrap();
 
-                                    let mut grabbed_idx = None;
-                                    for i in (0..self.ponies.len()).rev() {
-                                        let p = &self.ponies[i];
-                                        if local_x >= p.x && local_x <= p.x + p.width as f32 &&
-                                            local_y >= p.y && local_y <= p.y + p.height as f32 {
-                                            grabbed_idx = Some(i);
-                                            break;
-                                        }
-                                    }
+                if let Some(pony_idx) = self.get_pony_under_mouse_in_window(iw_idx) {
+                    println!("[Click] Window #{} on pony #{}: {:?} pressed={}",
+                             iw_idx, pony_idx, button, pressed);
+                    self.handle_click(pony_idx, button, pressed);
+                }
+            }
 
-                                    if let Some(i) = grabbed_idx {
-                                        let p = &self.ponies[i];
-                                        let pony_name = p.config_name.clone();
-
-                                        let drag_data = if let Some(config) = self.loader.get_config(&pony_name) {
-                                            if let Some(drag) = config.behaviors.iter().find(|b| b.name == "drag") {
-                                                let sprite_name = if !drag.sprite_right.is_empty() {
-                                                    drag.sprite_right.clone()
-                                                } else {
-                                                    drag.sprite_left.clone()
-                                                };
-                                                Some((sprite_name.clone(), self.loader.load_pony_frames(&pony_name, &sprite_name)))
-                                            } else {
-                                                None
-                                            }
-                                        } else {
-                                            None
-                                        };
-
-                                        let p = &mut self.ponies[i];
-                                        if let Some((_, (frames, fc, w, h, delay))) = drag_data {
-                                            p.frames = frames;
-                                            p.frame_count = fc;
-                                            p.width = w;
-                                            p.height = h;
-                                            p.frame_duration = delay;
-                                            p.current_frame = 0;
-                                            p.frame_timer = 0.0;
-                                            p.current_behavior = "drag".to_string();
-                                        }
-                                        p.grabbed = true;
-                                        p.movement_type = MovementType::Dragged;
-                                        self.grabbed_pony = Some(i);
-                                    }
-                                }
+            // Движение мыши в окне взаимодействия
+            WindowEvent::CursorMoved { position, .. } if interaction_window_idx.is_some() => {
+                let iw_idx = interaction_window_idx.unwrap();
+                if let Some(iw) = self.interaction_windows.get(iw_idx) {
+                    if let Ok(window_pos) = iw.window.outer_position() {
+                        if let Some(main_window) = &self.main_window {
+                            if let Ok(main_pos) = main_window.outer_position() {
+                                self.mouse_x = (window_pos.x - main_pos.x) as f32 + position.x as f32;
+                                self.mouse_y = (window_pos.y - main_pos.y) as f32 + position.y as f32;
                             }
                         }
                     }
-                } else {
-                    self.mouse_down = false;
                 }
             }
+
             WindowEvent::RedrawRequested => {
+                // Спавним пони из очереди
                 let to_spawn: Vec<String> = self.spawn_queue.lock().unwrap().drain(..).collect();
                 for name in to_spawn {
-                    self.spawn_pony(&name, None);
+                    self.spawn_pony(&name, event_loop);
                 }
 
                 self.render_all_windows();
 
-                for pw in &self.pony_windows {
-                    pw.window.request_redraw();
+                // Запрашиваем перерисовку
+                if let Some(w) = &self.main_window { w.request_redraw(); }
+                for iw in &self.interaction_windows {
+                    iw.window.request_redraw();
                 }
             }
             _ => {}
@@ -597,26 +1004,41 @@ impl ApplicationHandler<UserEvent> for App {
     fn user_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, event: UserEvent) {
         match event {
             UserEvent::RequestRedraw => {
-                for pw in &self.pony_windows {
-                    pw.window.request_redraw();
-                }
+                if let Some(w) = &self.main_window { w.request_redraw(); }
+            }
+            UserEvent::UpdateInteractionWindows => {
+                self.update_interaction_windows();
             }
             UserEvent::ReloadMonitors => {
                 self.monitor_manager.detect(event_loop);
                 if self.monitor_manager.selected_ids.is_empty() {
                     self.monitor_manager.selected_ids = self.monitor_manager.monitors.iter()
-                        .map(|m| m.id.clone())
-                        .collect();
+                        .map(|m| m.id.clone()).collect();
                 }
-                self.create_pony_windows(event_loop);
+
+                // Удаляем старые окна
+                self.interaction_windows.clear();
+                self.main_window = None;
+                self.main_surface = None;
+
+                // Пересоздаём
+                self.create_main_window(event_loop);
+                for i in 0..self.ponies.len() {
+                    self.create_interaction_window(i, event_loop);
+                }
             }
             UserEvent::ApplySettings { selected_monitors } => {
                 self.settings.selected_monitors = selected_monitors.iter().cloned().collect();
                 self.monitor_manager.selected_ids = selected_monitors;
                 self.settings.save(&self.settings_path);
-                self.create_pony_windows(event_loop);
-                if self.pony_windows.is_empty() {
-                    self.ponies.clear();
+
+                self.interaction_windows.clear();
+                self.main_window = None;
+                self.main_surface = None;
+
+                self.create_main_window(event_loop);
+                for i in 0..self.ponies.len() {
+                    self.create_interaction_window(i, event_loop);
                 }
             }
             UserEvent::SetFPS(fps) => {
@@ -629,7 +1051,11 @@ impl ApplicationHandler<UserEvent> for App {
     }
 }
 
+// ==================== MAIN ====================
+
 fn main() {
+    println!("Desktop Ponies RS - Starting...");
+
     let spawn_q = Arc::new(Mutex::new(Vec::<String>::new()));
 
     let mut loader = DesktopPoniesLoader::new(".");
@@ -651,9 +1077,20 @@ fn main() {
     let el = EventLoop::<UserEvent>::with_user_event().build().unwrap();
     let proxy = el.create_proxy();
 
+    // Запускаем периодическое обновление окон взаимодействия
+    let proxy_clone = proxy.clone();
+    std::thread::spawn(move || {
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(16)); // ~60 FPS
+            let _ = proxy_clone.send_event(UserEvent::UpdateInteractionWindows);
+        }
+    });
+
     el.run_app(&mut App {
         ponies: Vec::new(),
-        pony_windows: Vec::new(),
+        main_window: None,
+        main_surface: None,
+        interaction_windows: Vec::new(),
         ui_window: None,
         _webview: None,
         last_frame: Instant::now(),
@@ -666,10 +1103,13 @@ fn main() {
         mouse_x: 0.0,
         mouse_y: 0.0,
         mouse_down: false,
+        right_mouse_down: false,
         grabbed_pony: None,
+        context_menu: ContextMenu::new(),
         perf: PerformanceMonitor::new(),
         frame_counter: 0,
         fps_limit: 60,
         frame_timer: Instant::now(),
+        debug_hitboxes: true,
     }).unwrap();
 }
