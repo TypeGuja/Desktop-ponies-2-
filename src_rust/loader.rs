@@ -42,6 +42,10 @@ pub struct Behavior {
     pub prevent_loop: bool,
     pub group: String,
     pub follow_offset: String,
+    pub set_animation_speed: Option<f32>,
+    pub set_fps: Option<f32>,
+    pub set_max_fps: Option<f32>,
+    pub sound_files: Vec<String>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -93,7 +97,6 @@ pub struct DesktopPoniesLoader {
 
 impl MovementType {
     pub fn parse(s: &str) -> Self {
-        // Убираем кавычки, пробелы, приводим к нижнему регистру
         let s = s.trim()
             .trim_matches('"')
             .to_lowercase()
@@ -118,33 +121,80 @@ impl MovementType {
     }
 }
 
+/// Удаляет BOM (Byte Order Mark) из строки
+fn remove_bom(s: &str) -> &str {
+    if s.starts_with('\u{FEFF}') {
+        &s[3..]
+    } else {
+        s
+    }
+}
+
+/// Парсит CSV строку с поддержкой кавычек и пустых полей
 fn split_csv(line: &str) -> Vec<String> {
+    let line = remove_bom(line);
     let mut fields = vec![];
     let mut cur = String::new();
     let mut in_quotes = false;
+    let mut escape = false;
     let mut brace_depth: i32 = 0;
 
-    for c in line.chars() {
+    let chars: Vec<char> = line.chars().collect();
+    let mut i = 0;
+
+    while i < chars.len() {
+        let c = chars[i];
+
         match c {
-            '"' if brace_depth == 0 => in_quotes = !in_quotes,
-            '{' => brace_depth += 1,
-            '}' => brace_depth = brace_depth.saturating_sub(1),
+            '\\' if in_quotes => {
+                escape = true;
+                cur.push(c);
+                i += 1;
+                continue;
+            }
+            '"' if !escape && brace_depth == 0 => {
+                in_quotes = !in_quotes;
+                cur.push(c);
+                i += 1;
+                continue;
+            }
+            '{' => {
+                brace_depth += 1;
+                cur.push(c);
+            }
+            '}' => {
+                brace_depth = brace_depth.saturating_sub(1);
+                cur.push(c);
+            }
             ',' if !in_quotes && brace_depth == 0 => {
                 fields.push(cur.trim().to_string());
                 cur.clear();
+                i += 1;
                 continue;
             }
-            _ => {}
+            _ => {
+                escape = false;
+                cur.push(c);
+            }
         }
-        cur.push(c);
+        i += 1;
     }
+
     fields.push(cur.trim().to_string());
+
+    // Очищаем поля от лишних кавычек по краям (но не внутри)
+    for field in &mut fields {
+        if field.starts_with('"') && field.ends_with('"') && field.len() >= 2 {
+            *field = field[1..field.len()-1].to_string();
+        }
+    }
+
     fields
 }
 
 fn unquote(s: &str) -> String {
     let s = s.trim();
-    if s.starts_with('"') && s.ends_with('"') {
+    if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
         s[1..s.len()-1].to_string()
     } else {
         s.to_string()
@@ -152,11 +202,26 @@ fn unquote(s: &str) -> String {
 }
 
 fn parse_f32(s: &str) -> f32 {
-    unquote(s).parse().unwrap_or(0.0)
+    let cleaned = unquote(s);
+    if cleaned.is_empty() {
+        0.0
+    } else {
+        cleaned.parse().unwrap_or(0.0)
+    }
+}
+
+fn parse_optional_f32(s: &str) -> Option<f32> {
+    let cleaned = unquote(s);
+    if cleaned.is_empty() {
+        None
+    } else {
+        cleaned.parse().ok()
+    }
 }
 
 fn parse_bool(s: &str) -> bool {
-    matches!(unquote(s).to_lowercase().as_str(), "true" | "1" | "yes")
+    let cleaned = unquote(s).to_lowercase();
+    matches!(cleaned.as_str(), "true" | "1" | "yes" | "on")
 }
 
 fn parse_pair(s: &str) -> (f32, f32) {
@@ -172,8 +237,8 @@ fn parse_pair(s: &str) -> (f32, f32) {
 
 fn parse_list(s: &str) -> Vec<String> {
     let s = unquote(s);
-    if s.starts_with('{') {
-        s.trim_matches(&['{', '}'][..])
+    if s.starts_with('{') && s.ends_with('}') {
+        s[1..s.len()-1]
             .split(',')
             .map(|x| x.trim().trim_matches('"').to_string())
             .filter(|x| !x.is_empty())
@@ -182,6 +247,15 @@ fn parse_list(s: &str) -> Vec<String> {
         vec![]
     } else {
         vec![s]
+    }
+}
+
+// Функция для безопасного получения поля по индексу
+fn get_field(fields: &[String], idx: usize, default: &str) -> String {
+    if idx < fields.len() {
+        fields[idx].clone()
+    } else {
+        default.to_string()
     }
 }
 
@@ -228,7 +302,9 @@ impl DesktopPoniesLoader {
         }
 
         self.configs.clear();
-        self.scan_dir(&self.ponies_dir.clone())?;
+
+        let ponies_dir_clone = self.ponies_dir.clone();
+        self.scan_dir(&ponies_dir_clone)?;
 
         if self.configs.is_empty() {
             return Err(format!("No pony.ini files found in {:?}", self.ponies_dir));
@@ -249,7 +325,11 @@ impl DesktopPoniesLoader {
             } else if path.file_name().and_then(|n| n.to_str()) == Some("pony.ini") {
                 let parent = path.parent().unwrap();
                 match Self::parse_config(parent, &path) {
-                    Ok(cfg) => self.configs.push(cfg),
+                    Ok(cfg) => {
+                        println!("[Loader] Loaded config for: {} ({} behaviors, {} speaks, {} interactions, {} effects)",
+                                 cfg.name, cfg.behaviors.len(), cfg.speaks.len(), cfg.interactions.len(), cfg.effects.len());
+                        self.configs.push(cfg);
+                    }
                     Err(e) => eprintln!("Parse error {}: {}", parent.display(), e),
                 }
             }
@@ -259,6 +339,8 @@ impl DesktopPoniesLoader {
 
     fn parse_config(dir: &Path, ini: &Path) -> Result<PonyConfig, String> {
         let content = fs::read_to_string(ini).map_err(|e| e.to_string())?;
+        let content = remove_bom(&content);
+
         let name = dir.file_name().and_then(|n| n.to_str()).unwrap_or("??").to_string();
         let mut categories = Vec::new();
         let mut behaviors = Vec::new();
@@ -266,13 +348,18 @@ impl DesktopPoniesLoader {
         let mut interactions = Vec::new();
         let mut effects = Vec::new();
 
-        for line in content.lines() {
-            let line = line.trim();
+        for (line_num, raw_line) in content.lines().enumerate() {
+            let line = raw_line.trim();
             if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
                 continue;
             }
-            let row_type = line.find(',').map(|i| &line[..i]).unwrap_or("");
+
             let fields = split_csv(line);
+            if fields.is_empty() {
+                continue;
+            }
+
+            let row_type = fields[0].trim();
 
             match row_type {
                 "Categories" => {
@@ -281,64 +368,98 @@ impl DesktopPoniesLoader {
                         .filter(|s| !s.is_empty())
                         .collect();
                 }
-                "Behavior" if fields.len() >= 24 => {
-                    behaviors.push(Behavior {
-                        name: unquote(&fields[1]),
-                        probability: parse_f32(&fields[2]),
-                        max_duration: parse_f32(&fields[3]),
-                        min_duration: parse_f32(&fields[4]),
-                        speed: parse_f32(&fields[5]),
-                        sprite_right: unquote(&fields[6]),
-                        sprite_left: unquote(&fields[7]),
-                        movement: unquote(&fields[8]),
-                        linked_behavior: unquote(&fields[9]),
-                        start_speech: unquote(&fields[10]),
-                        end_speech: unquote(&fields[11]),
-                        skip: parse_bool(&fields[12]),
-                        target_x: parse_f32(&fields[13]),
-                        target_y: parse_f32(&fields[14]),
-                        follow_target: parse_bool(&fields[15]),
-                        auto_select_follow: parse_bool(&fields[16]),
-                        follow_stopped: unquote(&fields[17]),
-                        follow_moving: unquote(&fields[18]),
-                        right_image_center: parse_pair(&fields[19]),
-                        left_image_center: parse_pair(&fields[20]),
-                        prevent_loop: parse_bool(&fields[21]),
-                        group: unquote(&fields[22]),
-                        follow_offset: unquote(&fields[23]),
-                    });
+                "Behavior" => {
+                    // Поведение имеет минимум 13 полей, остальные опциональны
+                    if fields.len() >= 13 {
+                        let behavior = Behavior {
+                            name: get_field(&fields, 1, ""),
+                            probability: if fields.len() > 2 { parse_f32(&fields[2]) } else { 1.0 },
+                            max_duration: if fields.len() > 3 { parse_f32(&fields[3]) } else { 10.0 },
+                            min_duration: if fields.len() > 4 { parse_f32(&fields[4]) } else { 5.0 },
+                            speed: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
+                            sprite_right: get_field(&fields, 6, ""),
+                            sprite_left: get_field(&fields, 7, ""),
+                            movement: get_field(&fields, 8, "None"),
+                            linked_behavior: get_field(&fields, 9, ""),
+                            start_speech: get_field(&fields, 10, ""),
+                            end_speech: get_field(&fields, 11, ""),
+                            skip: if fields.len() > 12 { parse_bool(&fields[12]) } else { false },
+                            target_x: if fields.len() > 13 { parse_f32(&fields[13]) } else { 0.0 },
+                            target_y: if fields.len() > 14 { parse_f32(&fields[14]) } else { 0.0 },
+                            follow_target: if fields.len() > 15 { parse_bool(&fields[15]) } else { false },
+                            auto_select_follow: if fields.len() > 16 { parse_bool(&fields[16]) } else { false },
+                            follow_stopped: get_field(&fields, 17, ""),
+                            follow_moving: get_field(&fields, 18, ""),
+                            right_image_center: if fields.len() > 19 { parse_pair(&fields[19]) } else { (0.0, 0.0) },
+                            left_image_center: if fields.len() > 20 { parse_pair(&fields[20]) } else { (0.0, 0.0) },
+                            prevent_loop: if fields.len() > 21 { parse_bool(&fields[21]) } else { false },
+                            group: get_field(&fields, 22, ""),
+                            follow_offset: get_field(&fields, 23, ""),
+                            set_animation_speed: if fields.len() > 24 { parse_optional_f32(&fields[24]) } else { None },
+                            set_fps: if fields.len() > 25 { parse_optional_f32(&fields[25]) } else { None },
+                            set_max_fps: if fields.len() > 26 { parse_optional_f32(&fields[26]) } else { None },
+                            sound_files: if fields.len() > 27 { parse_list(&fields[27]) } else { vec![] },
+                        };
+
+                        if !behavior.skip {
+                            behaviors.push(behavior);
+                        }
+                    } else {
+                        eprintln!("[Warning] Line {}: Behavior has only {} fields, skipping", line_num + 1, fields.len());
+                    }
                 }
-                "Speak" if fields.len() >= 5 => {
-                    speaks.push(SpeakDef {
-                        name: unquote(&fields[1]),
-                        text: unquote(&fields[2]),
-                        sound_files: parse_list(&fields[3]),
-                        skip: parse_bool(&fields[4]),
-                        frequency: fields.get(5).map(|f| parse_f32(f)).unwrap_or(0.0),
-                    });
+                "Speak" => {
+                    if fields.len() >= 5 {
+                        speaks.push(SpeakDef {
+                            name: get_field(&fields, 1, ""),
+                            text: get_field(&fields, 2, ""),
+                            sound_files: if fields.len() > 3 { parse_list(&fields[3]) } else { vec![] },
+                            skip: if fields.len() > 4 { parse_bool(&fields[4]) } else { false },
+                            frequency: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
+                        });
+                    } else {
+                        eprintln!("[Warning] Line {}: Speak has only {} fields, skipping", line_num + 1, fields.len());
+                    }
                 }
-                "Interaction" if fields.len() >= 7 => {
-                    interactions.push(InteractionDef {
-                        name: unquote(&fields[1]),
-                        probability: parse_f32(&fields[2]),
-                        cooldown: parse_f32(&fields[3]),
-                        targets: parse_list(&fields[4]),
-                        target_count: unquote(&fields[5]),
-                        behaviors: parse_list(&fields[6]),
-                        duration: fields.get(7).map(|f| parse_f32(f)).unwrap_or(300.0),
-                    });
+                "Interaction" => {
+                    if fields.len() >= 7 {
+                        interactions.push(InteractionDef {
+                            name: get_field(&fields, 1, ""),
+                            probability: if fields.len() > 2 { parse_f32(&fields[2]) } else { 0.0 },
+                            cooldown: if fields.len() > 3 { parse_f32(&fields[3]) } else { 0.0 },
+                            targets: if fields.len() > 4 { parse_list(&fields[4]) } else { vec![] },
+                            target_count: get_field(&fields, 5, "One"),
+                            behaviors: if fields.len() > 6 { parse_list(&fields[6]) } else { vec![] },
+                            duration: if fields.len() > 7 { parse_f32(&fields[7]) } else { 300.0 },
+                        });
+                    } else {
+                        eprintln!("[Warning] Line {}: Interaction has only {} fields, skipping", line_num + 1, fields.len());
+                    }
                 }
-                "Effect" if fields.len() >= 7 => {
-                    effects.push(EffectDef {
-                        name: unquote(&fields[1]),
-                        linked: unquote(&fields[2]),
-                        sprite_right: unquote(&fields[3]),
-                        sprite_left: unquote(&fields[4]),
-                        duration: parse_f32(&fields[5]),
-                        delay: parse_f32(&fields[6]),
-                    });
+                "Effect" => {
+                    if fields.len() >= 7 {
+                        effects.push(EffectDef {
+                            name: get_field(&fields, 1, ""),
+                            linked: get_field(&fields, 2, ""),
+                            sprite_right: get_field(&fields, 3, ""),
+                            sprite_left: get_field(&fields, 4, ""),
+                            duration: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
+                            delay: if fields.len() > 6 { parse_f32(&fields[6]) } else { 0.0 },
+                        });
+                    } else {
+                        eprintln!("[Warning] Line {}: Effect has only {} fields, skipping", line_num + 1, fields.len());
+                    }
                 }
-                _ => {}
+                // Игнорируем строку Name (она уже обработана отдельно)
+                "Name" => {
+                    // Пропускаем, имя берётся из названия папки
+                }
+                _ => {
+                    // Неизвестный тип строки, тихо игнорируем
+                    if !row_type.is_empty() && !row_type.starts_with('"') {
+                        // eprintln!("[Debug] Unknown row type '{}' at line {}", row_type, line_num + 1);
+                    }
+                }
             }
         }
 
@@ -391,35 +512,51 @@ impl DesktopPoniesLoader {
     }
 
     pub fn load_pony_frames(&mut self, pony_name: &str, sprite_name: &str) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+        let cache_key = format!("{}/{}", pony_name, sprite_name);
+
+        if let Some(cached) = self.sprite_cache.get(&cache_key) {
+            return cached.clone();
+        }
+
         let pony_dir = self.ponies_dir.join(pony_name);
         if !pony_dir.exists() {
             return Self::fallback_sprite();
         }
 
-        let exact_path = pony_dir.join(sprite_name);
-        if exact_path.exists() {
-            return self.load_gif_file(&exact_path);
-        }
-
-        let with_ext = pony_dir.join(format!("{}.gif", sprite_name));
-        if with_ext.exists() {
-            return self.load_gif_file(&with_ext);
-        }
-
-        if let Ok(entries) = std::fs::read_dir(&pony_dir) {
+        let result = if let Ok(entries) = std::fs::read_dir(&pony_dir) {
             let sprite_lower = sprite_name.to_lowercase();
+            let mut found = None;
+
             for entry in entries.flatten() {
                 let path = entry.path();
                 if path.extension().and_then(|e| e.to_str()) == Some("gif") {
                     let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
-                    if filename.contains(&sprite_lower) {
-                        return self.load_gif_file(&path);
+                    let name_without_ext = filename.trim_end_matches(".gif");
+
+                    if name_without_ext == sprite_lower || filename.contains(&sprite_lower) {
+                        found = Some(path);
+                        break;
                     }
                 }
             }
-        }
 
-        Self::fallback_sprite()
+            if let Some(path) = found {
+                self.load_gif_file(&path)
+            } else {
+                let exact_path = pony_dir.join(format!("{}.gif", sprite_name));
+                if exact_path.exists() {
+                    self.load_gif_file(&exact_path)
+                } else {
+                    eprintln!("[Warning] Sprite '{}' not found for pony '{}'", sprite_name, pony_name);
+                    Self::fallback_sprite()
+                }
+            }
+        } else {
+            Self::fallback_sprite()
+        };
+
+        self.sprite_cache.insert(cache_key, result.clone());
+        result
     }
 
     fn fallback_sprite() -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
@@ -428,5 +565,89 @@ impl DesktopPoniesLoader {
 
     pub fn get_config(&self, name: &str) -> Option<&PonyConfig> {
         self.configs.iter().find(|c| c.name == name)
+    }
+
+    pub fn get_config_by_name_case_insensitive(&self, name: &str) -> Option<&PonyConfig> {
+        let name_lower = name.to_lowercase();
+        self.configs.iter().find(|c| c.name.to_lowercase() == name_lower)
+    }
+
+    pub fn get_random_pony_config(&self) -> Option<&PonyConfig> {
+        if self.configs.is_empty() {
+            None
+        } else {
+            let idx = fastrand::usize(0..self.configs.len());
+            Some(&self.configs[idx])
+        }
+    }
+
+    pub fn get_ponies_by_category(&self, category: &str) -> Vec<&PonyConfig> {
+        let cat_lower = category.to_lowercase();
+        self.configs.iter()
+            .filter(|c| c.categories.iter().any(|cat| cat.to_lowercase() == cat_lower))
+            .collect()
+    }
+
+    pub fn get_all_behavior_names(&self, pony_name: &str) -> Vec<String> {
+        if let Some(config) = self.get_config(pony_name) {
+            config.behaviors.iter()
+                .filter(|b| !b.skip)
+                .map(|b| b.name.clone())
+                .collect()
+        } else {
+            vec![]
+        }
+    }
+
+    pub fn get_random_behavior(&self, pony_name: &str, exclude: &[&str]) -> Option<Behavior> {
+        let config = self.get_config(pony_name)?;
+        let mut available: Vec<Behavior> = config.behaviors.iter()
+            .filter(|b| !b.skip && !exclude.contains(&b.name.as_str()))
+            .cloned()
+            .collect();
+
+        if available.is_empty() {
+            available = config.behaviors.iter()
+                .filter(|b| !b.skip)
+                .cloned()
+                .collect();
+        }
+
+        if available.is_empty() {
+            None
+        } else {
+            let total_prob: f32 = available.iter().map(|b| b.probability).sum();
+            if total_prob > 0.0 {
+                let mut rand_val = fastrand::f32() * total_prob;
+                for behavior in &available {
+                    rand_val -= behavior.probability;
+                    if rand_val <= 0.0 {
+                        return Some(behavior.clone());
+                    }
+                }
+            }
+            Some(available[0].clone())
+        }
+    }
+
+    pub fn get_speak_text(&self, pony_name: &str, speak_name: &str) -> Option<String> {
+        let config = self.get_config(pony_name)?;
+        config.speaks.iter()
+            .find(|s| s.name == speak_name && !s.skip)
+            .map(|s| s.text.clone())
+    }
+
+    pub fn get_random_speak(&self, pony_name: &str) -> Option<String> {
+        let config = self.get_config(pony_name)?;
+        let available: Vec<&SpeakDef> = config.speaks.iter()
+            .filter(|s| !s.skip)
+            .collect();
+
+        if available.is_empty() {
+            None
+        } else {
+            let idx = fastrand::usize(0..available.len());
+            Some(available[idx].text.clone())
+        }
     }
 }
