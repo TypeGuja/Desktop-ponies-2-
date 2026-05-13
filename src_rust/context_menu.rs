@@ -64,8 +64,8 @@ impl ContextMenu {
         self.pony_index = Some(pony_index);
         self.pony_name = Some(pony_name.to_string());
 
-        // Обновляем пункт "Спать" в зависимости от состояния
-        // (Было бы хорошо проверять текущее состояние пони)
+        // Можно обновить пункт "Спать" в зависимости от состояния
+        // если бы был доступ к состоянию пони
     }
 
     pub fn hide(&mut self) {
@@ -85,12 +85,15 @@ impl ContextMenu {
 
         let menu_height = self.items.len() as f32 * item_height + padding * 2.0;
 
+        // Проверяем, что мышь в пределах меню
         if mouse_x >= self.x && mouse_x <= self.x + menu_width &&
             mouse_y >= self.y && mouse_y <= self.y + menu_height {
             let rel_y = mouse_y - self.y - padding;
-            let index = (rel_y / item_height) as usize;
-            if index < self.items.len() && self.items[index].enabled {
-                return Some(index);
+            if rel_y >= 0.0 {
+                let index = (rel_y / item_height) as usize;
+                if index < self.items.len() && self.items[index].enabled {
+                    return Some(index);
+                }
             }
         }
         None
