@@ -257,7 +257,7 @@ impl App {
                     ) {
                         surface.resize(w, h).unwrap();
                         let mut buffer = surface.buffer_mut().unwrap();
-                        // Полупрозрачный синий (альфа 128) //TODO color window hitbox
+                        // Полупрозрачный синий (альфа 128)
                         let blue_color = 0x804488FF;
                         buffer.fill(blue_color);
                         buffer.present().unwrap();
@@ -319,10 +319,9 @@ impl App {
     fn update_interaction_windows(&mut self) {
         if let Some(main_window) = &self.main_window {
             if let Ok(main_pos) = main_window.outer_position() {
-                let main_size = main_window.inner_size();
                 let padding = 6.0;
 
-                for (idx, iw) in self.interaction_windows.iter().enumerate() {
+                for iw in &self.interaction_windows {
                     if iw.pony_index < self.ponies.len() {
                         let pony = &self.ponies[iw.pony_index];
 
@@ -352,7 +351,7 @@ impl App {
     fn render_interaction_windows(&mut self) {
         let padding = 6.0;
 
-        for (idx, iw) in self.interaction_windows.iter_mut().enumerate() {
+        for iw in self.interaction_windows.iter_mut() {
             if iw.pony_index < self.ponies.len() {
                 let pony = &self.ponies[iw.pony_index];
                 let window_w = ((pony.width as f32 + padding * 2.0) as u32).max(50);
@@ -363,7 +362,7 @@ impl App {
                     NonZeroU32::new(window_h)
                 ) {
                     if let Err(e) = iw.surface.resize(w, h) {
-                        eprintln!("[Error] Failed to resize surface for window #{}: {:?}", idx, e);
+                        eprintln!("[Error] Failed to resize surface for window: {:?}", e);
                         continue;
                     }
 
@@ -385,6 +384,92 @@ impl App {
                             for y in 0..bh {
                                 if bw > 0 { buffer[y * bw] = border_color; }
                                 if bw > 1 { buffer[y * bw + (bw-1)] = border_color; }
+                            }
+                        }
+
+                        buffer.present().unwrap();
+                    }
+                }
+            }
+        }
+    }
+
+    fn render_context_menu(&mut self) {
+        if !self.context_menu.visible {
+            return;
+        }
+
+        // Рисуем меню поверх главного окна
+        if let Some(surface) = &mut self.main_surface {
+            if let Some(window) = &self.main_window {
+                let size = window.inner_size();
+                if let (Some(sw), Some(sh)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) {
+                    if let Ok(mut buffer) = surface.buffer_mut() {
+                        let bw = sw.get() as usize;
+                        let bh = sh.get() as usize;
+
+                        let menu_x = self.context_menu.x as usize;
+                        let menu_y = self.context_menu.y as usize;
+                        let menu_width = 180;
+                        let item_height = 28;
+                        let padding = 4;
+
+                        let bg_color = 0xCC2D2D2D; // Тёмный фон
+                        let border_color = 0xFF4488FF; // Синяя рамка
+                        let hover_color = 0xCC4488FF; // Подсветка
+
+                        let total_height = self.context_menu.items.len() * item_height + padding * 2;
+
+                        // Проверяем границы
+                        if menu_x + menu_width > bw || menu_y + total_height > bh {
+                            return; // Меню выходит за границы окна
+                        }
+
+                        // Фон меню с рамкой
+                        for y in menu_y..(menu_y + total_height).min(bh) {
+                            for x in menu_x..(menu_x + menu_width).min(bw) {
+                                if x == menu_x || x == menu_x + menu_width - 1 ||
+                                    y == menu_y || y == menu_y + total_height - 1 {
+                                    buffer[y * bw + x] = border_color;
+                                } else {
+                                    buffer[y * bw + x] = bg_color;
+                                }
+                            }
+                        }
+
+                        // Определяем hover-элемент
+                        let hover_idx = self.context_menu.hit_test(self.mouse_x, self.mouse_y);
+
+                        // Рисуем пункты меню с подсветкой и разделителями
+                        for i in 0..self.context_menu.items.len() {
+                            let item_y = menu_y + padding + i * item_height;
+                            let item = &self.context_menu.items[i];
+
+                            // Фон пункта
+                            let item_bg = if Some(i) == hover_idx && item.enabled {
+                                hover_color
+                            } else if !item.enabled {
+                                0xCC555555 // Серый для недоступных
+                            } else {
+                                bg_color
+                            };
+
+                            for y in item_y..(item_y + item_height).min(bh) {
+                                let row_start = y * bw;
+                                for x in (menu_x + 1)..(menu_x + menu_width - 1).min(bw) {
+                                    buffer[row_start + x] = item_bg;
+                                }
+                            }
+
+                            // Разделитель между пунктами
+                            if i < self.context_menu.items.len() - 1 {
+                                let sep_y = item_y + item_height - 1;
+                                if sep_y < bh {
+                                    let row_start = sep_y * bw;
+                                    for x in (menu_x + padding)..(menu_x + menu_width - padding).min(bw) {
+                                        buffer[row_start + x] = 0xFF555555;
+                                    }
+                                }
                             }
                         }
 
@@ -476,10 +561,57 @@ impl App {
                         self.context_menu.hide();
                     }
 
-                    // Захват пони
+                    // Захват пони с анимацией драга
                     if pony_index < self.ponies.len() {
-                        self.ponies[pony_index].grabbed = true;
-                        self.ponies[pony_index].movement_type = MovementType::Dragged;
+                        // Сначала собираем данные для загрузки спрайта
+                        let drag_info = {
+                            let pony = &self.ponies[pony_index];
+                            let config_name = pony.config_name.clone();
+
+                            if let Some(config) = self.loader.get_config(&config_name) {
+                                if let Some(drag_behavior) = config.behaviors.iter()
+                                    .find(|b| b.name.to_lowercase().contains("drag"))
+                                {
+                                    let sprite_name = if !drag_behavior.sprite_right.is_empty() {
+                                        drag_behavior.sprite_right.clone()
+                                    } else {
+                                        drag_behavior.sprite_left.clone()
+                                    };
+                                    Some((config_name.clone(), sprite_name, drag_behavior.name.clone()))
+                                } else {
+                                    None
+                                }
+                            } else {
+                                None
+                            }
+                        };
+
+                        // Теперь загружаем спрайт и обновляем пони
+                        let pony = &mut self.ponies[pony_index];
+
+                        if let Some((config_name, sprite_name, behavior_name)) = drag_info {
+                            let (frames, fc, w, h, delay) = self.loader.load_pony_frames(
+                                &config_name,
+                                &sprite_name
+                            );
+
+                            pony.frames = frames;
+                            pony.frame_count = fc;
+                            pony.width = w;
+                            pony.height = h;
+                            pony.frame_duration = delay;
+                            pony.current_frame = 0;
+                            pony.current_behavior = behavior_name;
+                        } else {
+                            // Fallback: замедляем текущую анимацию
+                            if pony.original_frame_duration.is_none() {
+                                pony.original_frame_duration = Some(pony.frame_duration);
+                            }
+                            pony.frame_duration *= 1.5;
+                        }
+
+                        pony.grabbed = true;
+                        pony.movement_type = MovementType::Dragged;
                         self.grabbed_pony = Some(pony_index);
                         println!("[Drag] Started dragging pony #{}", pony_index);
                     }
@@ -487,9 +619,56 @@ impl App {
                     self.mouse_down = false;
                     if let Some(idx) = self.grabbed_pony.take() {
                         if idx < self.ponies.len() {
-                            self.ponies[idx].grabbed = false;
-                            self.ponies[idx].movement_type = MovementType::None;
-                            self.ponies[idx].behavior_timer = 0.0;
+                            // Сначала собираем данные для возврата к idle
+                            let idle_info = {
+                                let pony = &self.ponies[idx];
+                                let config_name = pony.config_name.clone();
+
+                                if let Some(config) = self.loader.get_config(&config_name) {
+                                    if let Some(idle_behavior) = config.behaviors.iter()
+                                        .find(|b| b.name.to_lowercase().contains("stand") ||
+                                            b.name.to_lowercase().contains("idle"))
+                                    {
+                                        let sprite_name = if !idle_behavior.sprite_right.is_empty() {
+                                            idle_behavior.sprite_right.clone()
+                                        } else {
+                                            idle_behavior.sprite_left.clone()
+                                        };
+                                        Some((config_name.clone(), sprite_name, idle_behavior.name.clone()))
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
+                                }
+                            };
+
+                            // Теперь обновляем пони
+                            let pony = &mut self.ponies[idx];
+                            pony.grabbed = false;
+                            pony.movement_type = MovementType::None;
+                            pony.behavior_timer = 0.0;
+
+                            if let Some((config_name, sprite_name, behavior_name)) = idle_info {
+                                let (frames, fc, w, h, delay) = self.loader.load_pony_frames(
+                                    &config_name,
+                                    &sprite_name
+                                );
+
+                                pony.frames = frames;
+                                pony.frame_count = fc;
+                                pony.width = w;
+                                pony.height = h;
+                                pony.frame_duration = delay;
+                                pony.current_behavior = behavior_name;
+                            }
+
+                            // Восстанавливаем оригинальную скорость анимации
+                            if let Some(orig_dur) = pony.original_frame_duration {
+                                pony.frame_duration = orig_dur;
+                                pony.original_frame_duration = None;
+                            }
+
                             println!("[Drag] Released pony #{}", idx);
                         }
                     }
@@ -532,9 +711,17 @@ impl App {
 
         match action {
             PonyAction::Drag => {
-                self.ponies[pony_index].grabbed = true;
-                self.ponies[pony_index].movement_type = MovementType::Dragged;
+                let pony = &mut self.ponies[pony_index];
+                pony.grabbed = true;
+                pony.movement_type = MovementType::Dragged;
                 self.grabbed_pony = Some(pony_index);
+
+                // По умолчанию просто уменьшаем скорость анимации
+                if pony.original_frame_duration.is_none() {
+                    pony.original_frame_duration = Some(pony.frame_duration);
+                }
+                pony.frame_duration *= 1.5; // Замедляем анимацию при драге
+
                 println!("[Action] Drag pony #{}", pony_index);
             }
             PonyAction::Boop => {
@@ -602,8 +789,7 @@ impl App {
             }
             PonyAction::SendHome => {
                 println!("[Action] Send home pony #{}", pony_index);
-                // Здесь нужен event_loop, но его нет в этом методе
-                // Поэтому просто помечаем, что нужно удалить
+                // TODO: реализовать отправку домой
             }
         }
     }
@@ -695,7 +881,6 @@ impl App {
                     let mut buffer = surface.buffer_mut().unwrap();
                     let bw = sw.get() as usize;
                     let bh = sh.get() as usize;
-                    //TODO color pony window
                     buffer.fill(0x00000000);
 
                     // Рисуем пони
@@ -730,6 +915,9 @@ impl App {
                 }
             }
         }
+
+        // Рисуем контекстное меню ПОВЕРХ пони (после презентации основного буфера)
+        self.render_context_menu();
 
         self.frame_counter += 1;
         self.perf.update(self.ponies.len(), 0);
@@ -816,6 +1004,13 @@ fn update_ponies(
                 p.grabbed = false;
                 p.movement_type = MovementType::None;
                 p.behavior_timer = 0.0;
+
+                // Восстанавливаем оригинальную скорость анимации
+                if let Some(orig_dur) = p.original_frame_duration {
+                    p.frame_duration = orig_dur;
+                    p.original_frame_duration = None;
+                }
+
                 *grabbed_pony = None;
             }
             p.frame_timer += dt;
@@ -1077,7 +1272,6 @@ fn main() {
     let el = EventLoop::<UserEvent>::with_user_event().build().unwrap();
     let proxy = el.create_proxy();
 
-    // Запускаем периодическое обновление окон взаимодействия
     let proxy_clone = proxy.clone();
     std::thread::spawn(move || {
         loop {
