@@ -30,6 +30,7 @@ pub struct PonyInteractionData {
     pub behavior_timer: f32,
     pub interaction_state: Option<InteractionState>,
     pub original_frame_duration: Option<f32>,
+    pub grabbed: bool,
 }
 
 pub struct PonyInteractionSystem;
@@ -90,6 +91,95 @@ impl PonyInteractionSystem {
     pub fn change_direction(pony: &mut PonyInteractionData) {
         pony.facing_right = !pony.facing_right;
         pony.vx *= -1.0;
+    }
+
+    /// Взять пони (drag) - переключает на drag-анимацию
+    pub fn drag_pony(pony: &mut PonyInteractionData, loader: &mut DesktopPoniesLoader) {
+        // Сохраняем оригинальную длительность
+        if pony.original_frame_duration.is_none() {
+            pony.original_frame_duration = Some(pony.frame_duration);
+        }
+
+        // Сначала получаем имя пони (чтобы не держать заимствование)
+        let pony_name = pony.config_name.clone();
+
+        // Теперь ищем drag-поведение
+        let drag_info = if let Some(config) = loader.get_config(&pony_name) {
+            config.behaviors.iter()
+                .find(|b| b.name.to_lowercase().contains("drag"))
+                .map(|behavior| {
+                    let sprite_name = if !behavior.sprite_right.is_empty() {
+                        behavior.sprite_right.clone()
+                    } else {
+                        behavior.sprite_left.clone()
+                    };
+                    (sprite_name, behavior.name.clone())
+                })
+        } else {
+            None
+        };
+
+        if let Some((sprite_name, behavior_name)) = drag_info {
+            let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
+            pony.frames = frames;
+            pony.frame_count = fc;
+            pony.width = w;
+            pony.height = h;
+            pony.frame_duration = delay;
+            pony.current_frame = 0;
+            pony.current_behavior = behavior_name;
+            pony.movement_type = MovementType::Dragged;
+        } else {
+            pony.frame_duration *= 1.5;
+        }
+
+        pony.grabbed = true;
+        println!("[Interaction] Drag pony '{}'", pony.config_name);
+    }
+
+    /// Отпустить пони - восстановить idle/stand
+    pub fn release_pony(pony: &mut PonyInteractionData, loader: &mut DesktopPoniesLoader) {
+        pony.grabbed = false;
+        pony.movement_type = MovementType::None;
+        pony.behavior_timer = 0.0;
+
+        // Сначала получаем информацию об idle/stand поведении
+        let pony_name = pony.config_name.clone();
+        let idle_info = if let Some(config) = loader.get_config(&pony_name) {
+            config.behaviors.iter()
+                .find(|b| {
+                    let name = b.name.to_lowercase();
+                    name.contains("stand") || name.contains("idle") || name.contains("wake")
+                })
+                .map(|behavior| {
+                    let sprite_name = if !behavior.sprite_right.is_empty() {
+                        behavior.sprite_right.clone()
+                    } else {
+                        behavior.sprite_left.clone()
+                    };
+                    (sprite_name, behavior.name.clone())
+                })
+        } else {
+            None
+        };
+
+        if let Some((sprite_name, behavior_name)) = idle_info {
+            let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
+            pony.frames = frames;
+            pony.frame_count = fc;
+            pony.width = w;
+            pony.height = h;
+            pony.frame_duration = delay;
+            pony.current_behavior = behavior_name;
+        }
+
+        // Восстанавливаем оригинальную скорость анимации
+        if let Some(orig_dur) = pony.original_frame_duration {
+            pony.frame_duration = orig_dur;
+            pony.original_frame_duration = None;
+        }
+
+        println!("[Interaction] Released pony '{}'", pony.config_name);
     }
 
     /// Усыпить или разбудить пони

@@ -1,13 +1,14 @@
 // src_rust/world.rs
 // src_rust/world.rs
+// src_rust/world.rs
 use glam::Vec2;
-use crate::pony::{PonyEntity, PonyRenderType};
+use crate::pony::PonyEntity;
 use std::collections::HashMap;
 
 pub struct World {
     pub ponies: HashMap<u64, PonyEntity>,
-    pub next_id: u64,                     // <-- pub
-    pub screen_size: (f32, f32),          // <-- pub (было pub(crate))
+    pub next_id: u64,
+    pub screen_size: (f32, f32),
 }
 
 impl World {

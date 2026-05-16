@@ -18,3 +18,9 @@ pub mod settings;
 pub mod performance;
 pub mod context_menu;
 pub mod pony_interaction;
+
+// Re-export основных типов для удобства
+pub use loader::{DesktopPoniesLoader, MovementType, Behavior};
+pub use pony::PonyEntity;
+pub use pony_interaction::{PonyInteractionSystem, PonyInteractionData, InteractionState};
+pub use context_menu::{ContextMenu, PonyAction};

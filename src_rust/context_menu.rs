@@ -2,13 +2,13 @@
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum PonyAction {
-    Drag,              // Взять и перетаскивать
-    Boop,              // Бопнуть по носику
-    Feed,              // Покормить
-    Pet,               // Погладить
-    ChangeDirection,   // Развернуть
-    ToggleSleep,       // Усыпить/разбудить
-    SendHome,          // Отправить домой
+    Drag,
+    Boop,
+    Feed,
+    Pet,
+    ChangeDirection,
+    ToggleSleep,
+    SendHome,
 }
 
 #[derive(Clone, Debug)]
@@ -63,9 +63,6 @@ impl ContextMenu {
         self.y = y;
         self.pony_index = Some(pony_index);
         self.pony_name = Some(pony_name.to_string());
-
-        // Можно обновить пункт "Спать" в зависимости от состояния
-        // если бы был доступ к состоянию пони
     }
 
     pub fn hide(&mut self) {
@@ -85,7 +82,6 @@ impl ContextMenu {
 
         let menu_height = self.items.len() as f32 * item_height + padding * 2.0;
 
-        // Проверяем, что мышь в пределах меню
         if mouse_x >= self.x && mouse_x <= self.x + menu_width &&
             mouse_y >= self.y && mouse_y <= self.y + menu_height {
             let rel_y = mouse_y - self.y - padding;
@@ -97,5 +93,23 @@ impl ContextMenu {
             }
         }
         None
+    }
+
+    pub fn is_point_inside(&self, x: f32, y: f32) -> bool {
+        if !self.visible {
+            return false;
+        }
+        let item_height = 28.0;
+        let menu_width = 180.0;
+        let padding = 4.0;
+        let menu_height = self.items.len() as f32 * item_height + padding * 2.0;
+
+        x >= self.x && x <= self.x + menu_width &&
+            y >= self.y && y <= self.y + menu_height
+    }
+
+    /// Получить действие по индексу
+    pub fn get_action(&self, index: usize) -> Option<PonyAction> {
+        self.items.get(index).map(|item| item.action.clone())
     }
 }

@@ -1,7 +1,6 @@
 // src_rust/interaction.rs
 use crate::pony::PonyEntity;
 use crate::world::World;
-use glam::Vec2;
 
 pub struct InteractionSystem;
 

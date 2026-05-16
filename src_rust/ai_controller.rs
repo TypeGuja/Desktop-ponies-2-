@@ -122,7 +122,7 @@ impl AIController {
         &mut self,
         pony_a: &PonyEntity,
         pony_a_name: &str,
-        pony_b: &PonyEntity,
+        _pony_b: &PonyEntity,
         pony_b_name: &str,
     ) -> Result<Option<AIResponse>, String> {
         let state_a = match self.states.get(&pony_a.id) {

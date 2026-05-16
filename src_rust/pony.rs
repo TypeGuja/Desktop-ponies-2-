@@ -1,4 +1,5 @@
 // src_rust/pony.rs (добавить в конец, перед impl PonyEntity)
+// src_rust/pony.rs
 use glam::{Vec2, Vec3, Quat};
 use crate::skeleton::Skeleton;
 use crate::animation::AnimationClip;
@@ -6,7 +7,6 @@ use crate::verlet::VerletChain;
 use crate::loader::MovementType;
 use std::collections::HashMap;
 
-// ДОБАВЛЯЕМ SkeletalVisuals В ЭТОТ МОДУЛЬ
 pub struct SkeletalVisuals {
     pub texture_atlas_id: usize,
     pub body_color: [f32; 3],
@@ -22,7 +22,7 @@ pub enum PonyRenderType {
         animations: HashMap<String, AnimationClip>,
         tail_chain: VerletChain,
         mane_chain: VerletChain,
-        visuals: Option<SkeletalVisuals>, // ДОБАВЛЯЕМ ПОЛЕ
+        visuals: Option<SkeletalVisuals>,
     },
     Sprite {
         texture_id: usize,
@@ -44,6 +44,7 @@ pub struct PonyEntity {
     pub scale: f32,
     pub speed_override: Option<f32>,
     pub movement_type: Option<MovementType>,
+    pub grabbed: bool,
 }
 
 impl PonyEntity {
@@ -66,17 +67,17 @@ impl PonyEntity {
                 animations,
                 tail_chain,
                 mane_chain,
-                visuals: None, // ПО УМОЛЧАНИЮ БЕЗ ВИЗУАЛОВ
+                visuals: None,
             },
             current_animation: "idle".to_string(),
             animation_time: 0.0,
             scale: 1.0,
             speed_override: None,
             movement_type: None,
+            grabbed: false,
         }
     }
 
-    // ДОБАВЛЯЕМ МЕТОД С ВИЗУАЛАМИ
     pub fn new_skeletal_with_visuals(id: u64, position: Vec2, vis: SkeletalVisuals) -> Self {
         let mut pony = Self::new_skeletal(id, position);
         if let PonyRenderType::Skeletal { visuals, .. } = &mut pony.render_type {
@@ -103,6 +104,7 @@ impl PonyEntity {
             scale: 1.0,
             speed_override: None,
             movement_type: None,
+            grabbed: false,
         }
     }
 

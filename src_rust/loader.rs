@@ -259,6 +259,39 @@ fn get_field(fields: &[String], idx: usize, default: &str) -> String {
     }
 }
 
+/// Проверяет, является ли строка мусорной (заголовки Excel, JSON-подобные строки)
+fn is_garbage_line(line: &str) -> bool {
+    let trimmed = line.trim();
+
+    // Пустые строки
+    if trimmed.is_empty() {
+        return true;
+    }
+
+    // Строки, начинающиеся с { (JSON-подобный мусор)
+    if trimmed.starts_with('{') {
+        return true;
+    }
+
+    // Строки с заголовками Excel/CSV
+    if trimmed.contains("Identifier") && trimmed.contains("Name") && trimmed.contains("Chance") {
+        return true;
+    }
+
+    // Строки, которые не начинаются с известных типов
+    let known_types = ["Behavior", "Speak", "Interaction", "Effect", "Categories", "Name"];
+    let first_field = trimmed.split(',').next().unwrap_or("").trim().trim_matches('"');
+
+    if !known_types.contains(&first_field) && !first_field.is_empty() {
+        // Это может быть неизвестный тип, но проверим, не содержит ли он цифр или спецсимволов
+        if first_field.chars().any(|c| c.is_digit(10) || c == '{' || c == '}') {
+            return true;
+        }
+    }
+
+    false
+}
+
 impl DesktopPoniesLoader {
     pub fn new<P: AsRef<Path>>(base_path: P) -> Self {
         let base = base_path.as_ref();
@@ -350,7 +383,9 @@ impl DesktopPoniesLoader {
 
         for (line_num, raw_line) in content.lines().enumerate() {
             let line = raw_line.trim();
-            if line.is_empty() || line.starts_with('#') || line.starts_with(';') {
+
+            // Пропускаем мусорные строки
+            if is_garbage_line(line) {
                 continue;
             }
 
@@ -359,7 +394,7 @@ impl DesktopPoniesLoader {
                 continue;
             }
 
-            let row_type = fields[0].trim();
+            let row_type = fields[0].trim().trim_matches('"');
 
             match row_type {
                 "Categories" => {
@@ -369,7 +404,7 @@ impl DesktopPoniesLoader {
                         .collect();
                 }
                 "Behavior" => {
-                    // Поведение имеет минимум 13 полей, остальные опциональны
+                    // Поведение имеет минимум 13 полей
                     if fields.len() >= 13 {
                         let behavior = Behavior {
                             name: get_field(&fields, 1, ""),
@@ -401,11 +436,11 @@ impl DesktopPoniesLoader {
                             sound_files: if fields.len() > 27 { parse_list(&fields[27]) } else { vec![] },
                         };
 
-                        if !behavior.skip {
-                            behaviors.push(behavior);
-                        }
+                        // ВАЖНО: Сохраняем ВСЕ поведения, даже с skip=true
+                        // Фильтрация будет происходить позже, при формировании available_behaviors
+                        behaviors.push(behavior);
                     } else {
-                        eprintln!("[Warning] Line {}: Behavior has only {} fields, skipping", line_num + 1, fields.len());
+                        eprintln!("[Warning] {} line {}: Behavior has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Speak" => {
@@ -418,7 +453,7 @@ impl DesktopPoniesLoader {
                             frequency: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
                         });
                     } else {
-                        eprintln!("[Warning] Line {}: Speak has only {} fields, skipping", line_num + 1, fields.len());
+                        eprintln!("[Warning] {} line {}: Speak has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Interaction" => {
@@ -433,7 +468,7 @@ impl DesktopPoniesLoader {
                             duration: if fields.len() > 7 { parse_f32(&fields[7]) } else { 300.0 },
                         });
                     } else {
-                        eprintln!("[Warning] Line {}: Interaction has only {} fields, skipping", line_num + 1, fields.len());
+                        eprintln!("[Warning] {} line {}: Interaction has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Effect" => {
@@ -447,17 +482,16 @@ impl DesktopPoniesLoader {
                             delay: if fields.len() > 6 { parse_f32(&fields[6]) } else { 0.0 },
                         });
                     } else {
-                        eprintln!("[Warning] Line {}: Effect has only {} fields, skipping", line_num + 1, fields.len());
+                        eprintln!("[Warning] {} line {}: Effect has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
-                // Игнорируем строку Name (она уже обработана отдельно)
                 "Name" => {
                     // Пропускаем, имя берётся из названия папки
                 }
                 _ => {
-                    // Неизвестный тип строки, тихо игнорируем
-                    if !row_type.is_empty() && !row_type.starts_with('"') {
-                        // eprintln!("[Debug] Unknown row type '{}' at line {}", row_type, line_num + 1);
+                    // Неизвестный тип строки, но не мусор - возможно новый тип
+                    if !row_type.is_empty() && !is_garbage_line(line) {
+                        eprintln!("[Debug] {}: Unknown row type '{}' at line {}", name, row_type, line_num + 1);
                     }
                 }
             }

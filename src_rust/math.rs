@@ -1,5 +1,5 @@
 // src_rust/math.rs
-use glam::{Vec2, Vec3, Mat4, Quat};
+use glam::{Vec2, Quat};
 
 pub const PI: f32 = std::f32::consts::PI;
 

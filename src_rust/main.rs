@@ -161,7 +161,7 @@ impl App {
         };
 
         let available_behaviors: Vec<Behavior> = config.behaviors.iter()
-            .filter(|b| (!b.sprite_right.is_empty() || !b.sprite_left.is_empty()) && !b.skip)
+            .filter(|b| !b.skip && (!b.sprite_right.is_empty() || !b.sprite_left.is_empty()))
             .cloned()
             .collect();
 
@@ -258,7 +258,7 @@ impl App {
                         surface.resize(w, h).unwrap();
                         let mut buffer = surface.buffer_mut().unwrap();
                         // Полупрозрачный синий (альфа 128)
-                        let blue_color = 0x804488FF;
+                        let blue_color = 0x00000000;
                         buffer.fill(blue_color);
                         buffer.present().unwrap();
                     }
@@ -368,7 +368,7 @@ impl App {
 
                     if let Ok(mut buffer) = iw.surface.buffer_mut() {
                         // Полупрозрачный синий фон
-                        let blue_color = 0x804488FF;
+                        let blue_color = 0x00000000;
                         buffer.fill(blue_color);
 
                         // Дебаг: рисуем рамку
@@ -414,9 +414,9 @@ impl App {
                         let item_height = 28;
                         let padding = 4;
 
-                        let bg_color = 0xCC2D2D2D; // Тёмный фон
-                        let border_color = 0xFF4488FF; // Синяя рамка
-                        let hover_color = 0xCC4488FF; // Подсветка
+                        let bg_color = 0x00000000; // Тёмный фон
+                        let border_color = 0x00000000; // Синяя рамка
+                        let hover_color = 0x00000000; // Подсветка
 
                         let total_height = self.context_menu.items.len() * item_height + padding * 2;
 
@@ -546,122 +546,47 @@ impl App {
                 if pressed {
                     self.mouse_down = true;
 
-                    // Проверяем контекстное меню
                     if self.context_menu.visible {
-                        if let Some(action_idx) = self.context_menu.hit_test(self.mouse_x, self.mouse_y) {
-                            if action_idx < self.context_menu.items.len() {
-                                let action = self.context_menu.items[action_idx].action.clone();
-                                if let Some(ctx_pony_idx) = self.context_menu.pony_index {
-                                    self.execute_pony_action(ctx_pony_idx, action);
-                                }
-                            }
-                            self.context_menu.hide();
-                            return;
-                        }
                         self.context_menu.hide();
+                        return;
                     }
 
-                    // Захват пони с анимацией драга
                     if pony_index < self.ponies.len() {
-                        // Сначала собираем данные для загрузки спрайта
-                        let drag_info = {
-                            let pony = &self.ponies[pony_index];
-                            let config_name = pony.config_name.clone();
+                        let pony_name = self.ponies[pony_index].config_name.clone();
 
-                            if let Some(config) = self.loader.get_config(&config_name) {
-                                if let Some(drag_behavior) = config.behaviors.iter()
-                                    .find(|b| b.name.to_lowercase().contains("drag"))
-                                {
-                                    let sprite_name = if !drag_behavior.sprite_right.is_empty() {
-                                        drag_behavior.sprite_right.clone()
-                                    } else {
-                                        drag_behavior.sprite_left.clone()
-                                    };
-                                    Some((config_name.clone(), sprite_name, drag_behavior.name.clone()))
-                                } else {
-                                    None
-                                }
-                            } else {
-                                None
-                            }
-                        };
-
-                        // Теперь загружаем спрайт и обновляем пони
-                        let pony = &mut self.ponies[pony_index];
-
-                        if let Some((config_name, sprite_name, behavior_name)) = drag_info {
-                            let (frames, fc, w, h, delay) = self.loader.load_pony_frames(
-                                &config_name,
-                                &sprite_name
-                            );
-
-                            pony.frames = frames;
-                            pony.frame_count = fc;
-                            pony.width = w;
-                            pony.height = h;
-                            pony.frame_duration = delay;
-                            pony.current_frame = 0;
-                            pony.current_behavior = behavior_name;
-                        } else {
-                            // Fallback: замедляем текущую анимацию
+                        // Сохраняем оригинальную длительность
+                        {
+                            let pony = &mut self.ponies[pony_index];
                             if pony.original_frame_duration.is_none() {
                                 pony.original_frame_duration = Some(pony.frame_duration);
                             }
-                            pony.frame_duration *= 1.5;
+                            pony.grabbed = true;
+                            pony.movement_type = MovementType::Dragged;
                         }
 
-                        pony.grabbed = true;
-                        pony.movement_type = MovementType::Dragged;
                         self.grabbed_pony = Some(pony_index);
-                        println!("[Drag] Started dragging pony #{}", pony_index);
+
+                        // Загружаем drag-анимацию (отдельный блок заимствования)
+                        self.set_pony_drag_animation(pony_index, &pony_name);
+
+                        println!("[Drag] === DRAG STARTED for pony #{} '{}' ===",
+                                 pony_index, pony_name);
                     }
                 } else {
+                    // Отпустили кнопку
                     self.mouse_down = false;
                     if let Some(idx) = self.grabbed_pony.take() {
                         if idx < self.ponies.len() {
-                            // Сначала собираем данные для возврата к idle
-                            let idle_info = {
-                                let pony = &self.ponies[idx];
-                                let config_name = pony.config_name.clone();
+                            let pony_name = self.ponies[idx].config_name.clone();
 
-                                if let Some(config) = self.loader.get_config(&config_name) {
-                                    if let Some(idle_behavior) = config.behaviors.iter()
-                                        .find(|b| b.name.to_lowercase().contains("stand") ||
-                                            b.name.to_lowercase().contains("idle"))
-                                    {
-                                        let sprite_name = if !idle_behavior.sprite_right.is_empty() {
-                                            idle_behavior.sprite_right.clone()
-                                        } else {
-                                            idle_behavior.sprite_left.clone()
-                                        };
-                                        Some((config_name.clone(), sprite_name, idle_behavior.name.clone()))
-                                    } else {
-                                        None
-                                    }
-                                } else {
-                                    None
-                                }
-                            };
+                            // Восстанавливаем idle анимацию
+                            self.restore_pony_idle_animation(idx, &pony_name);
 
-                            // Теперь обновляем пони
+                            // Сбрасываем состояние
                             let pony = &mut self.ponies[idx];
                             pony.grabbed = false;
                             pony.movement_type = MovementType::None;
                             pony.behavior_timer = 0.0;
-
-                            if let Some((config_name, sprite_name, behavior_name)) = idle_info {
-                                let (frames, fc, w, h, delay) = self.loader.load_pony_frames(
-                                    &config_name,
-                                    &sprite_name
-                                );
-
-                                pony.frames = frames;
-                                pony.frame_count = fc;
-                                pony.width = w;
-                                pony.height = h;
-                                pony.frame_duration = delay;
-                                pony.current_behavior = behavior_name;
-                            }
 
                             // Восстанавливаем оригинальную скорость анимации
                             if let Some(orig_dur) = pony.original_frame_duration {
@@ -669,38 +594,113 @@ impl App {
                                 pony.original_frame_duration = None;
                             }
 
-                            println!("[Drag] Released pony #{}", idx);
+                            println!("[Drag] === DRAG RELEASED for pony #{} '{}' ===",
+                                     idx, pony_name);
                         }
                     }
-                }
-            }
-            MouseButton::Right => {
-                if pressed {
-                    self.right_mouse_down = true;
-
-                    // Отпускаем захваченного
-                    if let Some(idx) = self.grabbed_pony.take() {
-                        if idx < self.ponies.len() {
-                            self.ponies[idx].grabbed = false;
-                            self.ponies[idx].movement_type = MovementType::None;
-                            self.ponies[idx].behavior_timer = 0.0;
-                        }
-                    }
-                    self.mouse_down = false;
-
-                    // Показываем контекстное меню
-                    if pony_index < self.ponies.len() {
-                        let pony_name = self.ponies[pony_index].config_name.clone();
-                        self.context_menu.show(self.mouse_x, self.mouse_y, pony_index, &pony_name);
-                        println!("[Menu] Opened for pony #{}", pony_index);
-                    } else {
-                        self.context_menu.hide();
-                    }
-                } else {
-                    self.right_mouse_down = false;
                 }
             }
             _ => {}
+        }
+    }
+
+    fn set_pony_drag_animation(&mut self, pony_index: usize, pony_name: &str) {
+        // Ищем drag-поведение НАПРЯМУЮ в конфиге (игнорируем available_behaviors)
+        let drag_info = if let Some(config) = self.loader.get_config(pony_name) {
+            config.behaviors.iter()
+                .find(|b| b.name.to_lowercase().contains("drag"))
+                .map(|behavior| {
+                    let sprite_name = if !behavior.sprite_right.is_empty() {
+                        behavior.sprite_right.clone()
+                    } else {
+                        behavior.sprite_left.clone()
+                    };
+                    println!("[Drag] Found drag behavior: '{}' using sprite '{}' (skip={})",
+                             behavior.name, sprite_name, behavior.skip);
+                    (sprite_name, behavior.name.clone())
+                })
+        } else {
+            None
+        };
+
+        if let Some((sprite_name, behavior_name)) = drag_info {
+            // ПРОВЕРЯЕМ существует ли файл спрайта
+            let pony_dir = self.loader.ponies_dir.join(pony_name);
+            let sprite_path = pony_dir.join(&sprite_name);
+
+            if sprite_path.exists() {
+                println!("[Drag] Loading sprite from: {:?}", sprite_path);
+                let (frames, fc, w, h, delay) = self.loader.load_pony_frames(pony_name, &sprite_name);
+
+                if !frames.is_empty() && !frames[0].is_empty() {
+                    let pony = &mut self.ponies[pony_index];
+                    pony.frames = frames;
+                    pony.frame_count = fc;
+                    pony.width = w;
+                    pony.height = h;
+                    pony.frame_duration = delay;
+                    pony.current_frame = 0;
+                    pony.current_behavior = behavior_name;
+                    println!("[Drag] ✓ Loaded drag animation: {} frames, {}x{}", fc, w, h);
+                    return;
+                } else {
+                    println!("[Drag] ✗ Failed to decode drag frames for '{}'", sprite_name);
+                }
+            } else {
+                println!("[Drag] ✗ Sprite file not found: {:?}", sprite_path);
+            }
+        }
+
+        // FALLBACK: Если нет drag-спрайтов, используем текущую анимацию с ускорением
+        println!("[Drag] ⚠ No drag sprite for '{}', using speed-up effect", pony_name);
+        let pony = &mut self.ponies[pony_index];
+        // Ускоряем анимацию для эффекта "напряжения"
+        pony.frame_duration = (pony.frame_duration * 0.4).max(0.03);
+    }
+
+    fn restore_pony_idle_animation(&mut self, pony_index: usize, pony_name: &str) {
+        // Ищем idle/stand поведение НАПРЯМУЮ в конфиге
+        let idle_info = if let Some(config) = self.loader.get_config(pony_name) {
+            config.behaviors.iter()
+                .find(|b| {
+                    let name = b.name.to_lowercase();
+                    name.contains("stand") || name.contains("idle") || name.contains("wake")
+                })
+                .map(|behavior| {
+                    let sprite_name = if !behavior.sprite_right.is_empty() {
+                        behavior.sprite_right.clone()
+                    } else {
+                        behavior.sprite_left.clone()
+                    };
+                    println!("[Drag] Found idle behavior: '{}' using sprite '{}' (skip={})",
+                             behavior.name, sprite_name, behavior.skip);
+                    (sprite_name, behavior.name.clone())
+                })
+        } else {
+            None
+        };
+
+        if let Some((sprite_name, behavior_name)) = idle_info {
+            let (frames, fc, w, h, delay) = self.loader.load_pony_frames(pony_name, &sprite_name);
+
+            if !frames.is_empty() && !frames[0].is_empty() {
+                let pony = &mut self.ponies[pony_index];
+                pony.frames = frames;
+                pony.frame_count = fc;
+                pony.width = w;
+                pony.height = h;
+                pony.frame_duration = delay;
+                pony.current_behavior = behavior_name;
+                println!("[Drag] ✓ Restored idle animation: {} frames, {}x{}", fc, w, h);
+                return;
+            }
+        }
+
+        // Если не нашли idle - просто восстанавливаем оригинальную длительность
+        println!("[Drag] ⚠ No idle behavior for '{}', restoring original duration", pony_name);
+        let pony = &mut self.ponies[pony_index];
+        if let Some(orig_dur) = pony.original_frame_duration {
+            pony.frame_duration = orig_dur;
         }
     }
 
@@ -930,8 +930,10 @@ impl App {
 // ==================== UPDATE PONIES ====================
 
 fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
-    if pony.available_behaviors.is_empty() { return; }
+    // Не меняем поведение если пони схвачен или спит/поглажен
+    if pony.grabbed { return; }
     if pony.interaction_state.is_some() { return; }
+    if pony.available_behaviors.is_empty() { return; }
 
     let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
     if total_prob <= 0.0 { return; }

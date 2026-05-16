@@ -151,7 +151,7 @@ impl ContentConfig {
         }
 
         let text_lower = text.to_lowercase();
-        let mut modified = text.to_string();
+        let modified = text.to_string();
         let mut blocked = false;
         let mut block_reason = String::new();
         let mut warnings = Vec::new();
