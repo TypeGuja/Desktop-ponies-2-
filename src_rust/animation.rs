@@ -1,4 +1,5 @@
 // src_rust/animation.rs
+// src_rust/animation.rs
 use glam::Quat;
 use std::collections::HashMap;
 
@@ -66,7 +67,6 @@ impl AnimationClip {
 
     pub fn create_walk() -> Self {
         let mut tracks = HashMap::new();
-        let half_pi = std::f32::consts::FRAC_PI_2;
 
         // Передняя левая нога (верх + низ)
         tracks.insert("front_left_upper".into(), BoneTrack {
