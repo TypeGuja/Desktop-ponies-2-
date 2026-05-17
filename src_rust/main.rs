@@ -19,12 +19,14 @@ mod monitor_manager;
 mod settings;
 mod performance;
 mod context_menu;
+mod editor;
+
 use loader::{DesktopPoniesLoader, MovementType, Behavior};
 use monitor_manager::MonitorManager;
 use settings::AppSettings;
 use performance::PerformanceMonitor;
 use context_menu::{ContextMenu, PonyAction};
-
+use crate::editor::EditorWindow;
 // ==================== ТИПЫ ДАННЫХ ====================
 
 #[derive(Debug, Clone)]
@@ -95,6 +97,33 @@ struct App {
     fps_limit: u32,
     frame_timer: Instant,
     debug_hitboxes: bool,
+}
+
+// ==================== ФУНКЦИЯ ЗАПУСКА РЕДАКТОРА ====================
+
+fn launch_editor() {
+    println!("[Editor] Launching Pony Editor...");
+
+    let exe_path = match std::env::current_exe() {
+        Ok(path) => path,
+        Err(e) => {
+            eprintln!("[Editor] Failed to get exe path: {}", e);
+            return;
+        }
+    };
+
+    // Запускаем редактор в отдельном процессе с флагом --editor
+    match std::process::Command::new(exe_path)
+        .arg("--editor")
+        .spawn()
+    {
+        Ok(child) => {
+            println!("[Editor] Editor started with PID: {}", child.id());
+        }
+        Err(e) => {
+            eprintln!("[Editor] Failed to launch editor: {}", e);
+        }
+    }
 }
 
 // ==================== HTML BUILDER ====================
@@ -217,10 +246,7 @@ impl App {
             original_frame_duration: None,
         });
 
-        // Создаём окно взаимодействия для этого пони
         self.create_interaction_window(pony_index, event_loop);
-
-        // Сразу обновляем позицию и показываем окно
         self.update_interaction_windows();
 
         println!("[Spawn] Created pony '{}' (#{}) at ({:.0},{:.0}) with interaction window",
@@ -245,19 +271,16 @@ impl App {
 
         if let Ok(window) = event_loop.create_window(attrs) {
             let pw = Arc::new(window);
-            // ВАЖНО: окно НЕ прозрачно для кликов
             pw.set_cursor_hittest(true).ok();
 
             if let Ok(ctx) = Context::new(pw.clone()) {
                 if let Ok(mut surface) = Surface::new(&ctx, pw.clone()) {
-                    // Рисуем полупрозрачный синий фон
                     if let (Some(w), Some(h)) = (
                         NonZeroU32::new(window_w as u32),
                         NonZeroU32::new(window_h as u32)
                     ) {
                         surface.resize(w, h).unwrap();
                         let mut buffer = surface.buffer_mut().unwrap();
-                        // Полупрозрачный синий (альфа 128)
                         let blue_color = 0x00000000;
                         buffer.fill(blue_color);
                         buffer.present().unwrap();
@@ -269,7 +292,6 @@ impl App {
                         pony_index,
                     });
 
-                    // ВАЖНО: Показываем окно сразу после создания
                     pw.set_visible(true);
 
                     println!("[Interaction] Created and SHOWN window for pony #{} ({}x{})",
@@ -285,16 +307,13 @@ impl App {
         if index < self.ponies.len() {
             println!("[Remove] Removing pony #{}", index);
 
-            // Скрываем и удаляем окно взаимодействия
             if let Some(iw_idx) = self.interaction_windows.iter().position(|iw| iw.pony_index == index) {
                 self.interaction_windows[iw_idx].window.set_visible(false);
                 println!("[Remove] Hidden interaction window for pony #{}", index);
             }
 
-            // Удаляем окно
             self.interaction_windows.retain(|iw| iw.pony_index != index);
 
-            // Обновляем индексы в оставшихся окнах
             for iw in &mut self.interaction_windows {
                 if iw.pony_index > index {
                     iw.pony_index -= 1;
@@ -303,7 +322,6 @@ impl App {
 
             self.ponies.remove(index);
 
-            // Обновляем grabbed_pony
             if self.grabbed_pony == Some(index) {
                 self.grabbed_pony = None;
             } else if let Some(g) = self.grabbed_pony {
@@ -330,11 +348,9 @@ impl App {
                         let w = ((pony.width as f32 + padding * 2.0) as u32).max(50);
                         let h = ((pony.height as f32 + padding * 2.0) as u32).max(50);
 
-                        // Позиционируем окно
                         let _ = iw.window.set_outer_position(PhysicalPosition::new(x.max(0), y.max(0)));
                         let _ = iw.window.request_inner_size(PhysicalSize::new(w, h));
 
-                        // Показываем/скрываем
                         let is_sleeping = matches!(pony.interaction_state, Some(InteractionState::Sleeping));
                         let should_show = !is_sleeping;
 
@@ -367,11 +383,9 @@ impl App {
                     }
 
                     if let Ok(mut buffer) = iw.surface.buffer_mut() {
-                        // Полупрозрачный синий фон
                         let blue_color = 0x00000000;
                         buffer.fill(blue_color);
 
-                        // Дебаг: рисуем рамку
                         if self.debug_hitboxes {
                             let bw = w.get() as usize;
                             let bh = h.get() as usize;
@@ -399,7 +413,6 @@ impl App {
             return;
         }
 
-        // Рисуем меню поверх главного окна
         if let Some(surface) = &mut self.main_surface {
             if let Some(window) = &self.main_window {
                 let size = window.inner_size();
@@ -414,18 +427,16 @@ impl App {
                         let item_height = 28;
                         let padding = 4;
 
-                        let bg_color = 0x00000000; // Тёмный фон
-                        let border_color = 0x00000000; // Синяя рамка
-                        let hover_color = 0x00000000; // Подсветка
+                        let bg_color = 0x00000000;
+                        let border_color = 0x00000000;
+                        let hover_color = 0x00000000;
 
                         let total_height = self.context_menu.items.len() * item_height + padding * 2;
 
-                        // Проверяем границы
                         if menu_x + menu_width > bw || menu_y + total_height > bh {
-                            return; // Меню выходит за границы окна
+                            return;
                         }
 
-                        // Фон меню с рамкой
                         for y in menu_y..(menu_y + total_height).min(bh) {
                             for x in menu_x..(menu_x + menu_width).min(bw) {
                                 if x == menu_x || x == menu_x + menu_width - 1 ||
@@ -437,19 +448,16 @@ impl App {
                             }
                         }
 
-                        // Определяем hover-элемент
                         let hover_idx = self.context_menu.hit_test(self.mouse_x, self.mouse_y);
 
-                        // Рисуем пункты меню с подсветкой и разделителями
                         for i in 0..self.context_menu.items.len() {
                             let item_y = menu_y + padding + i * item_height;
                             let item = &self.context_menu.items[i];
 
-                            // Фон пункта
                             let item_bg = if Some(i) == hover_idx && item.enabled {
                                 hover_color
                             } else if !item.enabled {
-                                0xCC555555 // Серый для недоступных
+                                0xCC555555
                             } else {
                                 bg_color
                             };
@@ -461,7 +469,6 @@ impl App {
                                 }
                             }
 
-                            // Разделитель между пунктами
                             if i < self.context_menu.items.len() - 1 {
                                 let sep_y = item_y + item_height - 1;
                                 if sep_y < bh {
@@ -526,7 +533,6 @@ impl App {
 
         if let Ok(window) = event_loop.create_window(attrs) {
             let pw = Arc::new(window);
-            // Главное окно ВСЕГДА прозрачно для кликов
             pw.set_cursor_hittest(false).ok();
 
             if let Ok(ctx) = Context::new(pw.clone()) {
@@ -554,7 +560,6 @@ impl App {
                     if pony_index < self.ponies.len() {
                         let pony_name = self.ponies[pony_index].config_name.clone();
 
-                        // Сохраняем оригинальную длительность
                         {
                             let pony = &mut self.ponies[pony_index];
                             if pony.original_frame_duration.is_none() {
@@ -565,30 +570,24 @@ impl App {
                         }
 
                         self.grabbed_pony = Some(pony_index);
-
-                        // Загружаем drag-анимацию (отдельный блок заимствования)
                         self.set_pony_drag_animation(pony_index, &pony_name);
 
                         println!("[Drag] === DRAG STARTED for pony #{} '{}' ===",
                                  pony_index, pony_name);
                     }
                 } else {
-                    // Отпустили кнопку
                     self.mouse_down = false;
                     if let Some(idx) = self.grabbed_pony.take() {
                         if idx < self.ponies.len() {
                             let pony_name = self.ponies[idx].config_name.clone();
 
-                            // Восстанавливаем idle анимацию
                             self.restore_pony_idle_animation(idx, &pony_name);
 
-                            // Сбрасываем состояние
                             let pony = &mut self.ponies[idx];
                             pony.grabbed = false;
                             pony.movement_type = MovementType::None;
                             pony.behavior_timer = 0.0;
 
-                            // Восстанавливаем оригинальную скорость анимации
                             if let Some(orig_dur) = pony.original_frame_duration {
                                 pony.frame_duration = orig_dur;
                                 pony.original_frame_duration = None;
@@ -605,7 +604,6 @@ impl App {
     }
 
     fn set_pony_drag_animation(&mut self, pony_index: usize, pony_name: &str) {
-        // Ищем drag-поведение НАПРЯМУЮ в конфиге (игнорируем available_behaviors)
         let drag_info = if let Some(config) = self.loader.get_config(pony_name) {
             config.behaviors.iter()
                 .find(|b| b.name.to_lowercase().contains("drag"))
@@ -624,7 +622,6 @@ impl App {
         };
 
         if let Some((sprite_name, behavior_name)) = drag_info {
-            // ПРОВЕРЯЕМ существует ли файл спрайта
             let pony_dir = self.loader.ponies_dir.join(pony_name);
             let sprite_path = pony_dir.join(&sprite_name);
 
@@ -651,15 +648,12 @@ impl App {
             }
         }
 
-        // FALLBACK: Если нет drag-спрайтов, используем текущую анимацию с ускорением
         println!("[Drag] ⚠ No drag sprite for '{}', using speed-up effect", pony_name);
         let pony = &mut self.ponies[pony_index];
-        // Ускоряем анимацию для эффекта "напряжения"
         pony.frame_duration = (pony.frame_duration * 0.4).max(0.03);
     }
 
     fn restore_pony_idle_animation(&mut self, pony_index: usize, pony_name: &str) {
-        // Ищем idle/stand поведение НАПРЯМУЮ в конфиге
         let idle_info = if let Some(config) = self.loader.get_config(pony_name) {
             config.behaviors.iter()
                 .find(|b| {
@@ -696,7 +690,6 @@ impl App {
             }
         }
 
-        // Если не нашли idle - просто восстанавливаем оригинальную длительность
         println!("[Drag] ⚠ No idle behavior for '{}', restoring original duration", pony_name);
         let pony = &mut self.ponies[pony_index];
         if let Some(orig_dur) = pony.original_frame_duration {
@@ -716,11 +709,10 @@ impl App {
                 pony.movement_type = MovementType::Dragged;
                 self.grabbed_pony = Some(pony_index);
 
-                // По умолчанию просто уменьшаем скорость анимации
                 if pony.original_frame_duration.is_none() {
                     pony.original_frame_duration = Some(pony.frame_duration);
                 }
-                pony.frame_duration *= 1.5; // Замедляем анимацию при драге
+                pony.frame_duration *= 1.5;
 
                 println!("[Action] Drag pony #{}", pony_index);
             }
@@ -789,7 +781,6 @@ impl App {
             }
             PonyAction::SendHome => {
                 println!("[Action] Send home pony #{}", pony_index);
-                // TODO: реализовать отправку домой
             }
         }
     }
@@ -872,7 +863,6 @@ impl App {
             &mut self.grabbed_pony,
         );
 
-        // Рисуем главное окно (самих пони)
         if let Some(surface) = &mut self.main_surface {
             if let Some(window) = &self.main_window {
                 let size = window.inner_size();
@@ -883,7 +873,6 @@ impl App {
                     let bh = sh.get() as usize;
                     buffer.fill(0x00000000);
 
-                    // Рисуем пони
                     for p in &self.ponies {
                         if p.current_frame as usize >= p.frames.len() { continue; }
                         let frame = &p.frames[p.current_frame as usize];
@@ -916,7 +905,6 @@ impl App {
             }
         }
 
-        // Рисуем контекстное меню ПОВЕРХ пони (после презентации основного буфера)
         self.render_context_menu();
 
         self.frame_counter += 1;
@@ -930,7 +918,6 @@ impl App {
 // ==================== UPDATE PONIES ====================
 
 fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
-    // Не меняем поведение если пони схвачен или спит/поглажен
     if pony.grabbed { return; }
     if pony.interaction_state.is_some() { return; }
     if pony.available_behaviors.is_empty() { return; }
@@ -1007,7 +994,6 @@ fn update_ponies(
                 p.movement_type = MovementType::None;
                 p.behavior_timer = 0.0;
 
-                // Восстанавливаем оригинальную скорость анимации
                 if let Some(orig_dur) = p.original_frame_duration {
                     p.frame_duration = orig_dur;
                     p.original_frame_duration = None;
@@ -1083,7 +1069,6 @@ impl ApplicationHandler<UserEvent> for App {
             }
         }
 
-        // Создаём UI окно
         if self.ui_window.is_none() {
             let attrs = WindowAttributes::default()
                 .with_title("Desktop Ponies")
@@ -1118,6 +1103,8 @@ impl ApplicationHandler<UserEvent> for App {
                         if let Ok(fps) = fps_str.parse::<u32>() {
                             let _ = proxy.send_event(UserEvent::SetFPS(fps));
                         }
+                    } else if body == "open_editor" {
+                        launch_editor();
                     }
                 })
                 .build(&*ui_w)
@@ -1128,7 +1115,6 @@ impl ApplicationHandler<UserEvent> for App {
             self._webview = Some(wv);
         }
 
-        // Создаём главное окно
         if self.main_window.is_none() {
             self.create_main_window(event_loop);
         }
@@ -1141,18 +1127,15 @@ impl ApplicationHandler<UserEvent> for App {
 
         match event {
             WindowEvent::CloseRequested if Some(window_id) == ui_id => {
-                // Сохраняем настройки перед выходом
                 self.settings.save(&self.settings_path);
                 event_loop.exit();
             }
 
-            // Курсор в главном окне
             WindowEvent::CursorMoved { position, .. } if Some(window_id) == main_id => {
                 self.mouse_x = position.x as f32;
                 self.mouse_y = position.y as f32;
             }
 
-            // Клики в окнах взаимодействия
             WindowEvent::MouseInput { state, button, .. } if interaction_window_idx.is_some() => {
                 let pressed = state == ElementState::Pressed;
                 let iw_idx = interaction_window_idx.unwrap();
@@ -1164,7 +1147,6 @@ impl ApplicationHandler<UserEvent> for App {
                 }
             }
 
-            // Движение мыши в окне взаимодействия
             WindowEvent::CursorMoved { position, .. } if interaction_window_idx.is_some() => {
                 let iw_idx = interaction_window_idx.unwrap();
                 if let Some(iw) = self.interaction_windows.get(iw_idx) {
@@ -1180,7 +1162,6 @@ impl ApplicationHandler<UserEvent> for App {
             }
 
             WindowEvent::RedrawRequested => {
-                // Спавним пони из очереди
                 let to_spawn: Vec<String> = self.spawn_queue.lock().unwrap().drain(..).collect();
                 for name in to_spawn {
                     self.spawn_pony(&name, event_loop);
@@ -1188,7 +1169,6 @@ impl ApplicationHandler<UserEvent> for App {
 
                 self.render_all_windows();
 
-                // Запрашиваем перерисовку
                 if let Some(w) = &self.main_window { w.request_redraw(); }
                 for iw in &self.interaction_windows {
                     iw.window.request_redraw();
@@ -1213,12 +1193,10 @@ impl ApplicationHandler<UserEvent> for App {
                         .map(|m| m.id.clone()).collect();
                 }
 
-                // Удаляем старые окна
                 self.interaction_windows.clear();
                 self.main_window = None;
                 self.main_surface = None;
 
-                // Пересоздаём
                 self.create_main_window(event_loop);
                 for i in 0..self.ponies.len() {
                     self.create_interaction_window(i, event_loop);
@@ -1248,9 +1226,98 @@ impl ApplicationHandler<UserEvent> for App {
     }
 }
 
+// ==================== EDITOR MODE ====================
+
+fn run_editor_mode() {
+    use winit::event_loop::EventLoop;
+    use winit::application::ApplicationHandler;
+    use winit::event::WindowEvent;
+    use winit::window::WindowAttributes;
+    use winit::dpi::LogicalSize;
+    use std::sync::Arc;
+    use crate::editor::EditorWindow;
+
+    println!("🦄 Pony Editor v1.0");
+
+    #[derive(Debug, Clone)]
+    enum EditorEvent {}
+
+    let event_loop = EventLoop::<EditorEvent>::with_user_event()
+        .build()
+        .unwrap();
+
+    let loader = Arc::new(Mutex::new(DesktopPoniesLoader::new(".")));
+    {
+        let mut l = loader.lock().unwrap();
+        if let Err(e) = l.load_all() {
+            eprintln!("Warning: Could not load ponies: {}", e);
+        }
+        println!("Loaded {} ponies", l.configs.len());
+    }
+
+    let ponies_dir = std::env::current_dir().unwrap_or_default().join("Ponies");
+
+    // Создаём окно
+    let attrs = WindowAttributes::default()
+        .with_title("Pony Editor - Desktop Ponies")
+        .with_inner_size(LogicalSize::new(1100, 750))
+        .with_min_inner_size(LogicalSize::new(900, 600));
+
+    let window = Arc::new(event_loop.create_window(attrs).unwrap());
+
+    // Создаём редактор из уже созданного окна
+    let editor_result = EditorWindow::from_window(window.clone(), loader, ponies_dir);
+
+    struct EditorApp {
+        editor: EditorWindow,
+    }
+
+    impl ApplicationHandler<EditorEvent> for EditorApp {
+        fn resumed(&mut self, _event_loop: &winit::event_loop::ActiveEventLoop) {}
+
+        fn window_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, window_id: winit::window::WindowId, event: WindowEvent) {
+            if self.editor.window.id() == window_id {
+                match event {
+                    WindowEvent::CloseRequested => {
+                        event_loop.exit();
+                    }
+                    WindowEvent::Destroyed => {
+                        event_loop.exit();
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    match editor_result {
+        Ok(editor) => {
+            println!("Editor ready!");
+
+            // Устанавливаем глобальный указатель на webview
+            crate::editor::editor_window::set_webview(&editor.webview);
+
+            let mut app = EditorApp { editor };
+            event_loop.run_app(&mut app).unwrap();
+        }
+        Err(e) => {
+            eprintln!("Failed to start editor: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
 // ==================== MAIN ====================
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+
+    // Если запущен с флагом --editor, запускаем режим редактора
+    if args.iter().any(|arg| arg == "--editor" || arg == "-e") {
+        run_editor_mode();
+        return;
+    }
+
+    // Нормальный запуск плеера
     println!("Desktop Ponies RS - Starting...");
 
     let spawn_q = Arc::new(Mutex::new(Vec::<String>::new()));
@@ -1277,7 +1344,7 @@ fn main() {
     let proxy_clone = proxy.clone();
     std::thread::spawn(move || {
         loop {
-            std::thread::sleep(std::time::Duration::from_millis(16)); // ~60 FPS
+            std::thread::sleep(std::time::Duration::from_millis(16));
             let _ = proxy_clone.send_event(UserEvent::UpdateInteractionWindows);
         }
     });

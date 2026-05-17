@@ -16,6 +16,7 @@ pub mod texture;
 pub mod monitor_manager;
 pub mod settings;
 pub mod performance;
+pub mod editor;
 pub mod context_menu;
 pub mod pony_interaction;
 
