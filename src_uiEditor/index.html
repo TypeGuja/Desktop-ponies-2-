@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pony Editor</title>
+    <!-- INJECT_CSS -->
+</head>
+<body>
+<div class="editor-container">
+    <header class="editor-header">
+        <h1>🦄 Pony Editor</h1>
+        <div class="header-actions">
+            <button id="btn-save" class="btn-primary">💾 Save</button>
+            <button id="btn-close" class="btn-icon">✕</button>
+        </div>
+    </header>
+
+    <div class="editor-main">
+        <aside class="editor-sidebar">
+            <div class="sidebar-header">
+                <input type="text" id="search-pony" placeholder="Search pony..." class="search-input">
+            </div>
+            <div id="pony-list" class="pony-list">
+                <div class="loading">Loading ponies...</div>
+            </div>
+        </aside>
+
+        <main class="editor-content">
+            <div id="editor-panel" class="editor-panel">
+                <div class="empty-state">
+                    <p>✨ Select a pony from the list to edit</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="editor-footer">
+        <span id="status-text">Ready</span>
+        <span id="pony-count">0 ponies loaded</span>
+    </footer>
+</div>
+<!-- INJECT_JS -->
+</body>
+</html>
