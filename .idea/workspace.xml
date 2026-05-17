@@ -12,23 +12,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/mod.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/base.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/components.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/editor.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/layout.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/index.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/utils.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/ai_controller.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/ai_controller.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/animation.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/animation.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/btcx.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/btcx.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/context_menu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/context_menu.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/interaction.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/interaction.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/math.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/math.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/pony.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/pony.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/pony_interaction.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/pony_interaction.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/settings.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/settings.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/world.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/world.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/target/.rustc_info.json" beforeDir="false" afterPath="$PROJECT_DIR$/target/.rustc_info.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,11 +51,11 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Python Script" />
         <option value="HTML File" />
+        <option value="Rust File" />
         <option value="CSS File" />
         <option value="JavaScript File" />
-        <option value="Python Script" />
-        <option value="Rust File" />
       </list>
     </option>
   </component>
@@ -336,6 +343,9 @@
       <workItem from="1778740489858" duration="3000" />
       <workItem from="1778859337709" duration="6017000" />
       <workItem from="1778947754232" duration="16000" />
+      <workItem from="1779000358175" duration="773000" />
+      <workItem from="1779009415617" duration="8283000" />
+      <workItem from="1779018823064" duration="2103000" />
     </task>
     <servers />
   </component>
