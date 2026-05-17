@@ -252,6 +252,11 @@
         return false;
     }
 
+    function openEditor() {
+        sendIPC('open_editor');
+        setStatus('Opening Pony Editor...');
+    }
+
     function bindEvents() {
         document.querySelectorAll('.tab-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
@@ -343,6 +348,12 @@
             fpsSlider.addEventListener('input', function() {
                 updateFPS(this.value);
             });
+        }
+
+        // Кнопка открытия редактора
+        var openEditorBtn = document.getElementById('btn-open-editor');
+        if (openEditorBtn) {
+            openEditorBtn.addEventListener('click', openEditor);
         }
     }
 
