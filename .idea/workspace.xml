@@ -12,30 +12,33 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/mod.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/base.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/components.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/editor.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/layout.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/utils.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/gif_editor.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_rust/editor/pony_preview.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/dialogs.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/gif_editor.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/build.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/debug_editor.html" beforeDir="false" afterPath="$PROJECT_DIR$/debug_editor.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/base.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/base.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/components.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/components.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/editor.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/editor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/layout.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/layout.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,8 +55,8 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
-        <option value="HTML File" />
         <option value="Rust File" />
+        <option value="HTML File" />
         <option value="CSS File" />
         <option value="JavaScript File" />
       </list>
@@ -107,8 +110,11 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Cargo.Build desktop_ponies_lib.executor&quot;: &quot;Run&quot;,
     &quot;Cargo.Run desktop-ponies-rs.executor&quot;: &quot;Debug&quot;,
     &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.gif_editor.html.executor&quot;: &quot;Run&quot;,
+    &quot;JavaScript Debug.index.html.executor&quot;: &quot;Debug&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
     &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
     &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
@@ -157,11 +163,11 @@
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\assets\characters\SunsetShommer" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_uiEditor\js" />
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_uiEditor\js\modules" />
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_uiEditor\js\dialogs" />
+      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_uiEditor\js\core" />
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\src_rust" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\Celestia" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP" />
-      <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\characters\StarlightGlimmer\Starlight_Gifct" />
     </key>
   </component>
   <component name="RunManager" selected="Cargo.Run desktop-ponies-rs">
@@ -183,53 +189,13 @@
         <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
       </method>
     </configuration>
-    <configuration name="app.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src-ui/app.js" working-dir="$PROJECT_DIR$/src-ui">
+    <configuration name="gif_editor.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63343/characters.json/src_uiEditor/gif_editor.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
-    <configuration name="DPP2" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Desktop-ponies-2-" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+    <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63343/characters.json/src_uiEditor/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
-    <configuration name="DPP2Launcher" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Desktop-ponies-2-" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2Launcher.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+    <configuration name="speech_editor.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" working-dir="$PROJECT_DIR$/src_uiEditor/js">
       <method v="2" />
     </configuration>
     <configuration name="main (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -258,10 +224,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Run desktop-ponies-rs" />
+        <item itemvalue="JavaScript Debug.index.html" />
+        <item itemvalue="Node.js.speech_editor.js" />
+        <item itemvalue="JavaScript Debug.gif_editor.html" />
         <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.DPP2" />
-        <item itemvalue="Python.DPP2Launcher" />
-        <item itemvalue="Node.js.app.js" />
       </list>
     </recent_temporary>
   </component>
@@ -271,7 +237,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-07523f343e4f-968fe969f28a-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.28539.27" />
+        <option value="bundled-js-predefined-d6986cc7102b-a71380e98a7c-JavaScript-WS-252.28238.10" />
       </set>
     </attachedChunks>
   </component>
@@ -346,6 +312,22 @@
       <workItem from="1779000358175" duration="773000" />
       <workItem from="1779009415617" duration="8283000" />
       <workItem from="1779018823064" duration="2103000" />
+      <workItem from="1779021261874" duration="3307000" />
+      <workItem from="1779036250330" duration="7870000" />
+      <workItem from="1779091994371" duration="5515000" />
+      <workItem from="1779102894561" duration="68000" />
+      <workItem from="1779119325360" duration="7568000" />
+      <workItem from="1779130148459" duration="607000" />
+      <workItem from="1779200800349" duration="13141000" />
+      <workItem from="1779281525851" duration="5985000" />
+      <workItem from="1779287745103" duration="146000" />
+      <workItem from="1779339848213" duration="1072000" />
+      <workItem from="1779376705289" duration="2000" />
+      <workItem from="1779389488657" duration="135000" />
+      <workItem from="1779445146741" duration="91000" />
+      <workItem from="1779448986883" duration="382000" />
+      <workItem from="1779557982927" duration="5537000" />
+      <workItem from="1779600343027" duration="1927000" />
     </task>
     <servers />
   </component>
