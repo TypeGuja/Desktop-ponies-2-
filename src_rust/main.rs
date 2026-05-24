@@ -1235,16 +1235,15 @@ fn run_editor_mode() {
     use winit::window::WindowAttributes;
     use winit::dpi::LogicalSize;
     use std::sync::Arc;
+    use std::sync::Mutex;
     use crate::editor::EditorWindow;
 
-    println!("🦄 Pony Editor v1.0");
+    println!("🦄 Pony Editor v2.0");
 
     #[derive(Debug, Clone)]
     enum EditorEvent {}
 
-    let event_loop = EventLoop::<EditorEvent>::with_user_event()
-        .build()
-        .unwrap();
+    let event_loop = EventLoop::<EditorEvent>::with_user_event().build().unwrap();
 
     let loader = Arc::new(Mutex::new(DesktopPoniesLoader::new(".")));
     {
@@ -1257,7 +1256,6 @@ fn run_editor_mode() {
 
     let ponies_dir = std::env::current_dir().unwrap_or_default().join("Ponies");
 
-    // Создаём окно
     let attrs = WindowAttributes::default()
         .with_title("Pony Editor - Desktop Ponies")
         .with_inner_size(LogicalSize::new(1100, 750))
@@ -1265,7 +1263,6 @@ fn run_editor_mode() {
 
     let window = Arc::new(event_loop.create_window(attrs).unwrap());
 
-    // Создаём редактор из уже созданного окна
     let editor_result = EditorWindow::from_window(window.clone(), loader, ponies_dir);
 
     struct EditorApp {
@@ -1278,11 +1275,10 @@ fn run_editor_mode() {
         fn window_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, window_id: winit::window::WindowId, event: WindowEvent) {
             if self.editor.window.id() == window_id {
                 match event {
-                    WindowEvent::CloseRequested => {
-                        event_loop.exit();
-                    }
-                    WindowEvent::Destroyed => {
-                        event_loop.exit();
+                    WindowEvent::CloseRequested => event_loop.exit(),
+                    WindowEvent::RedrawRequested => {
+                        self.editor.process_messages();
+                        self.editor.window.request_redraw();
                     }
                     _ => {}
                 }
@@ -1293,10 +1289,6 @@ fn run_editor_mode() {
     match editor_result {
         Ok(editor) => {
             println!("Editor ready!");
-
-            // Устанавливаем глобальный указатель на webview
-            crate::editor::editor_window::set_webview(&editor.webview);
-
             let mut app = EditorApp { editor };
             event_loop.run_app(&mut app).unwrap();
         }

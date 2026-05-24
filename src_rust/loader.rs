@@ -3,9 +3,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use image::AnimationDecoder;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Debug, PartialEq)]
+// ==================== ENUMS ====================
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum MovementType {
     None,
     All,
@@ -16,6 +18,72 @@ pub enum MovementType {
     Sleep,
     Dragged,
 }
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum TargetMode {
+    None,
+    Pony,
+    Point,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum FollowOffsetType {
+    Fixed,
+    Mirror,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum TargetActivation {
+    One,
+    Any,
+    All,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum Direction {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    MiddleLeft,
+    MiddleCenter,
+    MiddleRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+}
+
+impl Direction {
+    pub fn from_str(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "topleft" | "top left" => Direction::TopLeft,
+            "topcenter" | "top center" => Direction::TopCenter,
+            "topright" | "top right" => Direction::TopRight,
+            "middleleft" | "middle left" => Direction::MiddleLeft,
+            "middlecenter" | "middle center" => Direction::MiddleCenter,
+            "middleright" | "middle right" => Direction::MiddleRight,
+            "bottomleft" | "bottom left" => Direction::BottomLeft,
+            "bottomcenter" | "bottom center" => Direction::BottomCenter,
+            "bottomright" | "bottom right" => Direction::BottomRight,
+            _ => Direction::MiddleCenter,
+        }
+    }
+
+    pub fn to_display_string(&self) -> String {
+        match self {
+            Direction::TopLeft => "Top Left".to_string(),
+            Direction::TopCenter => "Top Center".to_string(),
+            Direction::TopRight => "Top Right".to_string(),
+            Direction::MiddleLeft => "Middle Left".to_string(),
+            Direction::MiddleCenter => "Middle Center".to_string(),
+            Direction::MiddleRight => "Middle Right".to_string(),
+            Direction::BottomLeft => "Bottom Left".to_string(),
+            Direction::BottomCenter => "Bottom Center".to_string(),
+            Direction::BottomRight => "Bottom Right".to_string(),
+        }
+    }
+}
+
+// ==================== STRUCTS ====================
 
 #[derive(Clone, Debug, Serialize)]
 pub struct Behavior {
@@ -46,6 +114,14 @@ pub struct Behavior {
     pub set_fps: Option<f32>,
     pub set_max_fps: Option<f32>,
     pub sound_files: Vec<String>,
+    pub target_mode: TargetMode,
+    pub target_vector: (i32, i32),
+    pub follow_target_name: String,
+    pub auto_select_images_on_follow: bool,
+    pub follow_moving_behavior: String,
+    pub follow_stopped_behavior: String,
+    pub follow_offset_type: FollowOffsetType,
+    pub do_not_repeat_animations: bool,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -55,6 +131,7 @@ pub struct SpeakDef {
     pub sound_files: Vec<String>,
     pub skip: bool,
     pub frequency: f32,
+    pub group: i32,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -66,6 +143,9 @@ pub struct InteractionDef {
     pub target_count: String,
     pub behaviors: Vec<String>,
     pub duration: f32,
+    pub activation: TargetActivation,
+    pub reactivation_delay: f32,
+    pub initiator_name: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -76,52 +156,32 @@ pub struct EffectDef {
     pub sprite_left: String,
     pub duration: f32,
     pub delay: f32,
+    pub placement_right: Direction,
+    pub placement_left: Direction,
+    pub centering_right: Direction,
+    pub centering_left: Direction,
+    pub follow: bool,
+    pub repeat_delay: f32,
+    pub do_not_repeat_animations: bool,
+    pub behavior_name: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
 pub struct PonyConfig {
     pub name: String,
+    pub display_name: String,
     pub categories: Vec<String>,
+    pub tags: Vec<String>,
     pub directory: PathBuf,
     pub behaviors: Vec<Behavior>,
     pub speaks: Vec<SpeakDef>,
     pub interactions: Vec<InteractionDef>,
     pub effects: Vec<EffectDef>,
+    pub behavior_groups: HashMap<i32, String>,
 }
 
-pub struct DesktopPoniesLoader {
-    pub ponies_dir: PathBuf,
-    pub configs: Vec<PonyConfig>,
-    pub sprite_cache: HashMap<String, (Vec<Vec<u32>>, u32, u32, u32, f32)>,
-}
+// ==================== ПАРСИНГ CSV ====================
 
-impl MovementType {
-    pub fn parse(s: &str) -> Self {
-        let s = s.trim()
-            .trim_matches('"')
-            .to_lowercase()
-            .replace('_', "")
-            .replace('-', "")
-            .replace(' ', "");
-
-        match s.as_str() {
-            "" | "none" => MovementType::None,
-            "all" => MovementType::All,
-            "horizontalonly" | "horizontal" | "onlyhorizontal" => MovementType::HorizontalOnly,
-            "verticalonly" | "vertical" | "onlyvertical" => MovementType::VerticalOnly,
-            "diagonalonly" | "diagonal" | "onlydiagonal" => MovementType::DiagonalOnly,
-            "diagonalhorizontal" | "horizontaldiagonal" => MovementType::DiagonalHorizontal,
-            "sleep" => MovementType::Sleep,
-            "dragged" => MovementType::Dragged,
-            _ => {
-                eprintln!("[Warning] Unknown movement type: '{}'", s);
-                MovementType::None
-            }
-        }
-    }
-}
-
-/// Удаляет BOM (Byte Order Mark) из строки
 fn remove_bom(s: &str) -> &str {
     if s.starts_with('\u{FEFF}') {
         &s[3..]
@@ -130,7 +190,6 @@ fn remove_bom(s: &str) -> &str {
     }
 }
 
-/// Парсит CSV строку с поддержкой кавычек и пустых полей
 fn split_csv(line: &str) -> Vec<String> {
     let line = remove_bom(line);
     let mut fields = vec![];
@@ -182,7 +241,6 @@ fn split_csv(line: &str) -> Vec<String> {
 
     fields.push(cur.trim().to_string());
 
-    // Очищаем поля от лишних кавычек по краям (но не внутри)
     for field in &mut fields {
         if field.starts_with('"') && field.ends_with('"') && field.len() >= 2 {
             *field = field[1..field.len()-1].to_string();
@@ -207,6 +265,15 @@ fn parse_f32(s: &str) -> f32 {
         0.0
     } else {
         cleaned.parse().unwrap_or(0.0)
+    }
+}
+
+fn parse_i32(s: &str) -> i32 {
+    let cleaned = unquote(s);
+    if cleaned.is_empty() {
+        0
+    } else {
+        cleaned.parse().unwrap_or(0)
     }
 }
 
@@ -235,6 +302,17 @@ fn parse_pair(s: &str) -> (f32, f32) {
     }
 }
 
+fn parse_vector(s: &str) -> (i32, i32) {
+    let s = unquote(s);
+    let parts: Vec<&str> = s.split(',').collect();
+    if parts.len() >= 2 {
+        (parts[0].trim().parse().unwrap_or(0),
+         parts[1].trim().parse().unwrap_or(0))
+    } else {
+        (0, 0)
+    }
+}
+
 fn parse_list(s: &str) -> Vec<String> {
     let s = unquote(s);
     if s.starts_with('{') && s.ends_with('}') {
@@ -250,7 +328,38 @@ fn parse_list(s: &str) -> Vec<String> {
     }
 }
 
-// Функция для безопасного получения поля по индексу
+fn parse_target_mode(s: &str) -> TargetMode {
+    let cleaned = unquote(s).to_lowercase();
+    if cleaned.contains("pony") {
+        TargetMode::Pony
+    } else if cleaned.contains("point") {
+        TargetMode::Point
+    } else {
+        TargetMode::None
+    }
+}
+
+fn parse_follow_offset(s: &str) -> FollowOffsetType {
+    let cleaned = unquote(s).to_lowercase();
+    if cleaned.contains("mirror") {
+        FollowOffsetType::Mirror
+    } else {
+        FollowOffsetType::Fixed
+    }
+}
+
+fn parse_target_activation(s: &str) -> TargetActivation {
+    match s.to_lowercase().as_str() {
+        "any" => TargetActivation::Any,
+        "all" => TargetActivation::All,
+        _ => TargetActivation::One,
+    }
+}
+
+fn parse_direction(s: &str) -> Direction {
+    Direction::from_str(s)
+}
+
 fn get_field(fields: &[String], idx: usize, default: &str) -> String {
     if idx < fields.len() {
         fields[idx].clone()
@@ -259,43 +368,64 @@ fn get_field(fields: &[String], idx: usize, default: &str) -> String {
     }
 }
 
-/// Проверяет, является ли строка мусорной (заголовки Excel, JSON-подобные строки)
 fn is_garbage_line(line: &str) -> bool {
     let trimmed = line.trim();
-
-    // Пустые строки
     if trimmed.is_empty() {
         return true;
     }
-
-    // Строки, начинающиеся с { (JSON-подобный мусор)
     if trimmed.starts_with('{') {
         return true;
     }
-
-    // Строки с заголовками Excel/CSV
     if trimmed.contains("Identifier") && trimmed.contains("Name") && trimmed.contains("Chance") {
         return true;
     }
-
-    // Строки, которые не начинаются с известных типов
-    let known_types = ["Behavior", "Speak", "Interaction", "Effect", "Categories", "Name"];
+    let known_types = ["Behavior", "Speak", "Interaction", "Effect", "Categories", "Name", "Groups", "Tags"];
     let first_field = trimmed.split(',').next().unwrap_or("").trim().trim_matches('"');
-
     if !known_types.contains(&first_field) && !first_field.is_empty() {
-        // Это может быть неизвестный тип, но проверим, не содержит ли он цифр или спецсимволов
         if first_field.chars().any(|c| c.is_digit(10) || c == '{' || c == '}') {
             return true;
         }
     }
-
     false
+}
+
+// ==================== ОСНОВНОЙ ЗАГРУЗЧИК ====================
+
+pub struct DesktopPoniesLoader {
+    pub ponies_dir: PathBuf,
+    pub configs: Vec<PonyConfig>,
+    pub sprite_cache: HashMap<String, (Vec<Vec<u32>>, u32, u32, u32, f32)>,
+}
+
+impl MovementType {
+    pub fn parse(s: &str) -> Self {
+        let s = s.trim()
+            .trim_matches('"')
+            .to_lowercase()
+            .replace('_', "")
+            .replace('-', "")
+            .replace(' ', "");
+
+        match s.as_str() {
+            "" | "none" => MovementType::None,
+            "all" => MovementType::All,
+            "horizontalonly" | "horizontal" | "onlyhorizontal" => MovementType::HorizontalOnly,
+            "verticalonly" | "vertical" | "onlyvertical" => MovementType::VerticalOnly,
+            "diagonalonly" | "diagonal" | "onlydiagonal" => MovementType::DiagonalOnly,
+            "diagonalhorizontal" | "horizontaldiagonal" => MovementType::DiagonalHorizontal,
+            "sleep" => MovementType::Sleep,
+            "dragged" => MovementType::Dragged,
+            _ => {
+                eprintln!("[Warning] Unknown movement type: '{}'", s);
+                MovementType::None
+            }
+        }
+    }
 }
 
 impl DesktopPoniesLoader {
     pub fn new<P: AsRef<Path>>(base_path: P) -> Self {
         let base = base_path.as_ref();
-
         let current_dir = if base == Path::new(".") || base == Path::new("") {
             std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
         } else {
@@ -375,16 +505,19 @@ impl DesktopPoniesLoader {
         let content = remove_bom(&content);
 
         let name = dir.file_name().and_then(|n| n.to_str()).unwrap_or("??").to_string();
+        let mut display_name = name.clone();
         let mut categories = Vec::new();
+        let mut tags = Vec::new();
         let mut behaviors = Vec::new();
         let mut speaks = Vec::new();
         let mut interactions = Vec::new();
         let mut effects = Vec::new();
+        let mut behavior_groups = HashMap::new();
 
-        for (line_num, raw_line) in content.lines().enumerate() {
+        behavior_groups.insert(0, "Any".to_string());
+
+        for (_line_num, raw_line) in content.lines().enumerate() {
             let line = raw_line.trim();
-
-            // Пропускаем мусорные строки
             if is_garbage_line(line) {
                 continue;
             }
@@ -403,8 +536,29 @@ impl DesktopPoniesLoader {
                         .filter(|s| !s.is_empty())
                         .collect();
                 }
+                "Name" => {
+                    if fields.len() > 1 {
+                        display_name = unquote(&fields[1]);
+                    }
+                }
+                "Tags" => {
+                    tags = fields[1..].iter()
+                        .map(|f| unquote(f))
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                }
+                "Groups" => {
+                    for field in &fields[1..] {
+                        let parts: Vec<&str> = field.split('=').collect();
+                        if parts.len() >= 2 {
+                            if let Ok(num) = parts[0].trim().parse::<i32>() {
+                                let name_val = unquote(parts[1].trim());
+                                behavior_groups.insert(num, name_val);
+                            }
+                        }
+                    }
+                }
                 "Behavior" => {
-                    // Поведение имеет минимум 13 полей
                     if fields.len() >= 13 {
                         let behavior = Behavior {
                             name: get_field(&fields, 1, ""),
@@ -428,36 +582,38 @@ impl DesktopPoniesLoader {
                             right_image_center: if fields.len() > 19 { parse_pair(&fields[19]) } else { (0.0, 0.0) },
                             left_image_center: if fields.len() > 20 { parse_pair(&fields[20]) } else { (0.0, 0.0) },
                             prevent_loop: if fields.len() > 21 { parse_bool(&fields[21]) } else { false },
-                            group: get_field(&fields, 22, ""),
+                            group: get_field(&fields, 22, "0"),
                             follow_offset: get_field(&fields, 23, ""),
                             set_animation_speed: if fields.len() > 24 { parse_optional_f32(&fields[24]) } else { None },
                             set_fps: if fields.len() > 25 { parse_optional_f32(&fields[25]) } else { None },
                             set_max_fps: if fields.len() > 26 { parse_optional_f32(&fields[26]) } else { None },
                             sound_files: if fields.len() > 27 { parse_list(&fields[27]) } else { vec![] },
+                            target_mode: if fields.len() > 28 { parse_target_mode(&fields[28]) } else { TargetMode::None },
+                            target_vector: if fields.len() > 29 { parse_vector(&fields[29]) } else { (0, 0) },
+                            follow_target_name: get_field(&fields, 30, ""),
+                            auto_select_images_on_follow: if fields.len() > 31 { parse_bool(&fields[31]) } else { true },
+                            follow_moving_behavior: get_field(&fields, 32, ""),
+                            follow_stopped_behavior: get_field(&fields, 33, ""),
+                            follow_offset_type: if fields.len() > 34 { parse_follow_offset(&fields[34]) } else { FollowOffsetType::Fixed },
+                            do_not_repeat_animations: if fields.len() > 35 { parse_bool(&fields[35]) } else { false },
                         };
-
-                        // ВАЖНО: Сохраняем ВСЕ поведения, даже с skip=true
-                        // Фильтрация будет происходить позже, при формировании available_behaviors
                         behaviors.push(behavior);
-                    } else {
-                        eprintln!("[Warning] {} line {}: Behavior has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Speak" => {
-                    if fields.len() >= 5 {
+                    if fields.len() >= 3 {
                         speaks.push(SpeakDef {
                             name: get_field(&fields, 1, ""),
                             text: get_field(&fields, 2, ""),
                             sound_files: if fields.len() > 3 { parse_list(&fields[3]) } else { vec![] },
                             skip: if fields.len() > 4 { parse_bool(&fields[4]) } else { false },
                             frequency: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
+                            group: if fields.len() > 6 { parse_i32(&fields[6]) } else { 0 },
                         });
-                    } else {
-                        eprintln!("[Warning] {} line {}: Speak has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Interaction" => {
-                    if fields.len() >= 7 {
+                    if fields.len() >= 3 {
                         interactions.push(InteractionDef {
                             name: get_field(&fields, 1, ""),
                             probability: if fields.len() > 2 { parse_f32(&fields[2]) } else { 0.0 },
@@ -466,13 +622,14 @@ impl DesktopPoniesLoader {
                             target_count: get_field(&fields, 5, "One"),
                             behaviors: if fields.len() > 6 { parse_list(&fields[6]) } else { vec![] },
                             duration: if fields.len() > 7 { parse_f32(&fields[7]) } else { 300.0 },
+                            activation: if fields.len() > 8 { parse_target_activation(&fields[8]) } else { TargetActivation::One },
+                            reactivation_delay: if fields.len() > 9 { parse_f32(&fields[9]) } else { 0.0 },
+                            initiator_name: get_field(&fields, 10, ""),
                         });
-                    } else {
-                        eprintln!("[Warning] {} line {}: Interaction has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
                 "Effect" => {
-                    if fields.len() >= 7 {
+                    if fields.len() >= 3 {
                         effects.push(EffectDef {
                             name: get_field(&fields, 1, ""),
                             linked: get_field(&fields, 2, ""),
@@ -480,31 +637,32 @@ impl DesktopPoniesLoader {
                             sprite_left: get_field(&fields, 4, ""),
                             duration: if fields.len() > 5 { parse_f32(&fields[5]) } else { 0.0 },
                             delay: if fields.len() > 6 { parse_f32(&fields[6]) } else { 0.0 },
+                            placement_right: if fields.len() > 7 { parse_direction(&fields[7]) } else { Direction::MiddleCenter },
+                            placement_left: if fields.len() > 8 { parse_direction(&fields[8]) } else { Direction::MiddleCenter },
+                            centering_right: if fields.len() > 9 { parse_direction(&fields[9]) } else { Direction::MiddleCenter },
+                            centering_left: if fields.len() > 10 { parse_direction(&fields[10]) } else { Direction::MiddleCenter },
+                            follow: if fields.len() > 11 { parse_bool(&fields[11]) } else { false },
+                            repeat_delay: if fields.len() > 12 { parse_f32(&fields[12]) } else { 0.0 },
+                            do_not_repeat_animations: if fields.len() > 13 { parse_bool(&fields[13]) } else { false },
+                            behavior_name: get_field(&fields, 14, ""),
                         });
-                    } else {
-                        eprintln!("[Warning] {} line {}: Effect has only {} fields, skipping", name, line_num + 1, fields.len());
                     }
                 }
-                "Name" => {
-                    // Пропускаем, имя берётся из названия папки
-                }
-                _ => {
-                    // Неизвестный тип строки, но не мусор - возможно новый тип
-                    if !row_type.is_empty() && !is_garbage_line(line) {
-                        eprintln!("[Debug] {}: Unknown row type '{}' at line {}", name, row_type, line_num + 1);
-                    }
-                }
+                _ => {}
             }
         }
 
         Ok(PonyConfig {
             name,
+            display_name,
             categories,
+            tags,
             directory: dir.to_path_buf(),
             behaviors,
             speaks,
             interactions,
             effects,
+            behavior_groups,
         })
     }
 
