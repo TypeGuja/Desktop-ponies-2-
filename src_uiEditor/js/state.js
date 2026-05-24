@@ -1,4 +1,4 @@
-// Управление состоянием редактора
+// src_uiEditor/js/state.js
 const EditorState = {
     currentPony: null,
     originalConfig: null,
@@ -7,10 +7,17 @@ const EditorState = {
     currentTab: 'basic',
 
     setPony(pony, config) {
+        console.log('[State] setPony called:', pony);
+        console.log('[State] Config received:', config);
+        console.log('[State] Config behaviors:', config?.behaviors?.length);
+
         this.currentPony = pony;
         this.originalConfig = JSON.parse(JSON.stringify(config));
         this.modified = false;
         this.updateModifiedStatus();
+
+        console.log('[State] State updated, currentPony:', this.currentPony);
+        console.log('[State] Config stored, behaviors:', this.originalConfig?.behaviors?.length);
     },
 
     markModified() {

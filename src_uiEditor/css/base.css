@@ -3,7 +3,6 @@
     padding: 0;
     box-sizing: border-box;
 }
-
 :root {
     --bg-primary: #1e1e2e;
     --bg-secondary: #181825;
@@ -22,7 +21,6 @@
     --header-height: 52px;
     --footer-height: 36px;
 }
-
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
     background: var(--bg-primary);
