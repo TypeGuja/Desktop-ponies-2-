@@ -1,4 +1,5 @@
 // src_rust/main.rs
+// src_rust/main.rs
 use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
@@ -21,12 +22,13 @@ mod performance;
 mod context_menu;
 mod editor;
 
-use loader::{DesktopPoniesLoader, MovementType, Behavior};
+use loader::{DesktopPoniesLoader, MovementType, Behavior, GifAnimation, GifFrameData};
 use monitor_manager::MonitorManager;
 use settings::AppSettings;
 use performance::PerformanceMonitor;
 use context_menu::{ContextMenu, PonyAction};
 use crate::editor::EditorWindow;
+
 // ==================== ТИПЫ ДАННЫХ ====================
 
 #[derive(Debug, Clone)]
@@ -46,15 +48,18 @@ enum InteractionState {
     Sleeping,
 }
 
+// НОВАЯ СТРУКТУРА PONY С ПОДДЕРЖКОЙ ИНДИВИДУАЛЬНЫХ ЗАДЕРЖЕК КАДРОВ
 struct Pony {
     x: f32, y: f32,
     vx: f32, vy: f32,
-    frames: Vec<Vec<u32>>,
-    frame_count: u32,
-    width: u32, height: u32,
-    current_frame: u32,
+    // Новая система анимации
+    animation: GifAnimation,
+    current_frame: usize,
     frame_timer: f32,
-    frame_duration: f32,
+    animation_speed_mult: f32,        // Из behavior.set_animation_speed
+    prevent_loop: bool,               // Из behavior.do_not_repeat_animations
+    fixed_fps: Option<f32>,           // Из behavior.set_fps
+    width: u32, height: u32,
     facing_right: bool,
     config_name: String,
     current_behavior: String,
@@ -112,7 +117,6 @@ fn launch_editor() {
         }
     };
 
-    // Запускаем редактор в отдельном процессе с флагом --editor
     match std::process::Command::new(exe_path)
         .arg("--editor")
         .spawn()
@@ -210,7 +214,7 @@ impl App {
             (first_behavior.sprite_left.clone(), false)
         };
 
-        let (frames, fc, w, h, delay) = self.loader.load_pony_frames(name, &sprite_name);
+        let animation = self.loader.load_pony_frames(name, &sprite_name);
         let speed = first_behavior.speed * 60.0;
         let angle = fastrand::f32() * std::f32::consts::TAU;
 
@@ -223,18 +227,28 @@ impl App {
 
         let pony_index = self.ponies.len();
 
+        // Применяем настройки анимации из поведения
+        let animation_speed_mult = first_behavior.set_animation_speed.unwrap_or(1.0);
+        let prevent_loop = first_behavior.do_not_repeat_animations;
+        let fixed_fps = first_behavior.set_fps;
+
+        // Сохраняем размеры ДО перемещения animation
+        let width = animation.width;
+        let height = animation.height;
+
         self.ponies.push(Pony {
             x: fastrand::f32() * (screen_w - 200.0) + 100.0,
             y: fastrand::f32() * (screen_h - 200.0) + 100.0,
             vx: angle.cos() * speed,
             vy: angle.sin() * speed,
-            frames,
-            frame_count: fc,
-            width: w,
-            height: h,
+            animation,  // перемещаем здесь
             current_frame: 0,
             frame_timer: 0.0,
-            frame_duration: delay,
+            animation_speed_mult,
+            prevent_loop,
+            fixed_fps,
+            width,      // используем сохраненное значение
+            height,     // используем сохраненное значение
             facing_right,
             config_name: name.to_string(),
             current_behavior: first_behavior.name.clone(),
@@ -249,10 +263,11 @@ impl App {
         self.create_interaction_window(pony_index, event_loop);
         self.update_interaction_windows();
 
-        println!("[Spawn] Created pony '{}' (#{}) at ({:.0},{:.0}) with interaction window",
-                 name, pony_index, self.ponies[pony_index].x, self.ponies[pony_index].y);
+        println!("[Spawn] Created pony '{}' (#{}) at ({:.0},{:.0}) with interaction window, frames: {}, delays: {}",
+                 name, pony_index, self.ponies[pony_index].x, self.ponies[pony_index].y,
+                 self.ponies[pony_index].animation.frames.len(),
+                 self.ponies[pony_index].animation.frames.iter().map(|f| f.delay).collect::<Vec<_>>().len());
     }
-
     fn create_interaction_window(&mut self, pony_index: usize, event_loop: &winit::event_loop::ActiveEventLoop) {
         let pony = &self.ponies[pony_index];
         let padding = 6.0;
@@ -563,7 +578,7 @@ impl App {
                         {
                             let pony = &mut self.ponies[pony_index];
                             if pony.original_frame_duration.is_none() {
-                                pony.original_frame_duration = Some(pony.frame_duration);
+                                pony.original_frame_duration = Some(pony.animation.default_delay);
                             }
                             pony.grabbed = true;
                             pony.movement_type = MovementType::Dragged;
@@ -589,7 +604,7 @@ impl App {
                             pony.behavior_timer = 0.0;
 
                             if let Some(orig_dur) = pony.original_frame_duration {
-                                pony.frame_duration = orig_dur;
+                                pony.animation.default_delay = orig_dur;
                                 pony.original_frame_duration = None;
                             }
 
@@ -615,30 +630,32 @@ impl App {
                     };
                     println!("[Drag] Found drag behavior: '{}' using sprite '{}' (skip={})",
                              behavior.name, sprite_name, behavior.skip);
-                    (sprite_name, behavior.name.clone())
+                    (sprite_name, behavior.name.clone(), behavior.set_animation_speed, behavior.set_fps)
                 })
         } else {
             None
         };
 
-        if let Some((sprite_name, behavior_name)) = drag_info {
+        if let Some((sprite_name, behavior_name, anim_speed, fps)) = drag_info {
             let pony_dir = self.loader.ponies_dir.join(pony_name);
             let sprite_path = pony_dir.join(&sprite_name);
 
             if sprite_path.exists() {
                 println!("[Drag] Loading sprite from: {:?}", sprite_path);
-                let (frames, fc, w, h, delay) = self.loader.load_pony_frames(pony_name, &sprite_name);
+                let animation = self.loader.load_pony_frames(pony_name, &sprite_name);
 
-                if !frames.is_empty() && !frames[0].is_empty() {
+                if !animation.frames.is_empty() && !animation.frames[0].data.is_empty() {
                     let pony = &mut self.ponies[pony_index];
-                    pony.frames = frames;
-                    pony.frame_count = fc;
-                    pony.width = w;
-                    pony.height = h;
-                    pony.frame_duration = delay;
+                    pony.animation = animation;
+                    pony.width = pony.animation.width;
+                    pony.height = pony.animation.height;
                     pony.current_frame = 0;
+                    pony.frame_timer = 0.0;
                     pony.current_behavior = behavior_name;
-                    println!("[Drag] ✓ Loaded drag animation: {} frames, {}x{}", fc, w, h);
+                    pony.animation_speed_mult = anim_speed.unwrap_or(1.0);
+                    pony.fixed_fps = fps;
+                    println!("[Drag] ✓ Loaded drag animation: {} frames, {}x{}",
+                             pony.animation.frames.len(), pony.width, pony.height);
                     return;
                 } else {
                     println!("[Drag] ✗ Failed to decode drag frames for '{}'", sprite_name);
@@ -650,7 +667,7 @@ impl App {
 
         println!("[Drag] ⚠ No drag sprite for '{}', using speed-up effect", pony_name);
         let pony = &mut self.ponies[pony_index];
-        pony.frame_duration = (pony.frame_duration * 0.4).max(0.03);
+        pony.animation_speed_mult = 2.5;
     }
 
     fn restore_pony_idle_animation(&mut self, pony_index: usize, pony_name: &str) {
@@ -668,32 +685,37 @@ impl App {
                     };
                     println!("[Drag] Found idle behavior: '{}' using sprite '{}' (skip={})",
                              behavior.name, sprite_name, behavior.skip);
-                    (sprite_name, behavior.name.clone())
+                    (sprite_name, behavior.name.clone(), behavior.set_animation_speed, behavior.set_fps)
                 })
         } else {
             None
         };
 
-        if let Some((sprite_name, behavior_name)) = idle_info {
-            let (frames, fc, w, h, delay) = self.loader.load_pony_frames(pony_name, &sprite_name);
+        if let Some((sprite_name, behavior_name, anim_speed, fps)) = idle_info {
+            let animation = self.loader.load_pony_frames(pony_name, &sprite_name);
 
-            if !frames.is_empty() && !frames[0].is_empty() {
+            if !animation.frames.is_empty() && !animation.frames[0].data.is_empty() {
                 let pony = &mut self.ponies[pony_index];
-                pony.frames = frames;
-                pony.frame_count = fc;
-                pony.width = w;
-                pony.height = h;
-                pony.frame_duration = delay;
+                pony.animation = animation;
+                pony.width = pony.animation.width;
+                pony.height = pony.animation.height;
+                pony.current_frame = 0;
+                pony.frame_timer = 0.0;
                 pony.current_behavior = behavior_name;
-                println!("[Drag] ✓ Restored idle animation: {} frames, {}x{}", fc, w, h);
+                pony.animation_speed_mult = anim_speed.unwrap_or(1.0);
+                pony.fixed_fps = fps;
+                println!("[Drag] ✓ Restored idle animation: {} frames, {}x{}",
+                         pony.animation.frames.len(), pony.width, pony.height);
                 return;
             }
         }
 
-        println!("[Drag] ⚠ No idle behavior for '{}', restoring original duration", pony_name);
+        println!("[Drag] ⚠ No idle behavior for '{}', restoring original settings", pony_name);
         let pony = &mut self.ponies[pony_index];
+        pony.animation_speed_mult = 1.0;
+        pony.fixed_fps = None;
         if let Some(orig_dur) = pony.original_frame_duration {
-            pony.frame_duration = orig_dur;
+            pony.animation.default_delay = orig_dur;
         }
     }
 
@@ -710,9 +732,9 @@ impl App {
                 self.grabbed_pony = Some(pony_index);
 
                 if pony.original_frame_duration.is_none() {
-                    pony.original_frame_duration = Some(pony.frame_duration);
+                    pony.original_frame_duration = Some(pony.animation.default_delay);
                 }
-                pony.frame_duration *= 1.5;
+                pony.animation_speed_mult = 1.5;
 
                 println!("[Action] Drag pony #{}", pony_index);
             }
@@ -724,6 +746,7 @@ impl App {
                 p.movement_type = MovementType::HorizontalOnly;
                 p.interaction_state = Some(InteractionState::Booped { timer: 2.0 });
                 p.behavior_timer = 2.0;
+                p.animation_speed_mult = 1.2;
                 println!("[Action] Boop pony #{}", pony_index);
             }
             PonyAction::Feed => {
@@ -732,9 +755,9 @@ impl App {
                 p.vx *= speed_mult;
                 p.vy *= speed_mult;
                 if p.original_frame_duration.is_none() {
-                    p.original_frame_duration = Some(p.frame_duration);
+                    p.original_frame_duration = Some(p.animation.default_delay);
                 }
-                p.frame_duration *= 0.6;
+                p.animation_speed_mult = 1.6;
                 p.interaction_state = Some(InteractionState::Fed {
                     timer: 3.0,
                     original_speed_mult: speed_mult,
@@ -748,9 +771,9 @@ impl App {
                 p.vy = 0.0;
                 p.movement_type = MovementType::None;
                 if p.original_frame_duration.is_none() {
-                    p.original_frame_duration = Some(p.frame_duration);
+                    p.original_frame_duration = Some(p.animation.default_delay);
                 }
-                p.frame_duration *= 1.8;
+                p.animation_speed_mult = 0.5;
                 p.interaction_state = Some(InteractionState::Petted { timer: 4.0 });
                 p.behavior_timer = 5.0;
                 println!("[Action] Pet pony #{}", pony_index);
@@ -769,6 +792,7 @@ impl App {
                     p.interaction_state = None;
                     p.movement_type = MovementType::None;
                     p.behavior_timer = 0.0;
+                    p.animation_speed_mult = 1.0;
                     println!("[Action] Wake up pony #{}", pony_index);
                 } else {
                     p.vx = 0.0;
@@ -776,6 +800,7 @@ impl App {
                     p.movement_type = MovementType::Sleep;
                     p.interaction_state = Some(InteractionState::Sleeping);
                     p.behavior_timer = 999999.0;
+                    p.animation_speed_mult = 0.0;
                     println!("[Action] Sleep pony #{}", pony_index);
                 }
             }
@@ -793,6 +818,7 @@ impl App {
                         *timer -= dt;
                         if *timer <= 0.0 {
                             pony.interaction_state = None;
+                            pony.animation_speed_mult = 1.0;
                         }
                     }
                     InteractionState::Fed { ref mut timer, original_speed_mult } => {
@@ -802,9 +828,10 @@ impl App {
                             pony.vx /= mult;
                             pony.vy /= mult;
                             if let Some(orig_dur) = pony.original_frame_duration {
-                                pony.frame_duration = orig_dur;
+                                pony.animation.default_delay = orig_dur;
                                 pony.original_frame_duration = None;
                             }
+                            pony.animation_speed_mult = 1.0;
                             pony.interaction_state = None;
                         }
                     }
@@ -812,10 +839,11 @@ impl App {
                         *timer -= dt;
                         if *timer <= 0.0 {
                             if let Some(orig_dur) = pony.original_frame_duration {
-                                pony.frame_duration = orig_dur;
+                                pony.animation.default_delay = orig_dur;
                                 pony.original_frame_duration = None;
                             }
                             pony.behavior_timer = 0.0;
+                            pony.animation_speed_mult = 1.0;
                             pony.interaction_state = None;
                         }
                     }
@@ -874,8 +902,8 @@ impl App {
                     buffer.fill(0x00000000);
 
                     for p in &self.ponies {
-                        if p.current_frame as usize >= p.frames.len() { continue; }
-                        let frame = &p.frames[p.current_frame as usize];
+                        if p.current_frame >= p.animation.frames.len() { continue; }
+                        let frame = &p.animation.frames[p.current_frame].data;
                         let fw = p.width as usize;
 
                         let x0 = p.x.max(0.0) as usize;
@@ -908,14 +936,14 @@ impl App {
         self.render_context_menu();
 
         self.frame_counter += 1;
-        self.perf.update(self.ponies.len(), 0);
+        self.perf.update(self.ponies.len(), self.loader.sprite_cache.len());
         if self.frame_counter % 60 == 0 {
             println!("[Stats] {} | Windows: {}", self.perf.stats_string(), self.interaction_windows.len());
         }
     }
 }
 
-// ==================== UPDATE PONIES ====================
+// ==================== UPDATE PONIES С НОВОЙ ЛОГИКОЙ АНИМАЦИИ ====================
 
 fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     if pony.grabbed { return; }
@@ -941,18 +969,25 @@ fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
         &chosen.sprite_left
     };
 
-    let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony.config_name, sprite_name);
+    let animation = loader.load_pony_frames(&pony.config_name, sprite_name);
 
-    pony.frames = frames;
-    pony.frame_count = fc;
-    pony.width = w;
-    pony.height = h;
-    pony.frame_duration = delay;
+    // ВАЖНО: Сохраняем размеры ДО перемещения
+    let width = animation.width;
+    let height = animation.height;
+
+    pony.animation = animation;
+    pony.width = width;
+    pony.height = height;
     pony.current_frame = 0;
     pony.frame_timer = 0.0;
     pony.current_behavior = chosen.name.clone();
     pony.movement_type = MovementType::parse(&chosen.movement);
     pony.behavior_timer = chosen.min_duration + fastrand::f32() * (chosen.max_duration - chosen.min_duration);
+
+    // ВАЖНО: Обновляем параметры анимации из нового поведения
+    pony.animation_speed_mult = chosen.set_animation_speed.unwrap_or(1.0);
+    pony.fixed_fps = chosen.set_fps;
+    pony.prevent_loop = chosen.do_not_repeat_animations;
 
     let speed = match pony.movement_type {
         MovementType::None | MovementType::Sleep => 0.0,
@@ -983,6 +1018,62 @@ fn update_ponies(
     for i in 0..ponies.len() {
         let p = &mut ponies[i];
 
+        // Обновление анимации с поддержкой индивидуальных задержек
+        let mut effective_dt = dt * p.animation_speed_mult;
+
+        // Если задан фиксированный FPS, используем его
+        if let Some(fps) = p.fixed_fps {
+            let frame_time = 1.0 / fps;
+            p.frame_timer += effective_dt;
+            if p.frame_timer >= frame_time {
+                p.frame_timer -= frame_time;
+                p.current_frame += 1;
+
+                if p.current_frame >= p.animation.frames.len() {
+                    if p.prevent_loop {
+                        p.current_frame = p.animation.frames.len() - 1;
+                        p.frame_timer = 0.0;
+                    } else {
+                        p.current_frame = 0;
+                    }
+                }
+            }
+        } else {
+            // Нормальная анимация с индивидуальными задержками кадров
+            p.frame_timer += effective_dt;
+            let current_delay = if p.current_frame < p.animation.frames.len() {
+                p.animation.frames[p.current_frame].delay
+            } else {
+                p.animation.default_delay
+            };
+
+            while p.frame_timer >= current_delay && p.animation.frames.len() > 0 {
+                p.frame_timer -= current_delay;
+                p.current_frame += 1;
+
+                if p.current_frame >= p.animation.frames.len() {
+                    if p.prevent_loop {
+                        p.current_frame = p.animation.frames.len() - 1;
+                        p.frame_timer = 0.0;
+                        break;
+                    } else {
+                        p.current_frame = 0;
+                    }
+                }
+                // Обновляем current_delay для следующей итерации
+                let new_delay = if p.current_frame < p.animation.frames.len() {
+                    p.animation.frames[p.current_frame].delay
+                } else {
+                    p.animation.default_delay
+                };
+                if p.frame_timer >= new_delay {
+                    continue;
+                }
+                break;
+            }
+        }
+
+        // Движение пони
         if p.grabbed {
             if mouse_down {
                 p.x = (mouse_x - p.width as f32 / 2.0).max(0.0).min(screen_width - p.width as f32);
@@ -993,18 +1084,14 @@ fn update_ponies(
                 p.grabbed = false;
                 p.movement_type = MovementType::None;
                 p.behavior_timer = 0.0;
+                p.animation_speed_mult = 1.0;
 
                 if let Some(orig_dur) = p.original_frame_duration {
-                    p.frame_duration = orig_dur;
+                    p.animation.default_delay = orig_dur;
                     p.original_frame_duration = None;
                 }
 
                 *grabbed_pony = None;
-            }
-            p.frame_timer += dt;
-            while p.frame_timer >= p.frame_duration {
-                p.frame_timer -= p.frame_duration;
-                p.current_frame = (p.current_frame + 1) % p.frame_count;
             }
             continue;
         }
@@ -1047,12 +1134,6 @@ fn update_ponies(
         if p.y > screen_height - p.height as f32 - margin { p.vy = -p.vy.abs(); }
 
         if p.vx.abs() > 1.0 { p.facing_right = p.vx > 0.0; }
-
-        p.frame_timer += dt;
-        while p.frame_timer >= p.frame_duration {
-            p.frame_timer -= p.frame_duration;
-            p.current_frame = (p.current_frame + 1) % p.frame_count;
-        }
     }
 }
 
@@ -1298,18 +1379,17 @@ fn run_editor_mode() {
         }
     }
 }
+
 // ==================== MAIN ====================
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    // Если запущен с флагом --editor, запускаем режим редактора
     if args.iter().any(|arg| arg == "--editor" || arg == "-e") {
         run_editor_mode();
         return;
     }
 
-    // Нормальный запуск плеера
     println!("Desktop Ponies RS - Starting...");
 
     let spawn_q = Arc::new(Mutex::new(Vec::<String>::new()));

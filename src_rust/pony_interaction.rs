@@ -1,5 +1,5 @@
 // src_rust/pony_interaction.rs
-use crate::loader::{DesktopPoniesLoader, MovementType};
+use crate::loader::{DesktopPoniesLoader, MovementType, GifAnimation};
 
 // Определяем InteractionState здесь, так как он используется в библиотеке
 #[derive(Clone, Debug)]
@@ -16,13 +16,12 @@ pub struct PonyInteractionData {
     pub y: f32,
     pub vx: f32,
     pub vy: f32,
-    pub frames: Vec<Vec<u32>>,
-    pub frame_count: u32,
+    pub animation: GifAnimation,
     pub width: u32,
     pub height: u32,
-    pub current_frame: u32,
+    pub current_frame: usize,
     pub frame_timer: f32,
-    pub frame_duration: f32,
+    pub animation_speed_mult: f32,
     pub facing_right: bool,
     pub config_name: String,
     pub current_behavior: String,
@@ -48,6 +47,7 @@ impl PonyInteractionSystem {
         });
 
         pony.behavior_timer = 2.0;
+        pony.animation_speed_mult = 1.2;
     }
 
     /// Погладить пони - останавливается и замедляется
@@ -57,9 +57,9 @@ impl PonyInteractionSystem {
         pony.movement_type = MovementType::None;
 
         if pony.original_frame_duration.is_none() {
-            pony.original_frame_duration = Some(pony.frame_duration);
+            pony.original_frame_duration = Some(pony.animation.default_delay);
         }
-        pony.frame_duration *= 1.8;
+        pony.animation_speed_mult = 0.5;
 
         pony.interaction_state = Some(InteractionState::Petted {
             timer: 4.0
@@ -75,9 +75,9 @@ impl PonyInteractionSystem {
         pony.vy *= speed_mult;
 
         if pony.original_frame_duration.is_none() {
-            pony.original_frame_duration = Some(pony.frame_duration);
+            pony.original_frame_duration = Some(pony.animation.default_delay);
         }
-        pony.frame_duration *= 0.6;
+        pony.animation_speed_mult = 1.6;
 
         pony.interaction_state = Some(InteractionState::Fed {
             timer: 3.0,
@@ -97,7 +97,7 @@ impl PonyInteractionSystem {
     pub fn drag_pony(pony: &mut PonyInteractionData, loader: &mut DesktopPoniesLoader) {
         // Сохраняем оригинальную длительность
         if pony.original_frame_duration.is_none() {
-            pony.original_frame_duration = Some(pony.frame_duration);
+            pony.original_frame_duration = Some(pony.animation.default_delay);
         }
 
         // Сначала получаем имя пони (чтобы не держать заимствование)
@@ -113,24 +113,24 @@ impl PonyInteractionSystem {
                     } else {
                         behavior.sprite_left.clone()
                     };
-                    (sprite_name, behavior.name.clone())
+                    (sprite_name, behavior.name.clone(), behavior.set_animation_speed)
                 })
         } else {
             None
         };
 
-        if let Some((sprite_name, behavior_name)) = drag_info {
-            let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
-            pony.frames = frames;
-            pony.frame_count = fc;
-            pony.width = w;
-            pony.height = h;
-            pony.frame_duration = delay;
+        if let Some((sprite_name, behavior_name, anim_speed)) = drag_info {
+            let animation = loader.load_pony_frames(&pony_name, &sprite_name);
+            pony.animation = animation;
+            pony.width = pony.animation.width;
+            pony.height = pony.animation.height;
             pony.current_frame = 0;
+            pony.frame_timer = 0.0;
             pony.current_behavior = behavior_name;
             pony.movement_type = MovementType::Dragged;
+            pony.animation_speed_mult = anim_speed.unwrap_or(1.5);
         } else {
-            pony.frame_duration *= 1.5;
+            pony.animation_speed_mult = 2.5;
         }
 
         pony.grabbed = true;
@@ -142,6 +142,7 @@ impl PonyInteractionSystem {
         pony.grabbed = false;
         pony.movement_type = MovementType::None;
         pony.behavior_timer = 0.0;
+        pony.animation_speed_mult = 1.0;
 
         // Сначала получаем информацию об idle/stand поведении
         let pony_name = pony.config_name.clone();
@@ -164,18 +165,18 @@ impl PonyInteractionSystem {
         };
 
         if let Some((sprite_name, behavior_name)) = idle_info {
-            let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
-            pony.frames = frames;
-            pony.frame_count = fc;
-            pony.width = w;
-            pony.height = h;
-            pony.frame_duration = delay;
+            let animation = loader.load_pony_frames(&pony_name, &sprite_name);
+            pony.animation = animation;
+            pony.width = pony.animation.width;
+            pony.height = pony.animation.height;
+            pony.current_frame = 0;
+            pony.frame_timer = 0.0;
             pony.current_behavior = behavior_name;
         }
 
         // Восстанавливаем оригинальную скорость анимации
         if let Some(orig_dur) = pony.original_frame_duration {
-            pony.frame_duration = orig_dur;
+            pony.animation.default_delay = orig_dur;
             pony.original_frame_duration = None;
         }
 
@@ -189,6 +190,7 @@ impl PonyInteractionSystem {
             pony.interaction_state = None;
             pony.movement_type = MovementType::None;
             pony.behavior_timer = 0.0;
+            pony.animation_speed_mult = 1.0;
 
             // Сначала получаем имя спрайта, чтобы избежать конфликта заимствований
             let sprite_info = loader.get_config(&pony.config_name)
@@ -210,13 +212,12 @@ impl PonyInteractionSystem {
             // Теперь загружаем спрайт, когда иммутабельная ссылка уже не нужна
             if let Some((sprite_name, behavior_name)) = sprite_info {
                 let pony_name = pony.config_name.clone();
-                let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
-                pony.frames = frames;
-                pony.frame_count = fc;
-                pony.width = w;
-                pony.height = h;
-                pony.frame_duration = delay;
+                let animation = loader.load_pony_frames(&pony_name, &sprite_name);
+                pony.animation = animation;
+                pony.width = pony.animation.width;
+                pony.height = pony.animation.height;
                 pony.current_frame = 0;
+                pony.frame_timer = 0.0;
                 pony.current_behavior = behavior_name;
             }
         } else {
@@ -226,6 +227,7 @@ impl PonyInteractionSystem {
             pony.movement_type = MovementType::Sleep;
             pony.interaction_state = Some(InteractionState::Sleeping);
             pony.behavior_timer = 999999.0;
+            pony.animation_speed_mult = 0.0;
 
             // Сначала получаем имя спрайта
             let sprite_info = loader.get_config(&pony.config_name)
@@ -245,13 +247,12 @@ impl PonyInteractionSystem {
             // Потом загружаем спрайт
             if let Some((sprite_name, behavior_name)) = sprite_info {
                 let pony_name = pony.config_name.clone();
-                let (frames, fc, w, h, delay) = loader.load_pony_frames(&pony_name, &sprite_name);
-                pony.frames = frames;
-                pony.frame_count = fc;
-                pony.width = w;
-                pony.height = h;
-                pony.frame_duration = delay;
+                let animation = loader.load_pony_frames(&pony_name, &sprite_name);
+                pony.animation = animation;
+                pony.width = pony.animation.width;
+                pony.height = pony.animation.height;
                 pony.current_frame = 0;
+                pony.frame_timer = 0.0;
                 pony.current_behavior = behavior_name;
             }
         }

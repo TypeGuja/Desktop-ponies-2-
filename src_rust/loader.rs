@@ -5,6 +5,22 @@ use std::collections::HashMap;
 use image::AnimationDecoder;
 use serde::{Serialize, Deserialize};
 
+// ==================== НОВАЯ СТРУКТУРА ДЛЯ АНИМАЦИИ ====================
+
+#[derive(Clone)]
+pub struct GifFrameData {
+    pub data: Vec<u32>,           // BGRA данные
+    pub delay: f32,               // Индивидуальная задержка кадра в секундах
+}
+
+#[derive(Clone)]
+pub struct GifAnimation {
+    pub frames: Vec<GifFrameData>, // Все кадры с их задержками
+    pub width: u32,
+    pub height: u32,
+    pub default_delay: f32,        // Запасная задержка
+}
+
 // ==================== ENUMS ====================
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -394,7 +410,7 @@ fn is_garbage_line(line: &str) -> bool {
 pub struct DesktopPoniesLoader {
     pub ponies_dir: PathBuf,
     pub configs: Vec<PonyConfig>,
-    pub sprite_cache: HashMap<String, (Vec<Vec<u32>>, u32, u32, u32, f32)>,
+    pub sprite_cache: HashMap<String, GifAnimation>,
 }
 
 impl MovementType {
@@ -666,44 +682,80 @@ impl DesktopPoniesLoader {
         })
     }
 
-    fn load_gif_file(&self, path: &Path) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+    // ==================== НОВАЯ ВЕРСИЯ ЗАГРУЗКИ GIF ====================
+
+    fn load_gif_animation(&self, path: &Path) -> GifAnimation {
+        let mut animation = GifAnimation {
+            frames: Vec::new(),
+            width: 0,
+            height: 0,
+            default_delay: 0.1,
+        };
+
         if let Ok(bytes) = std::fs::read(path) {
             if let Ok(decoder) = image::codecs::gif::GifDecoder::new(std::io::Cursor::new(&bytes)) {
-                let frames: Vec<_> = decoder.into_frames()
-                    .filter_map(|f: Result<image::Frame, _>| f.ok())
+                let frames_data: Vec<_> = decoder.into_frames()
+                    .filter_map(|f| f.ok())
                     .collect();
 
-                if !frames.is_empty() {
-                    let w = frames[0].buffer().width();
-                    let h = frames[0].buffer().height();
-                    let fc = frames.len() as u32;
+                if !frames_data.is_empty() {
+                    let w = frames_data[0].buffer().width();
+                    let h = frames_data[0].buffer().height();
                     let mut delays = Vec::new();
 
-                    let bgra: Vec<Vec<u32>> = frames.iter().map(|f: &image::Frame| {
-                        let (d, _) = f.delay().numer_denom_ms();
-                        delays.push(d as f32);
-                        f.buffer().chunks(4).map(|p| {
-                            ((p[3] as u32) << 24) | ((p[0] as u32) << 16) | ((p[1] as u32) << 8) | (p[2] as u32)
-                        }).collect()
-                    }).collect();
+                    for frame in frames_data {
+                        let (numer, denom) = frame.delay().numer_denom_ms();
+                        let delay_secs = (numer as f32 / denom as f32) / 1000.0;
+                        let delay_secs = delay_secs.max(0.03).min(0.3);
+                        delays.push(delay_secs);
 
-                    delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                    let median_delay = if !delays.is_empty() {
-                        delays[delays.len() / 2] / 1000.0
-                    } else {
-                        0.1
-                    };
+                        // Получаем RGBA данные
+                        let rgba = frame.into_buffer();
+                        let rgba_data = rgba.into_raw();
 
-                    let frame_duration = median_delay.max(0.03).min(0.15);
+                        // Конвертируем RGBA в формат для softbuffer (ARGB)
+                        // softbuffer ожидает 0xAARRGGBB
+                        let argb: Vec<u32> = rgba_data.chunks(4).map(|p| {
+                            let r = p[0] as u32;
+                            let g = p[1] as u32;
+                            let b = p[2] as u32;
+                            let a = p[3] as u32;
+                            (a << 24) | (r << 16) | (g << 8) | b
+                        }).collect();
 
-                    return (bgra, fc, w, h, frame_duration);
+                        animation.frames.push(GifFrameData {
+                            data: argb,
+                            delay: delay_secs,
+                        });
+                    }
+
+                    animation.width = w;
+                    animation.height = h;
+
+                    // Вычисляем медианную задержку как fallback
+                    let mut delays_sorted = delays.clone();
+                    delays_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                    animation.default_delay = delays_sorted[delays_sorted.len() / 2];
                 }
             }
         }
-        Self::fallback_sprite()
-    }
 
-    pub fn load_pony_frames(&mut self, pony_name: &str, sprite_name: &str) -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
+        // Фолбэк если не загрузилось
+        if animation.frames.is_empty() {
+            // Красный квадрат как фолбэк (ARGB: alpha=255, red=255)
+            let fallback_data = vec![0xFFFF0000u32; 32 * 32];
+            animation.frames.push(GifFrameData {
+                data: fallback_data,
+                delay: 0.1,
+            });
+            animation.width = 32;
+            animation.height = 32;
+            animation.default_delay = 0.1;
+        }
+
+        animation
+    }
+    pub fn load_pony_frames(&mut self, pony_name: &str, sprite_name: &str) -> GifAnimation {
         let cache_key = format!("{}/{}", pony_name, sprite_name);
 
         if let Some(cached) = self.sprite_cache.get(&cache_key) {
@@ -711,48 +763,44 @@ impl DesktopPoniesLoader {
         }
 
         let pony_dir = self.ponies_dir.join(pony_name);
-        if !pony_dir.exists() {
-            return Self::fallback_sprite();
-        }
+        let animation = if pony_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&pony_dir) {
+                let sprite_lower = sprite_name.to_lowercase();
+                let mut found = None;
 
-        let result = if let Ok(entries) = std::fs::read_dir(&pony_dir) {
-            let sprite_lower = sprite_name.to_lowercase();
-            let mut found = None;
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.extension().and_then(|e| e.to_str()) == Some("gif") {
+                        let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
+                        let name_without_ext = filename.trim_end_matches(".gif");
 
-            for entry in entries.flatten() {
-                let path = entry.path();
-                if path.extension().and_then(|e| e.to_str()) == Some("gif") {
-                    let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
-                    let name_without_ext = filename.trim_end_matches(".gif");
-
-                    if name_without_ext == sprite_lower || filename.contains(&sprite_lower) {
-                        found = Some(path);
-                        break;
+                        if name_without_ext == sprite_lower || filename.contains(&sprite_lower) {
+                            found = Some(path);
+                            break;
+                        }
                     }
                 }
-            }
 
-            if let Some(path) = found {
-                self.load_gif_file(&path)
-            } else {
-                let exact_path = pony_dir.join(format!("{}.gif", sprite_name));
-                if exact_path.exists() {
-                    self.load_gif_file(&exact_path)
+                if let Some(path) = found {
+                    self.load_gif_animation(&path)
                 } else {
-                    eprintln!("[Warning] Sprite '{}' not found for pony '{}'", sprite_name, pony_name);
-                    Self::fallback_sprite()
+                    let exact_path = pony_dir.join(format!("{}.gif", sprite_name));
+                    if exact_path.exists() {
+                        self.load_gif_animation(&exact_path)
+                    } else {
+                        eprintln!("[Warning] Sprite '{}' not found for pony '{}'", sprite_name, pony_name);
+                        self.load_gif_animation(Path::new(""))
+                    }
                 }
+            } else {
+                self.load_gif_animation(Path::new(""))
             }
         } else {
-            Self::fallback_sprite()
+            self.load_gif_animation(Path::new(""))
         };
 
-        self.sprite_cache.insert(cache_key, result.clone());
-        result
-    }
-
-    fn fallback_sprite() -> (Vec<Vec<u32>>, u32, u32, u32, f32) {
-        (vec![vec![0xFFFF0000u32; 32 * 32]], 1, 32, 32, 0.1)
+        self.sprite_cache.insert(cache_key, animation.clone());
+        animation
     }
 
     pub fn get_config(&self, name: &str) -> Option<&PonyConfig> {
