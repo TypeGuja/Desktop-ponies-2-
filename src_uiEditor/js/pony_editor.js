@@ -191,7 +191,7 @@ function showInlineGifEditor(ponyName, spriteName) {
         flex-direction: column;
     `;
 
-    modal.innerHTML = `
+        modal.innerHTML = `
         <div style="padding: 12px 20px; background: #181825; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <span style="font-size: 20px; font-weight: bold;">🎨 GIF Editor</span>
@@ -200,41 +200,36 @@ function showInlineGifEditor(ponyName, spriteName) {
             <button id="gif-editor-close" style="background: none; border: none; color: #f38ba8; font-size: 28px; cursor: pointer; padding: 4px 12px;">✕</button>
         </div>
         
-        <div style="padding: 10px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-            <button id="gif-tool-pencil" class="gif-tool-btn active" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">✏️ Pencil</button>
-            <button id="gif-tool-eraser" class="gif-tool-btn" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">🧽 Eraser</button>
-            <button id="gif-tool-fill" class="gif-tool-btn" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">🪣 Fill</button>
-            <button id="gif-tool-smooth" class="gif-tool-btn" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">✨ Smooth Edges</button>
+        <!-- ПЕРВАЯ СТРОКА: Инструменты рисования -->
+        <div style="padding: 8px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <button id="gif-tool-pencil" class="gif-tool-btn active" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✏️ Pencil</button>
+            <button id="gif-tool-eraser" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🧽 Eraser</button>
+            <button id="gif-tool-fill" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🪣 Fill</button>
+            <button id="gif-tool-smooth" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✨ Smooth Edges</button>
             
-            <div style="width: 1px; height: 32px; background: #313244; margin: 0 6px;"></div>
+            <div style="width: 1px; height: 28px; background: #313244;"></div>
             
-            <button id="gif-tween-frames" class="gif-tool-btn" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">🔄 Tween Frames</button>
-            <button id="gif-smooth-animation" class="gif-tool-btn" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">🎞️ Smooth Anim</button>
+            <button id="gif-tween-frames" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🔄 Tween Frames</button>
+            <button id="gif-smooth-animation" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🎞️ Smooth Anim</button>
             
-            <div style="width: 1px; height: 32px; background: #313244; margin: 0 6px;"></div>
+            <div style="width: 1px; height: 28px; background: #313244;"></div>
             
-            <button id="gif-clear-frame" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">🗑️ Clear</button>
-            <button id="gif-add-frame" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">➕ Add Frame</button>
-            <button id="gif-duplicate-frame" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">📋 Duplicate</button>
-            <button id="gif-delete-frame" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">➖ Delete Frame</button>
+            <button id="gif-preview" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">▶️ Preview</button>
+            <button id="gif-save" style="padding: 6px 14px; background: #a6e3a1; border: none; border-radius: 8px; color: #1e1e2e; cursor: pointer; font-weight: bold; font-size: 13px;">💾 Save</button>
             
-            <div style="width: 1px; height: 32px; background: #313244; margin: 0 6px;"></div>
-            
-            <button id="gif-preview" style="padding: 8px 16px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 14px;">▶️ Preview</button>
-            <button id="gif-save" style="padding: 8px 16px; background: #a6e3a1; border: none; border-radius: 8px; color: #1e1e2e; cursor: pointer; font-weight: bold; font-size: 14px;">💾 Save</button>
-            
-            <div style="display: flex; align-items: center; gap: 8px; background: #1e1e2e; padding: 4px 12px; border-radius: 20px; border: 1px solid #313244;">
-                <span style="font-size: 12px; color: #a6adc8;">-</span>
-                <input type="range" id="gif-speed-slider" min="0.25" max="4" step="0.05" value="1" style="width: 100px; cursor: pointer; height: 4px; border-radius: 2px;">
-                <span style="font-size: 12px; color: #a6adc8;">+</span>
-                <span id="gif-speed-value" style="font-size: 11px; color: #cba6f7; min-width: 45px; font-family: monospace;">1.00x</span>
+            <div style="display: flex; align-items: center; gap: 6px; background: #1e1e2e; padding: 3px 10px; border-radius: 20px; border: 1px solid #313244;">
+                <span style="font-size: 11px; color: #a6adc8;">-</span>
+                <input type="range" id="gif-speed-slider" min="0.25" max="4" step="0.05" value="1" style="width: 90px; cursor: pointer; height: 4px;">
+                <span style="font-size: 11px; color: #a6adc8;">+</span>
+                <span id="gif-speed-value" style="font-size: 10px; color: #cba6f7; min-width: 40px; font-family: monospace;">1.00x</span>
             </div>
             
             <div style="flex:1"></div>
             
+            <!-- Правая часть первой строки -->
             <div style="position: relative;">
-                <button id="gif-color-btn" style="padding: 8px 16px; background: #cba6f7; border: none; border-radius: 8px; color: #1e1e2e; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px;">
-                    <span id="gif-color-preview-mini" style="display: inline-block; width: 18px; height: 18px; border-radius: 4px; background: #cba6f7;"></span>
+                <button id="gif-color-btn" style="padding: 6px 14px; background: #cba6f7; border: none; border-radius: 8px; color: #1e1e2e; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 13px;">
+                    <span id="gif-color-preview-mini" style="display: inline-block; width: 16px; height: 16px; border-radius: 4px; background: #cba6f7;"></span>
                     🎨 Color
                 </button>
                 
@@ -242,57 +237,67 @@ function showInlineGifEditor(ponyName, spriteName) {
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0;">
                         <div style="font-size: 16px; font-weight: bold; color: #cdd6f4;">🎨 Color Picker</div>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <div id="gif-current-color-preview" style="width: 48px; height: 48px; border-radius: 8px; border: 2px solid #313244; background: #cba6f7; box-shadow: 0 2px 8px rgba(0,0,0,0.2);"></div>
+                            <div id="gif-current-color-preview" style="width: 48px; height: 48px; border-radius: 8px; border: 2px solid #313244; background: #cba6f7;"></div>
                             <div>
                                 <div style="font-size: 12px; font-weight: bold; color: #cdd6f4;"><span id="gif-current-rgb">RGB(203,166,247)</span></div>
                                 <div style="font-size: 11px; color: #a6adc8;"><span id="gif-current-hex">#CBA6F7</span></div>
                             </div>
                         </div>
-                        <button id="gif-pipette-btn" style="background: #313244; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 14px; color: #cdd6f4; display: flex; align-items: center; gap: 6px;">🔍 Pipette</button>
+                        <button id="gif-pipette-btn" style="background: #313244; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; color: #cdd6f4; display: flex; align-items: center; gap: 6px;">🔍 Pipette</button>
                     </div>
                     
                     <div style="display: flex; gap: 16px; flex: 1; min-height: 0;">
-                        <div style="flex: 2; display: flex; flex-direction: column;">
+                        <div style="flex: 2;">
                             <canvas id="gif-color-square" width="380" height="240" style="width: 100%; height: auto; border-radius: 10px; border: 1px solid #313244; cursor: crosshair; background: #11111b;"></canvas>
                         </div>
                         <div style="flex: 1.2; display: flex; flex-direction: column; gap: 12px;">
                             <div>
                                 <div style="font-size: 11px; color: #a6adc8; margin-bottom: 4px;">🌈 Hue</div>
-                                <input type="range" id="gif-hue-slider" min="0" max="360" value="260" style="width: 100%; cursor: pointer; height: 6px; border-radius: 3px;">
+                                <input type="range" id="gif-hue-slider" min="0" max="360" value="260" style="width: 100%;">
                             </div>
                             <div>
                                 <div style="font-size: 11px; color: #a6adc8; margin-bottom: 4px;">🎭 Alpha <span id="gif-alpha-value" style="color: #cba6f7;">255</span></div>
-                                <input type="range" id="gif-alpha-slider" min="0" max="255" value="255" style="width: 100%; cursor: pointer; height: 6px; border-radius: 3px;">
+                                <input type="range" id="gif-alpha-slider" min="0" max="255" value="255" style="width: 100%;">
                             </div>
-                            <div style="height: 1px; background: #313244; margin: 4px 0;"></div>
+                            <div style="height: 1px; background: #313244;"></div>
                             <div>
                                 <div style="font-size: 11px; color: #a6adc8; margin-bottom: 4px;">🎨 RGBA</div>
-                                <input type="text" id="gif-rgba-input" value="rgba(203,166,247,1)" style="width:100%; background:#11111b; border:1px solid #313244; border-radius: 8px; padding: 8px 10px; color:#cdd6f4; font-size: 12px; font-family: monospace;">
+                                <input type="text" id="gif-rgba-input" value="rgba(203,166,247,1)" style="width:100%; background:#11111b; border:1px solid #313244; border-radius: 8px; padding: 6px 8px; color:#cdd6f4; font-size: 11px; font-family: monospace;">
                             </div>
                             <div>
                                 <div style="font-size: 11px; color: #a6adc8; margin-bottom: 4px;">📋 HEX</div>
-                                <input type="text" id="gif-hex-input" value="#CBA6F7" maxlength="7" style="width:100%; background:#11111b; border:1px solid #313244; border-radius: 8px; padding: 8px 10px; color:#cdd6f4; font-size: 12px; font-family: monospace;">
+                                <input type="text" id="gif-hex-input" value="#CBA6F7" maxlength="7" style="width:100%; background:#11111b; border:1px solid #313244; border-radius: 8px; padding: 6px 8px; color:#cdd6f4; font-size: 11px; font-family: monospace;">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div style="display: flex; gap: 6px; align-items: center; background: #1e1e2e; padding: 4px 10px; border-radius: 20px; border: 1px solid #313244;">
-                <span style="font-size: 12px; color: #a6adc8;">🔍</span>
-                <button id="gif-zoom-out" style="padding: 4px 8px; background: #313244; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #cdd6f4;">−</button>
-                <span id="gif-zoom-level" style="min-width: 50px; text-align: center; font-size: 12px; font-family: monospace; color: #cba6f7;">100%</span>
-                <button id="gif-zoom-in" style="padding: 4px 8px; background: #313244; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; color: #cdd6f4;">+</button>
-                <div style="width: 1px; height: 20px; background: #313244; margin: 0 2px;"></div>
-                <button id="gif-zoom-reset" style="padding: 4px 8px; background: #313244; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; color: #cdd6f4;">1:1</button>
-                <button id="gif-zoom-fit" style="padding: 4px 8px; background: #313244; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; color: #cdd6f4;">Fit</button>
+            <div style="display: flex; gap: 5px; align-items: center; background: #1e1e2e; padding: 3px 8px; border-radius: 20px; border: 1px solid #313244;">
+                <span style="font-size: 11px; color: #a6adc8;">🔍</span>
+                <button id="gif-zoom-out" style="padding: 3px 6px; background: #313244; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; color: #cdd6f4;">−</button>
+                <span id="gif-zoom-level" style="min-width: 45px; text-align: center; font-size: 11px; font-family: monospace; color: #cba6f7;">100%</span>
+                <button id="gif-zoom-in" style="padding: 3px 6px; background: #313244; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; color: #cdd6f4;">+</button>
+                <div style="width: 1px; height: 18px; background: #313244;"></div>
+                <button id="gif-zoom-reset" style="padding: 3px 6px; background: #313244; border: none; border-radius: 5px; cursor: pointer; font-size: 10px; color: #cdd6f4;">1:1</button>
+                <button id="gif-zoom-fit" style="padding: 3px 6px; background: #313244; border: none; border-radius: 5px; cursor: pointer; font-size: 10px; color: #cdd6f4;">Fit</button>
             </div>
             
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <span style="font-size: 12px; color: #a6adc8;">⏱️ Delay:</span>
-                <input type="number" id="gif-frame-delay" value="10" min="1" max="100" style="width: 60px; background: #1e1e2e; border: 1px solid #313244; border-radius: 6px; padding: 6px; color: #cdd6f4; text-align: center;">
-                <span style="font-size: 12px;">cs</span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <span style="font-size: 11px; color: #a6adc8;">⏱️ Delay:</span>
+                <input type="number" id="gif-frame-delay" value="10" min="1" max="100" style="width: 55px; background: #1e1e2e; border: 1px solid #313244; border-radius: 5px; padding: 4px; color: #cdd6f4; text-align: center; font-size: 12px;">
+                <span style="font-size: 11px;">cs</span>
             </div>
+        </div>
+        
+        <!-- ВТОРАЯ СТРОКА: Управление кадрами -->
+        <div style="padding: 8px 16px; background: #0f0f17; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 12px; color: #a6adc8; font-weight: bold;"></span>
+            
+            <button id="gif-clear-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🗑️ Clear Frame</button>
+            <button id="gif-add-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➕ Add Frame</button>
+            <button id="gif-duplicate-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">📋 Duplicate Frame</button>
+            <button id="gif-delete-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➖ Delete Frame</button>
         </div>
         
         <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px;">
