@@ -12,33 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/gif_editor.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_rust/editor/pony_preview.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/css/dialogs.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src_uiEditor/js/gif_editor.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.rs" beforeDir="false" afterPath="$PROJECT_DIR$/build.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug_editor.html" beforeDir="false" afterPath="$PROJECT_DIR$/debug_editor.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/base.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/base.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/components.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/components.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/editor.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/editor.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/layout.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/layout.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -328,6 +303,11 @@
       <workItem from="1779448986883" duration="382000" />
       <workItem from="1779557982927" duration="5537000" />
       <workItem from="1779600343027" duration="1927000" />
+      <workItem from="1779602761355" duration="1986000" />
+      <workItem from="1779608439755" duration="545000" />
+      <workItem from="1779628346335" duration="1931000" />
+      <workItem from="1779641450899" duration="651000" />
+      <workItem from="1779808181487" duration="11000" />
     </task>
     <servers />
   </component>
