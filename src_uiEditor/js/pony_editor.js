@@ -283,7 +283,7 @@ function showInlineGifEditor(ponyName, spriteName) {
                 <button id="gif-zoom-fit" style="padding: 3px 6px; background: #313244; border: none; border-radius: 5px; cursor: pointer; font-size: 10px; color: #cdd6f4;">Fit</button>
             </div>
             
-            <div style="display: flex; gap: 6px; align-items: center;">
+            <div style="display: flex; gap: 6px; align-items: center;"> 
                 <span style="font-size: 11px; color: #a6adc8;">⏱️ Delay:</span>
                 <input type="number" id="gif-frame-delay" value="10" min="1" max="100" style="width: 55px; background: #1e1e2e; border: 1px solid #313244; border-radius: 5px; padding: 4px; color: #cdd6f4; text-align: center; font-size: 12px;">
                 <span style="font-size: 11px;">cs</span>
@@ -392,15 +392,37 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         const idx = (py * state.width + px) * 4;
 
         if (state.tool === 'eraser') {
+            // Стирание - просто обнуляем
             frame.data[idx] = 0;
             frame.data[idx + 1] = 0;
             frame.data[idx + 2] = 0;
             frame.data[idx + 3] = 0;
         } else if (state.tool === 'pencil') {
-            frame.data[idx] = state.currentColor.r;
-            frame.data[idx + 1] = state.currentColor.g;
-            frame.data[idx + 2] = state.currentColor.b;
-            frame.data[idx + 3] = state.currentColor.a;
+            // ПРАВИЛЬНОЕ СМЕШИВАНИЕ с учётом текущего альфа-канала
+            const targetAlpha = state.currentColor.a / 255;
+            const currentAlpha = frame.data[idx + 3] / 255;
+
+            // Альфа для нового пикселя (не перекрываем полностью, если есть прозрачность)
+            const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
+
+            if (resultAlpha > 0) {
+                // Смешиваем цвета
+                frame.data[idx] = Math.round(
+                    (state.currentColor.r * targetAlpha + frame.data[idx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[idx + 1] = Math.round(
+                    (state.currentColor.g * targetAlpha + frame.data[idx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[idx + 2] = Math.round(
+                    (state.currentColor.b * targetAlpha + frame.data[idx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[idx + 3] = Math.round(resultAlpha * 255);
+            } else {
+                frame.data[idx] = 0;
+                frame.data[idx + 1] = 0;
+                frame.data[idx + 2] = 0;
+                frame.data[idx + 3] = 0;
+            }
         }
 
         state.hasChanges = true;
@@ -422,6 +444,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             a: frame.data[idx + 3]
         };
 
+        // Проверка на идентичность цвета с учётом альфа
         if (target.r === state.currentColor.r &&
             target.g === state.currentColor.g &&
             target.b === state.currentColor.b &&
@@ -438,16 +461,31 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
 
             const cidx = (cy * state.width + cx) * 4;
 
-            if (frame.data[cidx] !== target.r ||
-                frame.data[cidx + 1] !== target.g ||
-                frame.data[cidx + 2] !== target.b ||
-                frame.data[cidx + 3] !== target.a) continue;
+            // Проверяем, совпадает ли с целевым цветом
+            if (Math.abs(frame.data[cidx] - target.r) > 5 ||
+                Math.abs(frame.data[cidx + 1] - target.g) > 5 ||
+                Math.abs(frame.data[cidx + 2] - target.b) > 5 ||
+                Math.abs(frame.data[cidx + 3] - target.a) > 10) continue;
 
-            frame.data[cidx] = state.currentColor.r;
-            frame.data[cidx + 1] = state.currentColor.g;
-            frame.data[cidx + 2] = state.currentColor.b;
-            frame.data[cidx + 3] = state.currentColor.a;
+            // Применяем новый цвет с правильным смешиванием
+            const targetAlpha = state.currentColor.a / 255;
+            const currentAlpha = frame.data[cidx + 3] / 255;
+            const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
 
+            if (resultAlpha > 0) {
+                frame.data[cidx] = Math.round(
+                    (state.currentColor.r * targetAlpha + frame.data[cidx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[cidx + 1] = Math.round(
+                    (state.currentColor.g * targetAlpha + frame.data[cidx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[cidx + 2] = Math.round(
+                    (state.currentColor.b * targetAlpha + frame.data[cidx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                );
+                frame.data[cidx + 3] = Math.round(resultAlpha * 255);
+            }
+
+            // Добавляем соседей
             if (cx > 0) stack.push({ x: cx - 1, y: cy });
             if (cx < state.width - 1) stack.push({ x: cx + 1, y: cy });
             if (cy > 0) stack.push({ x: cx, y: cy - 1 });
@@ -505,37 +543,26 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         }
 
         function interpolatePixel(idx, t) {
-            const aAlpha = dataA[idx + 3];
-            const bAlpha = dataB[idx + 3];
+            const aAlpha = dataA[idx + 3] / 255;
+            const bAlpha = dataB[idx + 3] / 255;
 
-            if (aAlpha === 0 && bAlpha === 0) {
+            // Интерполируем альфа-каналы
+            const resultAlpha = aAlpha * (1 - t) + bAlpha * t;
+
+            if (resultAlpha === 0) {
                 return [0, 0, 0, 0];
             }
 
-            if (aAlpha === 0) {
-                return [
-                    Math.round(dataB[idx] * t),
-                    Math.round(dataB[idx + 1] * t),
-                    Math.round(dataB[idx + 2] * t),
-                    Math.round(bAlpha * t)
-                ];
-            }
-
-            if (bAlpha === 0) {
-                const invT = 1 - t;
-                return [
-                    Math.round(dataA[idx] * invT),
-                    Math.round(dataA[idx + 1] * invT),
-                    Math.round(dataA[idx + 2] * invT),
-                    Math.round(aAlpha * invT)
-                ];
-            }
+            // Интерполируем RGB с учётом альфа
+            const r = ((dataA[idx] * aAlpha * (1 - t) + dataB[idx] * bAlpha * t) / resultAlpha);
+            const g = ((dataA[idx + 1] * aAlpha * (1 - t) + dataB[idx + 1] * bAlpha * t) / resultAlpha);
+            const b = ((dataA[idx + 2] * aAlpha * (1 - t) + dataB[idx + 2] * bAlpha * t) / resultAlpha);
 
             return [
-                lerp(dataA[idx], dataB[idx], t),
-                lerp(dataA[idx + 1], dataB[idx + 1], t),
-                lerp(dataA[idx + 2], dataB[idx + 2], t),
-                lerp(dataA[idx + 3], dataB[idx + 3], t)
+                Math.round(Math.min(255, Math.max(0, r))),
+                Math.round(Math.min(255, Math.max(0, g))),
+                Math.round(Math.min(255, Math.max(0, b))),
+                Math.round(resultAlpha * 255)
             ];
         }
 
