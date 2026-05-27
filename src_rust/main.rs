@@ -52,13 +52,12 @@ enum InteractionState {
 struct Pony {
     x: f32, y: f32,
     vx: f32, vy: f32,
-    // Новая система анимации
     animation: GifAnimation,
     current_frame: usize,
     frame_timer: f32,
-    animation_speed_mult: f32,        // Из behavior.set_animation_speed
-    prevent_loop: bool,               // Из behavior.do_not_repeat_animations
-    fixed_fps: Option<f32>,           // Из behavior.set_fps
+    animation_speed_mult: f32,
+    prevent_loop: bool,
+    fixed_fps: Option<f32>,
     width: u32, height: u32,
     facing_right: bool,
     config_name: String,
@@ -69,6 +68,8 @@ struct Pony {
     grabbed: bool,
     interaction_state: Option<InteractionState>,
     original_frame_duration: Option<f32>,
+    // НОВОЕ ПОЛЕ: счётчик повторений текущей анимации
+    current_behavior_repeat_count: u32,
 }
 
 struct InteractionWindow {
@@ -258,6 +259,7 @@ impl App {
             grabbed: false,
             interaction_state: None,
             original_frame_duration: None,
+            current_behavior_repeat_count: 0,
         });
 
         self.create_interaction_window(pony_index, event_loop);
@@ -950,19 +952,111 @@ fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     if pony.interaction_state.is_some() { return; }
     if pony.available_behaviors.is_empty() { return; }
 
-    let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
-    if total_prob <= 0.0 { return; }
+    // Запоминаем текущее поведение
+    let old_behavior_name = pony.current_behavior.clone();
 
-    let mut rand_val = fastrand::f32() * total_prob;
-    let mut chosen = &pony.available_behaviors[0];
-    for behavior in &pony.available_behaviors {
-        rand_val -= behavior.probability;
-        if rand_val <= 0.0 {
-            chosen = behavior;
-            break;
+    // НОВОЕ: Шанс на принудительный показ редкой анимации (15%)
+    let force_rare = fastrand::f32() < 0.15;
+
+    let chosen = if force_rare {
+        // Принудительно выбираем случайное поведение
+        let idx = fastrand::usize(0..pony.available_behaviors.len());
+        &pony.available_behaviors[idx]
+    } else {
+        // Обычный выбор по вероятностям
+        let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
+        if total_prob <= 0.0 { return; }
+
+        let mut rand_val = fastrand::f32() * total_prob;
+        let mut chosen = &pony.available_behaviors[0];
+
+        for behavior in &pony.available_behaviors {
+            rand_val -= behavior.probability;
+            if rand_val <= 0.0 {
+                chosen = behavior;
+                break;
+            }
         }
+        chosen
+    };
+
+    // НОВОЕ: Проверка на повторение одной и той же анимации
+    if chosen.name == old_behavior_name {
+        pony.current_behavior_repeat_count += 1;
+
+        // Если одна и та же анимация выбрана 2+ раз подряд - принудительно меняем
+        if pony.current_behavior_repeat_count >= 2 {
+            println!("[Skip Repeat] {} repeated {}x, forcing change",
+                     pony.config_name, pony.current_behavior_repeat_count);
+
+            // Выбираем другое случайное поведение (не текущее)
+            let other_behaviors: Vec<&Behavior> = pony.available_behaviors.iter()
+                .filter(|b| b.name != old_behavior_name)
+                .collect();
+
+            if !other_behaviors.is_empty() {
+                let idx = fastrand::usize(0..other_behaviors.len());
+                let new_chosen = other_behaviors[idx];
+
+                // Сбрасываем счётчик
+                pony.current_behavior_repeat_count = 0;
+
+                // Загружаем новую анимацию
+                let sprite_name = if !new_chosen.sprite_right.is_empty() {
+                    &new_chosen.sprite_right
+                } else {
+                    &new_chosen.sprite_left
+                };
+                let animation = loader.load_pony_frames(&pony.config_name, sprite_name);
+                let width = animation.width;
+                let height = animation.height;
+
+                pony.animation = animation;
+                pony.width = width;
+                pony.height = height;
+                pony.current_frame = 0;
+                pony.frame_timer = 0.0;
+                pony.current_behavior = new_chosen.name.clone();
+                pony.movement_type = MovementType::parse(&new_chosen.movement);
+                pony.behavior_timer = new_chosen.min_duration + fastrand::f32() * (new_chosen.max_duration - new_chosen.min_duration);
+                pony.animation_speed_mult = new_chosen.set_animation_speed.unwrap_or(1.0);
+                pony.fixed_fps = new_chosen.set_fps;
+                pony.prevent_loop = new_chosen.do_not_repeat_animations;
+
+                let speed = match pony.movement_type {
+                    MovementType::None | MovementType::Sleep => 0.0,
+                    _ => new_chosen.speed * 60.0,
+                };
+
+                if speed > 0.0 {
+                    let angle = fastrand::f32() * std::f32::consts::TAU;
+                    pony.vx = angle.cos() * speed;
+                    pony.vy = angle.sin() * speed;
+                } else {
+                    pony.vx = 0.0;
+                    pony.vy = 0.0;
+                }
+
+                println!("[Behavior] {} → {} (forced change, was {} repeated {}x)",
+                         pony.config_name, new_chosen.name, old_behavior_name, pony.current_behavior_repeat_count);
+                return;
+            }
+        }
+    } else {
+        // Разные анимации - сбрасываем счётчик
+        pony.current_behavior_repeat_count = 0;
     }
 
+    // Вывод в лог
+    if chosen.probability < 0.01 {
+        println!("[RARE!] {} → {} (prob: {})",
+                 pony.config_name, chosen.name, chosen.probability);
+    } else {
+        println!("[Behavior] {} → {} (prob: {})",
+                 pony.config_name, chosen.name, chosen.probability);
+    }
+
+    // Загружаем анимацию
     let sprite_name = if !chosen.sprite_right.is_empty() {
         &chosen.sprite_right
     } else {
@@ -970,8 +1064,6 @@ fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     };
 
     let animation = loader.load_pony_frames(&pony.config_name, sprite_name);
-
-    // ВАЖНО: Сохраняем размеры ДО перемещения
     let width = animation.width;
     let height = animation.height;
 
@@ -983,8 +1075,6 @@ fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     pony.current_behavior = chosen.name.clone();
     pony.movement_type = MovementType::parse(&chosen.movement);
     pony.behavior_timer = chosen.min_duration + fastrand::f32() * (chosen.max_duration - chosen.min_duration);
-
-    // ВАЖНО: Обновляем параметры анимации из нового поведения
     pony.animation_speed_mult = chosen.set_animation_speed.unwrap_or(1.0);
     pony.fixed_fps = chosen.set_fps;
     pony.prevent_loop = chosen.do_not_repeat_animations;
@@ -1018,62 +1108,47 @@ fn update_ponies(
     for i in 0..ponies.len() {
         let p = &mut ponies[i];
 
-        // Обновление анимации с поддержкой индивидуальных задержек
-        let mut effective_dt = dt * p.animation_speed_mult;
+        // ИСПРАВЛЕННОЕ ОБНОВЛЕНИЕ АНИМАЦИИ
+        let effective_dt = dt * p.animation_speed_mult;
 
-        // Если задан фиксированный FPS, используем его
-        if let Some(fps) = p.fixed_fps {
-            let frame_time = 1.0 / fps;
-            p.frame_timer += effective_dt;
-            if p.frame_timer >= frame_time {
-                p.frame_timer -= frame_time;
-                p.current_frame += 1;
+        // Получаем задержку текущего кадра
+        let current_delay = if p.current_frame < p.animation.frames.len() {
+            p.animation.frames[p.current_frame].delay
+        } else {
+            p.animation.default_delay
+        };
 
-                if p.current_frame >= p.animation.frames.len() {
-                    if p.prevent_loop {
-                        p.current_frame = p.animation.frames.len() - 1;
-                        p.frame_timer = 0.0;
-                    } else {
-                        p.current_frame = 0;
-                    }
+        p.frame_timer += effective_dt;
+
+        // Переключение кадров
+        while p.frame_timer >= current_delay && p.animation.frames.len() > 0 {
+            p.frame_timer -= current_delay;
+            p.current_frame += 1;
+
+            if p.current_frame >= p.animation.frames.len() {
+                if p.prevent_loop {
+                    p.current_frame = p.animation.frames.len() - 1;
+                    p.frame_timer = 0.0;
+                    break;
+                } else {
+                    p.current_frame = 0;
                 }
             }
-        } else {
-            // Нормальная анимация с индивидуальными задержками кадров
-            p.frame_timer += effective_dt;
-            let current_delay = if p.current_frame < p.animation.frames.len() {
+
+            // Обновляем current_delay для следующей итерации
+            let new_delay = if p.current_frame < p.animation.frames.len() {
                 p.animation.frames[p.current_frame].delay
             } else {
                 p.animation.default_delay
             };
 
-            while p.frame_timer >= current_delay && p.animation.frames.len() > 0 {
-                p.frame_timer -= current_delay;
-                p.current_frame += 1;
-
-                if p.current_frame >= p.animation.frames.len() {
-                    if p.prevent_loop {
-                        p.current_frame = p.animation.frames.len() - 1;
-                        p.frame_timer = 0.0;
-                        break;
-                    } else {
-                        p.current_frame = 0;
-                    }
-                }
-                // Обновляем current_delay для следующей итерации
-                let new_delay = if p.current_frame < p.animation.frames.len() {
-                    p.animation.frames[p.current_frame].delay
-                } else {
-                    p.animation.default_delay
-                };
-                if p.frame_timer >= new_delay {
-                    continue;
-                }
-                break;
+            if p.frame_timer >= new_delay {
+                continue;
             }
+            break;
         }
 
-        // Движение пони
+        // Остальной код движения пони...
         if p.grabbed {
             if mouse_down {
                 p.x = (mouse_x - p.width as f32 / 2.0).max(0.0).min(screen_width - p.width as f32);
