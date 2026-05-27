@@ -704,22 +704,27 @@ impl DesktopPoniesLoader {
                     let mut delays = Vec::new();
 
                     for frame in frames_data {
+                        // Получаем задержку кадра из GIF
                         let (numer, denom) = frame.delay().numer_denom_ms();
-                        let delay_secs = (numer as f32 / denom as f32) / 1000.0;
-                        let delay_secs = delay_secs.max(0.03).min(0.3);
+                        let delay_secs = if numer > 0 && denom > 0 {
+                            (numer as f32 / denom as f32) / 1000.0
+                        } else {
+                            0.1 // Задержка по умолчанию
+                        };
+                        let delay_secs = delay_secs.max(0.03).min(0.5); // Ограничиваем
                         delays.push(delay_secs);
 
                         // Получаем RGBA данные
                         let rgba = frame.into_buffer();
                         let rgba_data = rgba.into_raw();
 
-                        // Конвертируем RGBA в формат для softbuffer (ARGB)
-                        // softbuffer ожидает 0xAARRGGBB
+                        // Конвертируем RGBA в ARGB (формат для softbuffer)
                         let argb: Vec<u32> = rgba_data.chunks(4).map(|p| {
                             let r = p[0] as u32;
                             let g = p[1] as u32;
                             let b = p[2] as u32;
                             let a = p[3] as u32;
+                            // ARGB: alpha в старший байт
                             (a << 24) | (r << 16) | (g << 8) | b
                         }).collect();
 
@@ -732,25 +737,26 @@ impl DesktopPoniesLoader {
                     animation.width = w;
                     animation.height = h;
 
-                    // Вычисляем медианную задержку как fallback
-                    let mut delays_sorted = delays.clone();
-                    delays_sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                    animation.default_delay = delays_sorted[delays_sorted.len() / 2];
+                    // Устанавливаем задержку по умолчанию (средняя)
+                    if !delays.is_empty() {
+                        delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                        animation.default_delay = delays[delays.len() / 2];
+                    }
                 }
             }
         }
 
-        // Фолбэк если не загрузилось
+        // Фолбэк для отладки
         if animation.frames.is_empty() {
-            // Красный квадрат как фолбэк (ARGB: alpha=255, red=255)
-            let fallback_data = vec![0xFFFF0000u32; 32 * 32];
+            let fallback_data = vec![0xFFFF0000u32; 64 * 64];
             animation.frames.push(GifFrameData {
                 data: fallback_data,
                 delay: 0.1,
             });
-            animation.width = 32;
-            animation.height = 32;
+            animation.width = 64;
+            animation.height = 64;
             animation.default_delay = 0.1;
+            eprintln!("[Warning] Failed to load GIF: {:?}", path);
         }
 
         animation
@@ -764,43 +770,89 @@ impl DesktopPoniesLoader {
 
         let pony_dir = self.ponies_dir.join(pony_name);
         let animation = if pony_dir.exists() {
-            if let Ok(entries) = std::fs::read_dir(&pony_dir) {
-                let sprite_lower = sprite_name.to_lowercase();
-                let mut found = None;
+            let mut found = None;
 
+            // Убираем расширение .gif для поиска
+            let sprite_base = sprite_name
+                .trim_end_matches(".gif")
+                .trim_end_matches(".GIF");
+
+            println!("[Loader] Looking for sprite: '{}' (base: '{}') in {:?}",
+                     sprite_name, sprite_base, pony_dir);
+
+            if let Ok(entries) = std::fs::read_dir(&pony_dir) {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     if path.extension().and_then(|e| e.to_str()) == Some("gif") {
-                        let filename = path.file_name().and_then(|n| n.to_str()).unwrap_or("").to_lowercase();
-                        let name_without_ext = filename.trim_end_matches(".gif");
+                        let filename = path.file_stem()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("")
+                            .to_string();
 
-                        if name_without_ext == sprite_lower || filename.contains(&sprite_lower) {
-                            found = Some(path);
+                        let full_filename = path.file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("")
+                            .to_string();
+
+                        println!("[Loader] Checking file: '{}' (stem: '{}')", full_filename, filename);
+
+                        // Сравниваем:
+                        // 1. По полному имени (с расширением)
+                        // 2. По stem (без расширения)
+                        // 3. По base (без учёта регистра)
+                        if full_filename == sprite_name ||
+                            filename == sprite_name ||
+                            filename == sprite_base ||
+                            filename.to_lowercase() == sprite_base.to_lowercase() {
+                            println!("[Loader] ✓ Found match: {:?}", path);
+                            found = Some(path.clone());  // ← clone() здесь!
                             break;
                         }
                     }
                 }
+            }
 
-                if let Some(path) = found {
-                    self.load_gif_animation(&path)
+            if let Some(path) = found {
+                self.load_gif_animation(&path)
+            } else {
+                // Пробуем найти файл напрямую
+                let exact_path = pony_dir.join(&sprite_name);
+                if exact_path.exists() {
+                    println!("[Loader] ✓ Found exact path: {:?}", exact_path);
+                    self.load_gif_animation(&exact_path)
                 } else {
-                    let exact_path = pony_dir.join(format!("{}.gif", sprite_name));
-                    if exact_path.exists() {
-                        self.load_gif_animation(&exact_path)
+                    // Пробуем добавить .gif
+                    let with_ext = pony_dir.join(format!("{}.gif", sprite_base));
+                    if with_ext.exists() {
+                        println!("[Loader] ✓ Found with .gif: {:?}", with_ext);
+                        self.load_gif_animation(&with_ext)
                     } else {
-                        eprintln!("[Warning] Sprite '{}' not found for pony '{}'", sprite_name, pony_name);
-                        self.load_gif_animation(Path::new(""))
+                        eprintln!("[Loader] ✗ Sprite '{}' not found for pony '{}' in {:?}",
+                                  sprite_name, pony_name, pony_dir);
+                        self.create_fallback_animation()
                     }
                 }
-            } else {
-                self.load_gif_animation(Path::new(""))
             }
         } else {
-            self.load_gif_animation(Path::new(""))
+            eprintln!("[Loader] ✗ Pony directory not found: {:?}", pony_dir);
+            self.create_fallback_animation()
         };
 
         self.sprite_cache.insert(cache_key, animation.clone());
         animation
+    }
+
+    fn create_fallback_animation(&self) -> GifAnimation {
+        let fallback_data = vec![0xFFFF0000u32; 64 * 64];
+        GifAnimation {
+            frames: vec![GifFrameData {
+                data: fallback_data,
+                delay: 0.1,
+            }],
+            width: 64,
+            height: 64,
+            default_delay: 0.1,
+        }
     }
 
     pub fn get_config(&self, name: &str) -> Option<&PonyConfig> {
