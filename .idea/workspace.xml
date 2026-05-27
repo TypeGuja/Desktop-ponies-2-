@@ -13,9 +13,7 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/pony_interaction.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/pony_interaction.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -311,6 +309,8 @@
       <workItem from="1779641450899" duration="651000" />
       <workItem from="1779808181487" duration="11000" />
       <workItem from="1779808359048" duration="4329000" />
+      <workItem from="1779813052653" duration="720000" />
+      <workItem from="1779900342320" duration="305000" />
     </task>
     <servers />
   </component>
