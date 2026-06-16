@@ -10,10 +10,8 @@ const PonyEditor = {
         this.container = document.getElementById('editor-panel');
         console.log('[PonyEditor] Initialized, container:', this.container);
 
-        // Добавляем глобальную кнопку создания нового персонажа
         this.addGlobalCreateButton();
 
-        // Подписываемся на события перезагрузки пони
         if (window.EditorAPI && EditorAPI.on) {
             EditorAPI.on('pony:reloaded', (data) => this.onPonyReloaded(data));
             EditorAPI.on('gif:created', (data) => this.onGifCreated(data));
@@ -33,7 +31,6 @@ const PonyEditor = {
         console.log('[PonyEditor] GIF created:', data);
         if (data && data.pony_name === this.currentPonyName) {
             showStatus(`✅ Sprite "${data.sprite_name}" created successfully! Refreshing...`);
-            // Запрашиваем перезагрузку конфига пони
             setTimeout(() => {
                 EditorAPI.send('pony:reload:' + this.currentPonyName);
             }, 300);
@@ -41,7 +38,6 @@ const PonyEditor = {
     },
 
     addGlobalCreateButton() {
-        // Ждем появления тулбара
         const checkToolbar = setInterval(() => {
             const toolbar = document.querySelector('.editor-toolbar');
             if (toolbar && !document.getElementById('global-create-pony-btn')) {
@@ -135,7 +131,6 @@ const PonyEditor = {
             modal.remove();
             showStatus(`Creating pony: ${name}...`);
 
-            // Обновляем список пони в левой панели через секунду
             setTimeout(() => {
                 if (window.refreshPoniesList) window.refreshPoniesList();
                 else if (window.PonyListManager && window.PonyListManager.refresh) window.PonyListManager.refresh();
@@ -277,20 +272,7 @@ const PonyEditor = {
             modal.remove();
             showStatus(`Creating sprite: ${spriteName}...`);
 
-            // Открываем редактор для нового спрайта после его создания
-            const checkAndOpen = setInterval(() => {
-                // Проверяем, появился ли спрайт в конфиге
-                if (this.currentPonyConfig && this.currentPonyConfig.behaviors) {
-                    const spriteExists = this.currentPonyConfig.behaviors.some(b =>
-                        b.sprite_right === spriteName || b.sprite_left === spriteName
-                    );
-                    // Или просто ждем 1.5 секунды и открываем редактор
-                }
-            }, 500);
-
             setTimeout(() => {
-                clearInterval(checkAndOpen);
-                // Пытаемся открыть редактор для нового спрайта
                 showInlineGifEditor(ponyName, spriteName);
             }, 1500);
         });
@@ -732,6 +714,135 @@ const traceStyles = `
 </style>
 `;
 
+// === КЛАСС ДЛЯ УПРАВЛЕНИЯ СОСТОЯНИЕМ GIF РЕДАКТОРА ===
+class GifEditorStateManager {
+    constructor(ponyName, spriteName, modal) {
+        this.ponyName = ponyName;
+        this.spriteName = spriteName;
+        this.modal = modal;
+        this.frames = [];
+        this.currentFrame = 0;
+        this.width = 128;
+        this.height = 128;
+        this.zoom = 1;
+        this.tool = 'pencil';
+        this.currentColor = { r: 203, g: 166, b: 247, a: 255 };
+        this.currentHue = 260;
+        this.previewInterval = null;
+        this.playSpeed = 1.0;
+        this.hasChanges = false;
+        this.isLoading = false;
+        this.isPickingColor = false;
+        this.isDrawing = false;
+        this.pipetteActive = false;
+        this.traceState = {
+            image: null,
+            visible: true,
+            opacity: 0.5,
+            scale: 1,
+            offsetX: 0,
+            offsetY: 0,
+            frames: null,
+            currentFrame: 0,
+            animationInterval: null
+        };
+        this.resizeHandler = null;
+        this.eventListeners = [];
+        this.cleanupFunctions = [];
+    }
+
+    addEventListener(element, event, handler) {
+        element.addEventListener(event, handler);
+        this.eventListeners.push({ element, event, handler });
+    }
+
+    cleanup() {
+        if (this.previewInterval) {
+            clearInterval(this.previewInterval);
+            this.previewInterval = null;
+        }
+        if (this.traceState.animationInterval) {
+            clearInterval(this.traceState.animationInterval);
+            this.traceState.animationInterval = null;
+        }
+
+        this.eventListeners.forEach(({ element, event, handler }) => {
+            element.removeEventListener(event, handler);
+        });
+        this.eventListeners = [];
+
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = null;
+        }
+
+        const tracePanel = document.getElementById('trace-panel');
+        if (tracePanel) tracePanel.remove();
+
+        if (window.GifEditorState === this) {
+            window.GifEditorState = null;
+        }
+    }
+
+    getCurrentFrameData() {
+        if (!this.frames[this.currentFrame]) return null;
+        return this.frames[this.currentFrame];
+    }
+
+    setFrameData(frameIndex, data) {
+        if (frameIndex >= 0 && frameIndex < this.frames.length) {
+            this.frames[frameIndex].data = data;
+            this.hasChanges = true;
+        }
+    }
+
+    addFrame(data, delay = 10) {
+        this.frames.push({ data, delay });
+        this.hasChanges = true;
+    }
+
+    removeFrame(index) {
+        if (this.frames.length > 1 && index >= 0 && index < this.frames.length) {
+            this.frames.splice(index, 1);
+            if (this.currentFrame >= this.frames.length) {
+                this.currentFrame = this.frames.length - 1;
+            }
+            this.hasChanges = true;
+        }
+    }
+
+    duplicateFrame(index) {
+        if (index >= 0 && index < this.frames.length) {
+            const frame = this.frames[index];
+            const newData = new Uint8ClampedArray(frame.data.length);
+            newData.set(frame.data);
+            this.frames.splice(index + 1, 0, { data: newData, delay: frame.delay });
+            this.hasChanges = true;
+        }
+    }
+
+    clearFrame(index) {
+        if (index >= 0 && index < this.frames.length) {
+            this.frames[index].data.fill(0);
+            this.hasChanges = true;
+        }
+    }
+
+    setFrameDelay(index, delay) {
+        if (index >= 0 && index < this.frames.length) {
+            this.frames[index].delay = Math.max(1, parseInt(delay) || 10);
+            this.hasChanges = true;
+        }
+    }
+
+    getFrameDelay(index) {
+        if (index >= 0 && index < this.frames.length) {
+            return (this.frames[index].delay || 10) * 10 / this.playSpeed;
+        }
+        return 100;
+    }
+}
+
 // Функция открытия редактора GIF
 function showInlineGifEditor(ponyName, spriteName) {
     console.log('[GIF] Opening inline editor for:', ponyName, spriteName);
@@ -760,7 +871,7 @@ function showInlineGifEditor(ponyName, spriteName) {
     `;
 
     modal.innerHTML = traceStyles + `
-        <div style="padding: 12px 20px; background: #181825; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center;">
+        <div style="padding: 12px 20px; background: #181825; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
             <div>
                 <span style="font-size: 20px; font-weight: bold;">🎨 GIF Editor</span>
                 <span style="color: #a6adc8; margin-left: 16px; font-size: 14px;">${escapeHtml(ponyName)} / ${escapeHtml(spriteName)}</span>
@@ -768,7 +879,7 @@ function showInlineGifEditor(ponyName, spriteName) {
             <button id="gif-editor-close" style="background: none; border: none; color: #f38ba8; font-size: 28px; cursor: pointer; padding: 4px 12px;">✕</button>
         </div>
         
-        <div style="padding: 8px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <div style="padding: 8px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0;">
             <button id="gif-tool-pencil" class="gif-tool-btn active" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✏️ Pencil</button>
             <button id="gif-tool-eraser" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🧽 Eraser</button>
             <button id="gif-tool-fill" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🪣 Fill</button>
@@ -858,36 +969,40 @@ function showInlineGifEditor(ponyName, spriteName) {
             </div>
         </div>
         
-        <div style="padding: 8px 16px; background: #0f0f17; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <div style="padding: 8px 16px; background: #0f0f17; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0;">
             <button id="gif-clear-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🗑️ Clear Frame</button>
             <button id="gif-add-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➕ Add Frame</button>
             <button id="gif-duplicate-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">📋 Duplicate Frame</button>
             <button id="gif-delete-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➖ Delete Frame</button>
         </div>
         
-        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px;">
+        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px; position: relative;">
             <canvas id="gif-main-canvas" style="image-rendering: crisp-edges; image-rendering: pixelated; border: 2px solid #313244; border-radius: 8px; cursor: crosshair; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></canvas>
         </div>
         
-        <div style="height: 130px; background: #181825; border-top: 1px solid #313244; padding: 10px; overflow-x: auto;">
+        <div style="height: 130px; background: #181825; border-top: 1px solid #313244; padding: 10px; overflow-x: auto; flex-shrink: 0;">
             <div id="gif-timeline" style="display: flex; gap: 10px; height: 100%;"></div>
         </div>
         
-        <div style="padding: 6px 16px; font-size: 12px; color: #a6adc8; background: #11111b; border-top: 1px solid #313244;">
+        <div style="padding: 6px 16px; font-size: 12px; color: #a6adc8; background: #11111b; border-top: 1px solid #313244; flex-shrink: 0;">
             <span id="gif-status">Loading GIF...</span>
         </div>
     `;
 
     document.body.appendChild(modal);
-    initGifEditorEnhanced(ponyName, spriteName, modal);
+
+    const stateManager = new GifEditorStateManager(ponyName, spriteName, modal);
+    window.GifEditorState = stateManager;
+
+    initGifEditorEnhanced(stateManager);
 }
 
 // Функция ресайза canvas
-function resizeGif(state, newWidth, newHeight, statusEl) {
-    if (!state.frames || state.frames.length === 0) return;
+function resizeGif(stateManager, newWidth, newHeight, statusEl) {
+    if (!stateManager.frames || stateManager.frames.length === 0) return;
 
-    const oldWidth = state.width;
-    const oldHeight = state.height;
+    const oldWidth = stateManager.width;
+    const oldHeight = stateManager.height;
 
     if (newWidth === oldWidth && newHeight === oldHeight) {
         if (statusEl) statusEl.textContent = 'Size unchanged';
@@ -897,16 +1012,10 @@ function resizeGif(state, newWidth, newHeight, statusEl) {
     const scaleX = newWidth / oldWidth;
     const scaleY = newHeight / oldHeight;
 
-    for (let f = 0; f < state.frames.length; f++) {
-        const oldData = state.frames[f].data;
+    for (let f = 0; f < stateManager.frames.length; f++) {
+        const oldData = stateManager.frames[f].data;
         const newData = new Uint8ClampedArray(newWidth * newHeight * 4);
-
-        for (let i = 0; i < newData.length; i += 4) {
-            newData[i] = 0;
-            newData[i + 1] = 0;
-            newData[i + 2] = 0;
-            newData[i + 3] = 0;
-        }
+        newData.fill(0);
 
         for (let y = 0; y < newHeight; y++) {
             for (let x = 0; x < newWidth; x++) {
@@ -925,38 +1034,51 @@ function resizeGif(state, newWidth, newHeight, statusEl) {
             }
         }
 
-        state.frames[f].data = newData;
+        stateManager.frames[f].data = newData;
     }
 
-    state.width = newWidth;
-    state.height = newHeight;
-    state.hasChanges = true;
+    stateManager.width = newWidth;
+    stateManager.height = newHeight;
+    stateManager.hasChanges = true;
 
     if (statusEl) statusEl.textContent = `✅ Resized to ${newWidth}x${newHeight}`;
 }
 
-// ИНИЦИАЛИЗАТОР GIF РЕДАКТОРА
-function initGifEditorEnhanced(ponyName, spriteName, modal) {
-    console.log('[GIF] initGifEditorEnhanced for:', ponyName, spriteName);
+// === УТИЛИТЫ ДЛЯ РАБОТЫ С ЦВЕТОМ ===
+function hslToRgb(h, s, l) {
+    h = h / 360;
+    let r, g, b;
+    if (s === 0) r = g = b = l;
+    else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
+}
 
-    const state = {
-        frames: [],
-        currentFrame: 0,
-        width: 128,
-        height: 128,
-        zoom: 1,
-        tool: 'pencil',
-        currentColor: { r: 203, g: 166, b: 247, a: 255 },
-        currentHue: 260,
-        previewInterval: null,
-        playSpeed: 1.0,
-        ponyName: ponyName,
-        spriteName: spriteName,
-        hasChanges: false,
-        isLoading: false,
-        isPickingColor: false
-    };
+function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('').toUpperCase();
+}
 
+// === ИНИЦИАЛИЗАТОР GIF РЕДАКТОРА ===
+function initGifEditorEnhanced(stateManager) {
+    console.log('[GIF] initGifEditorEnhanced for:', stateManager.ponyName, stateManager.spriteName);
+
+    const modal = stateManager.modal;
     const canvas = document.getElementById('gif-main-canvas');
     const timeline = document.getElementById('gif-timeline');
     const statusEl = document.getElementById('gif-status');
@@ -985,45 +1107,48 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
 
     const ctx = canvas.getContext('2d');
     let isDrawingSquare = false;
+    let isDraggingRef = false;
+    let dragStartX = 0, dragStartY = 0;
+    let refStartX = 0, refStartY = 0;
 
     function getPixelFromMouseEvent(e) {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        const pixelX = Math.floor((mouseX / canvas.width) * state.width);
-        const pixelY = Math.floor((mouseY / canvas.height) * state.height);
+        const pixelX = Math.floor((mouseX / canvas.width) * stateManager.width);
+        const pixelY = Math.floor((mouseY / canvas.height) * stateManager.height);
         return {
-            x: Math.max(0, Math.min(state.width - 1, pixelX)),
-            y: Math.max(0, Math.min(state.height - 1, pixelY))
+            x: Math.max(0, Math.min(stateManager.width - 1, pixelX)),
+            y: Math.max(0, Math.min(stateManager.height - 1, pixelY))
         };
     }
 
     function setPixelAt(px, py) {
-        if (!state.frames[state.currentFrame] || state.isPickingColor) return;
-        if (px < 0 || px >= state.width || py < 0 || py >= state.height) return;
+        if (!stateManager.frames[stateManager.currentFrame] || stateManager.isPickingColor) return;
+        if (px < 0 || px >= stateManager.width || py < 0 || py >= stateManager.height) return;
 
-        const frame = state.frames[state.currentFrame];
-        const idx = (py * state.width + px) * 4;
+        const frame = stateManager.frames[stateManager.currentFrame];
+        const idx = (py * stateManager.width + px) * 4;
 
-        if (state.tool === 'eraser') {
+        if (stateManager.tool === 'eraser') {
             frame.data[idx] = 0;
             frame.data[idx + 1] = 0;
             frame.data[idx + 2] = 0;
             frame.data[idx + 3] = 0;
-        } else if (state.tool === 'pencil') {
-            const targetAlpha = state.currentColor.a / 255;
+        } else if (stateManager.tool === 'pencil') {
+            const targetAlpha = stateManager.currentColor.a / 255;
             const currentAlpha = frame.data[idx + 3] / 255;
             const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
 
             if (resultAlpha > 0) {
                 frame.data[idx] = Math.round(
-                    (state.currentColor.r * targetAlpha + frame.data[idx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.r * targetAlpha + frame.data[idx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[idx + 1] = Math.round(
-                    (state.currentColor.g * targetAlpha + frame.data[idx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.g * targetAlpha + frame.data[idx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[idx + 2] = Math.round(
-                    (state.currentColor.b * targetAlpha + frame.data[idx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.b * targetAlpha + frame.data[idx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[idx + 3] = Math.round(resultAlpha * 255);
             } else {
@@ -1034,17 +1159,17 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             }
         }
 
-        state.hasChanges = true;
+        stateManager.hasChanges = true;
         drawCanvas();
         updateTimeline();
     }
 
     function floodFillAt(px, py) {
-        if (!state.frames[state.currentFrame] || state.isPickingColor) return;
-        if (px < 0 || px >= state.width || py < 0 || py >= state.height) return;
+        if (!stateManager.frames[stateManager.currentFrame] || stateManager.isPickingColor) return;
+        if (px < 0 || px >= stateManager.width || py < 0 || py >= stateManager.height) return;
 
-        const frame = state.frames[state.currentFrame];
-        const idx = (py * state.width + px) * 4;
+        const frame = stateManager.frames[stateManager.currentFrame];
+        const idx = (py * stateManager.width + px) * 4;
 
         const target = {
             r: frame.data[idx],
@@ -1053,73 +1178,76 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             a: frame.data[idx + 3]
         };
 
-        if (target.r === state.currentColor.r &&
-            target.g === state.currentColor.g &&
-            target.b === state.currentColor.b &&
-            target.a === state.currentColor.a) return;
+        if (target.r === stateManager.currentColor.r &&
+            target.g === stateManager.currentColor.g &&
+            target.b === stateManager.currentColor.b &&
+            target.a === stateManager.currentColor.a) return;
 
-        const stack = [{ x: px, y: py }];
+        const queue = [{ x: px, y: py }];
         const visited = new Set();
+        let processed = 0;
+        const maxProcessed = stateManager.width * stateManager.height;
 
-        while (stack.length) {
-            const { x: cx, y: cy } = stack.pop();
+        while (queue.length > 0 && processed < maxProcessed) {
+            const { x: cx, y: cy } = queue.shift();
             const key = `${cx},${cy}`;
             if (visited.has(key)) continue;
             visited.add(key);
+            processed++;
 
-            const cidx = (cy * state.width + cx) * 4;
+            const cidx = (cy * stateManager.width + cx) * 4;
 
             if (Math.abs(frame.data[cidx] - target.r) > 5 ||
                 Math.abs(frame.data[cidx + 1] - target.g) > 5 ||
                 Math.abs(frame.data[cidx + 2] - target.b) > 5 ||
                 Math.abs(frame.data[cidx + 3] - target.a) > 10) continue;
 
-            const targetAlpha = state.currentColor.a / 255;
+            const targetAlpha = stateManager.currentColor.a / 255;
             const currentAlpha = frame.data[cidx + 3] / 255;
             const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
 
             if (resultAlpha > 0) {
                 frame.data[cidx] = Math.round(
-                    (state.currentColor.r * targetAlpha + frame.data[cidx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.r * targetAlpha + frame.data[cidx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[cidx + 1] = Math.round(
-                    (state.currentColor.g * targetAlpha + frame.data[cidx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.g * targetAlpha + frame.data[cidx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[cidx + 2] = Math.round(
-                    (state.currentColor.b * targetAlpha + frame.data[cidx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
+                    (stateManager.currentColor.b * targetAlpha + frame.data[cidx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
                 );
                 frame.data[cidx + 3] = Math.round(resultAlpha * 255);
             }
 
-            if (cx > 0) stack.push({ x: cx - 1, y: cy });
-            if (cx < state.width - 1) stack.push({ x: cx + 1, y: cy });
-            if (cy > 0) stack.push({ x: cx, y: cy - 1 });
-            if (cy < state.height - 1) stack.push({ x: cx, y: cy + 1 });
+            if (cx > 0) queue.push({ x: cx - 1, y: cy });
+            if (cx < stateManager.width - 1) queue.push({ x: cx + 1, y: cy });
+            if (cy > 0) queue.push({ x: cx, y: cy - 1 });
+            if (cy < stateManager.height - 1) queue.push({ x: cx, y: cy + 1 });
         }
 
-        state.hasChanges = true;
+        stateManager.hasChanges = true;
         drawCanvas();
         updateTimeline();
     }
 
     // TWEENING FRAMES
     function tweenFrames() {
-        if (state.frames.length < 2) {
+        if (stateManager.frames.length < 2) {
             if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to tween';
             return;
         }
 
-        const frameList = state.frames.map((_, idx) => `${idx + 1}: Frame ${idx + 1} (delay: ${_.delay}cs)`).join('\n');
-        let fromFrame = prompt(`🎬 TWEENING - Create smooth in-between frames\n\nEnter START frame number (1-${state.frames.length}):\n\n${frameList}`, '1');
+        const frameList = stateManager.frames.map((_, idx) => `${idx + 1}: Frame ${idx + 1} (delay: ${_.delay}cs)`).join('\n');
+        let fromFrame = prompt(`🎬 TWEENING - Create smooth in-between frames\n\nEnter START frame number (1-${stateManager.frames.length}):\n\n${frameList}`, '1');
         if (!fromFrame) return;
 
-        let toFrame = prompt(`Enter END frame number (1-${state.frames.length}):`, String(state.frames.length));
+        let toFrame = prompt(`Enter END frame number (1-${stateManager.frames.length}):`, String(stateManager.frames.length));
         if (!toFrame) return;
 
         let fromIdx = parseInt(fromFrame) - 1;
         let toIdx = parseInt(toFrame) - 1;
 
-        if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx < 0 || toIdx >= state.frames.length || fromIdx === toIdx) {
+        if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx < 0 || toIdx >= stateManager.frames.length || fromIdx === toIdx) {
             if (statusEl) statusEl.textContent = '❌ Invalid frame numbers';
             return;
         }
@@ -1132,12 +1260,12 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             return;
         }
 
-        const frameA = state.frames[fromIdx];
-        const frameB = state.frames[toIdx];
+        const frameA = stateManager.frames[fromIdx];
+        const frameB = stateManager.frames[toIdx];
 
         const dataA = new Uint8ClampedArray(frameA.data);
         const dataB = new Uint8ClampedArray(frameB.data);
-        const totalPixels = state.width * state.height * 4;
+        const totalPixels = stateManager.width * stateManager.height * 4;
 
         const newFrames = [];
 
@@ -1196,9 +1324,9 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         const insertPosition = fromIdx < toIdx ? fromIdx + 1 : toIdx + 1;
         const sortedNewFrames = fromIdx < toIdx ? newFrames : newFrames.reverse();
 
-        state.frames.splice(insertPosition, 0, ...sortedNewFrames);
-        state.currentFrame = insertPosition;
-        state.hasChanges = true;
+        stateManager.frames.splice(insertPosition, 0, ...sortedNewFrames);
+        stateManager.currentFrame = insertPosition;
+        stateManager.hasChanges = true;
 
         drawCanvas();
         updateTimeline();
@@ -1207,7 +1335,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             statusEl.textContent = `✓ Generated ${newFrames.length} in-between frames between frame ${fromFrame} and ${toFrame}`;
             setTimeout(() => {
                 if (statusEl.textContent?.includes('Generated')) {
-                    statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | ${state.width}x${state.height}`;
+                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
                 }
             }, 3000);
         }
@@ -1215,7 +1343,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
 
     // SMOOTH ANIMATION
     function smoothAnimation() {
-        if (state.frames.length < 2) {
+        if (stateManager.frames.length < 2) {
             if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to smooth animation';
             return;
         }
@@ -1225,7 +1353,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         const numPasses = Math.min(5, Math.max(1, parseInt(passes)));
         if (isNaN(numPasses)) return;
 
-        const originalFrames = state.frames.map(f => ({
+        const originalFrames = stateManager.frames.map(f => ({
             data: new Uint8ClampedArray(f.data),
             delay: f.delay
         }));
@@ -1233,7 +1361,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         for (let pass = 0; pass < numPasses; pass++) {
             const newFrames = [];
 
-            for (let i = 0; i < state.frames.length; i++) {
+            for (let i = 0; i < stateManager.frames.length; i++) {
                 const current = originalFrames[i];
                 const prev = i > 0 ? originalFrames[i - 1] : null;
                 const next = i < originalFrames.length - 1 ? originalFrames[i + 1] : null;
@@ -1276,16 +1404,16 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                 });
             }
 
-            for (let i = 0; i < state.frames.length; i++) {
+            for (let i = 0; i < stateManager.frames.length; i++) {
                 originalFrames[i].data.set(newFrames[i].data);
             }
 
-            for (let i = 0; i < state.frames.length; i++) {
-                state.frames[i].data.set(newFrames[i].data);
+            for (let i = 0; i < stateManager.frames.length; i++) {
+                stateManager.frames[i].data.set(newFrames[i].data);
             }
         }
 
-        state.hasChanges = true;
+        stateManager.hasChanges = true;
         drawCanvas();
         updateTimeline();
 
@@ -1293,7 +1421,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             statusEl.textContent = `✓ Animation smoothed with ${numPasses} pass(es) (temporal blending)`;
             setTimeout(() => {
                 if (statusEl.textContent?.includes('smoothed')) {
-                    statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | ${state.width}x${state.height}`;
+                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
                 }
             }, 3000);
         }
@@ -1301,11 +1429,11 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
 
     // SMOOTH EDGES
     function smoothEdges() {
-        if (!state.frames[state.currentFrame]) return;
+        if (!stateManager.frames[stateManager.currentFrame]) return;
 
-        const frame = state.frames[state.currentFrame];
-        const width = state.width;
-        const height = state.height;
+        const frame = stateManager.frames[stateManager.currentFrame];
+        const width = stateManager.width;
+        const height = stateManager.height;
         const data = frame.data;
 
         const original = new Uint8ClampedArray(data);
@@ -1486,7 +1614,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             data[idx] = 0; data[idx+1] = 0; data[idx+2] = 0; data[idx+3] = 0;
         }
 
-        state.hasChanges = true;
+        stateManager.hasChanges = true;
         drawCanvas();
         updateTimeline();
 
@@ -1494,32 +1622,10 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             statusEl.textContent = `✓ Smooth complete: +${cornersToAdd.length} outer, +${pitsToFill.length} inner, -${spikesToRemove.length} spikes, -${toClean.length} sharp`;
             setTimeout(() => {
                 if (statusEl.textContent === `✓ Smooth complete: +${cornersToAdd.length} outer, +${pitsToFill.length} inner, -${spikesToRemove.length} spikes, -${toClean.length} sharp`) {
-                    statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | Delay: ${state.frames[state.currentFrame]?.delay || 10}cs | ${state.width}x${state.height}`;
+                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame]?.delay || 10}cs | ${stateManager.width}x${stateManager.height}`;
                 }
             }, 3000);
         }
-    }
-
-    function hslToRgb(h, s, l) {
-        h = h / 360;
-        let r, g, b;
-        if (s === 0) r = g = b = l;
-        else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1/6) return p + (q - p) * 6 * t;
-                if (t < 1/2) return q;
-                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            r = hue2rgb(p, q, h + 1/3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1/3);
-        }
-        return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
     }
 
     function drawColorSquare() {
@@ -1532,7 +1638,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             for (let y = 0; y < h; y++) {
                 const sat = x / w;
                 const light = 1 - (y / h);
-                const rgb = hslToRgb(state.currentHue, sat, light);
+                const rgb = hslToRgb(stateManager.currentHue, sat, light);
                 ctxSquare.fillStyle = `rgb(${rgb.r},${rgb.g},${rgb.b})`;
                 ctxSquare.fillRect(x, y, 1, 1);
             }
@@ -1540,31 +1646,24 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
     }
 
     function updateAlphaSlider() {
-        if (alphaSlider) alphaSlider.value = state.currentColor.a;
-        if (alphaValue) alphaValue.textContent = state.currentColor.a;
-    }
-
-    function rgbToHex(r, g, b) {
-        return '#' + [r, g, b].map(x => {
-            const hex = x.toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
-        }).join('').toUpperCase();
+        if (alphaSlider) alphaSlider.value = stateManager.currentColor.a;
+        if (alphaValue) alphaValue.textContent = stateManager.currentColor.a;
     }
 
     function updateCurrentColorDisplay() {
-        const bgColor = `rgba(${state.currentColor.r}, ${state.currentColor.g}, ${state.currentColor.b}, ${state.currentColor.a / 255})`;
+        const bgColor = `rgba(${stateManager.currentColor.r}, ${stateManager.currentColor.g}, ${stateManager.currentColor.b}, ${stateManager.currentColor.a / 255})`;
         if (currentColorPreview) currentColorPreview.style.backgroundColor = bgColor;
         if (colorPreviewMini) colorPreviewMini.style.backgroundColor = bgColor;
-        if (currentRgbSpan) currentRgbSpan.textContent = `RGB(${state.currentColor.r},${state.currentColor.g},${state.currentColor.b})`;
-        const hex = rgbToHex(state.currentColor.r, state.currentColor.g, state.currentColor.b);
+        if (currentRgbSpan) currentRgbSpan.textContent = `RGB(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b})`;
+        const hex = rgbToHex(stateManager.currentColor.r, stateManager.currentColor.g, stateManager.currentColor.b);
         if (currentHexSpan) currentHexSpan.textContent = hex;
         if (hexInput) hexInput.value = hex;
-        if (rgbaInput) rgbaInput.value = `rgba(${state.currentColor.r},${state.currentColor.g},${state.currentColor.b},${(state.currentColor.a/255).toFixed(2)})`;
+        if (rgbaInput) rgbaInput.value = `rgba(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b},${(stateManager.currentColor.a/255).toFixed(2)})`;
         updateAlphaSlider();
     }
 
     function setColorFromRgb(r, g, b, a) {
-        state.currentColor = { r, g, b, a: a !== undefined ? a : state.currentColor.a };
+        stateManager.currentColor = { r, g, b, a: a !== undefined ? a : stateManager.currentColor.a };
         updateCurrentColorDisplay();
     }
 
@@ -1578,92 +1677,82 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         y = Math.min(Math.max(0, y), colorSquare.height - 1);
         const sat = x / colorSquare.width;
         const light = 1 - (y / colorSquare.height);
-        const rgb = hslToRgb(state.currentHue, sat, light);
+        const rgb = hslToRgb(stateManager.currentHue, sat, light);
         setColorFromRgb(rgb.r, rgb.g, rgb.b);
     }
 
-    if (colorSquare) {
-        colorSquare.addEventListener('mousedown', (e) => {
-            isDrawingSquare = true;
-            onColorSquareClick(e);
-        });
-        colorSquare.addEventListener('mousemove', (e) => {
-            if (isDrawingSquare) onColorSquareClick(e);
-        });
-        colorSquare.addEventListener('mouseup', () => isDrawingSquare = false);
-    }
+    stateManager.addEventListener(colorSquare, 'mousedown', (e) => {
+        isDrawingSquare = true;
+        onColorSquareClick(e);
+    });
+    stateManager.addEventListener(colorSquare, 'mousemove', (e) => {
+        if (isDrawingSquare) onColorSquareClick(e);
+    });
+    stateManager.addEventListener(colorSquare, 'mouseup', () => isDrawingSquare = false);
 
-    if (hueSlider) {
-        hueSlider.addEventListener('input', (e) => {
-            state.currentHue = parseInt(e.target.value);
+    stateManager.addEventListener(hueSlider, 'input', (e) => {
+        stateManager.currentHue = parseInt(e.target.value);
+        drawColorSquare();
+    });
+
+    stateManager.addEventListener(alphaSlider, 'input', (e) => {
+        stateManager.currentColor.a = parseInt(e.target.value);
+        updateCurrentColorDisplay();
+    });
+
+    stateManager.addEventListener(hexInput, 'change', () => {
+        let hex = hexInput.value;
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            setColorFromRgb(r, g, b);
+        }
+    });
+
+    stateManager.addEventListener(rgbaInput, 'change', () => {
+        const match = rgbaInput.value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/);
+        if (match) {
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            const a = match[4] ? Math.round(parseFloat(match[4]) * 255) : 255;
+            setColorFromRgb(r, g, b, a);
+        }
+    });
+
+    // Color dropdown toggle
+    stateManager.addEventListener(colorBtn, 'click', (e) => {
+        e.stopPropagation();
+        const isVisible = colorDropdown.style.display === 'flex';
+        colorDropdown.style.display = isVisible ? 'none' : 'flex';
+        if (!isVisible) {
             drawColorSquare();
-        });
-    }
-
-    if (alphaSlider) {
-        alphaSlider.addEventListener('input', (e) => {
-            state.currentColor.a = parseInt(e.target.value);
             updateCurrentColorDisplay();
-        });
-    }
+        }
+    });
 
-    if (hexInput) {
-        hexInput.addEventListener('change', () => {
-            let hex = hexInput.value;
-            if (!hex.startsWith('#')) hex = '#' + hex;
-            if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-                const r = parseInt(hex.slice(1,3), 16);
-                const g = parseInt(hex.slice(3,5), 16);
-                const b = parseInt(hex.slice(5,7), 16);
-                setColorFromRgb(r, g, b);
-            }
-        });
-    }
+    document.addEventListener('click', (e) => {
+        if (!colorBtn.contains(e.target) && !colorDropdown.contains(e.target)) {
+            colorDropdown.style.display = 'none';
+        }
+    });
 
-    if (rgbaInput) {
-        rgbaInput.addEventListener('change', () => {
-            const match = rgbaInput.value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/);
-            if (match) {
-                const r = parseInt(match[1]);
-                const g = parseInt(match[2]);
-                const b = parseInt(match[3]);
-                const a = match[4] ? Math.round(parseFloat(match[4]) * 255) : 255;
-                setColorFromRgb(r, g, b, a);
-            }
-        });
-    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && colorDropdown.style.display === 'flex') {
+            colorDropdown.style.display = 'none';
+        }
+    });
 
-    if (colorBtn && colorDropdown) {
-        colorBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isVisible = colorDropdown.style.display === 'flex';
-            colorDropdown.style.display = isVisible ? 'none' : 'flex';
-            if (!isVisible) {
-                drawColorSquare();
-                updateCurrentColorDisplay();
-            }
-        });
-        document.addEventListener('click', (e) => {
-            if (!colorBtn.contains(e.target) && !colorDropdown.contains(e.target)) {
-                colorDropdown.style.display = 'none';
-            }
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && colorDropdown.style.display === 'flex') {
-                colorDropdown.style.display = 'none';
-            }
-        });
-    }
-
-    // Pipette
+    // === PIPETTE FEATURE ===
     let pipetteOverlay = null;
     let pipetteLoupe = null;
-    let pipetteActive = false;
 
     function startPipette() {
-        if (pipetteActive) return;
-        pipetteActive = true;
-        state.isPickingColor = true;
+        if (stateManager.pipetteActive) return;
+        stateManager.pipetteActive = true;
+        stateManager.isPickingColor = true;
         if (colorDropdown) colorDropdown.style.display = 'none';
         if (statusEl) statusEl.textContent = '🔍 Pipette active: Click on canvas to pick color, ESC to cancel';
         canvas.style.cursor = 'crosshair';
@@ -1693,7 +1782,7 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         const pixelDrawSize = loupeSize / sampleSize;
 
         function updateLoupe(e) {
-            if (!state.isPickingColor) return;
+            if (!stateManager.isPickingColor) return;
             const x = e.clientX;
             const y = e.clientY;
             pipetteLoupe.style.left = (x - loupeSize/2) + 'px';
@@ -1702,12 +1791,12 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
                 const canvasX = (x - rect.left) / canvas.width;
                 const canvasY = (y - rect.top) / canvas.height;
-                let px = Math.floor(canvasX * state.width);
-                let py = Math.floor(canvasY * state.height);
-                px = Math.max(0, Math.min(state.width - 1, px));
-                py = Math.max(0, Math.min(state.height - 1, py));
-                if (state.frames[state.currentFrame]) {
-                    const frame = state.frames[state.currentFrame];
+                let px = Math.floor(canvasX * stateManager.width);
+                let py = Math.floor(canvasY * stateManager.height);
+                px = Math.max(0, Math.min(stateManager.width - 1, px));
+                py = Math.max(0, Math.min(stateManager.height - 1, py));
+                if (stateManager.frames[stateManager.currentFrame]) {
+                    const frame = stateManager.frames[stateManager.currentFrame];
                     loupeCtx.clearRect(0, 0, loupeSize, loupeSize);
                     const cellSize = pixelDrawSize;
                     for (let i = 0; i < sampleSize; i++) {
@@ -1720,9 +1809,9 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                     const offset = Math.floor(sampleSize / 2);
                     for (let dy = 0; dy < sampleSize; dy++) {
                         for (let dx = 0; dx < sampleSize; dx++) {
-                            const sampleX = Math.max(0, Math.min(state.width - 1, px + (dx - offset)));
-                            const sampleY = Math.max(0, Math.min(state.height - 1, py + (dy - offset)));
-                            const idx = (sampleY * state.width + sampleX) * 4;
+                            const sampleX = Math.max(0, Math.min(stateManager.width - 1, px + (dx - offset)));
+                            const sampleY = Math.max(0, Math.min(stateManager.height - 1, py + (dy - offset)));
+                            const idx = (sampleY * stateManager.width + sampleX) * 4;
                             const r = frame.data[idx];
                             const g = frame.data[idx+1];
                             const b = frame.data[idx+2];
@@ -1768,33 +1857,33 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         }
 
         function pickColor(e) {
-            if (!state.isPickingColor) return;
+            if (!stateManager.isPickingColor) return;
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX;
             const y = e.clientY;
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
                 const canvasX = (x - rect.left) / canvas.width;
                 const canvasY = (y - rect.top) / canvas.height;
-                let px = Math.floor(canvasX * state.width);
-                let py = Math.floor(canvasY * state.height);
-                px = Math.max(0, Math.min(state.width - 1, px));
-                py = Math.max(0, Math.min(state.height - 1, py));
-                if (state.frames[state.currentFrame]) {
-                    const frame = state.frames[state.currentFrame];
-                    const idx = (py * state.width + px) * 4;
+                let px = Math.floor(canvasX * stateManager.width);
+                let py = Math.floor(canvasY * stateManager.height);
+                px = Math.max(0, Math.min(stateManager.width - 1, px));
+                py = Math.max(0, Math.min(stateManager.height - 1, py));
+                if (stateManager.frames[stateManager.currentFrame]) {
+                    const frame = stateManager.frames[stateManager.currentFrame];
+                    const idx = (py * stateManager.width + px) * 4;
                     const newColor = {
                         r: frame.data[idx],
                         g: frame.data[idx+1],
                         b: frame.data[idx+2],
                         a: frame.data[idx+3]
                     };
-                    state.currentColor = newColor;
+                    stateManager.currentColor = newColor;
                     updateCurrentColorDisplay();
                     if (statusEl) {
                         statusEl.textContent = `✓ Picked: rgba(${newColor.r},${newColor.g},${newColor.b},${newColor.a})`;
                         setTimeout(() => {
                             if (statusEl.textContent === `✓ Picked: rgba(${newColor.r},${newColor.g},${newColor.b},${newColor.a})`) {
-                                statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | Delay: ${state.frames[state.currentFrame]?.delay || 10}cs | ${state.width}x${state.height}`;
+                                statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame]?.delay || 10}cs | ${stateManager.width}x${stateManager.height}`;
                             }
                         }, 2000);
                     }
@@ -1808,8 +1897,8 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                         else hue = 60 * (4 + (rgb.r - rgb.g) / (max - min));
                         if (hue < 0) hue += 360;
                     }
-                    state.currentHue = Math.round(hue);
-                    if (hueSlider) hueSlider.value = state.currentHue;
+                    stateManager.currentHue = Math.round(hue);
+                    if (hueSlider) hueSlider.value = stateManager.currentHue;
                     drawColorSquare();
                 }
             }
@@ -1817,9 +1906,9 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         }
 
         function stopPipette() {
-            if (!pipetteActive) return;
-            pipetteActive = false;
-            state.isPickingColor = false;
+            if (!stateManager.pipetteActive) return;
+            stateManager.pipetteActive = false;
+            stateManager.isPickingColor = false;
             if (pipetteOverlay) pipetteOverlay.remove();
             if (pipetteLoupe) pipetteLoupe.remove();
             pipetteOverlay = null;
@@ -1846,25 +1935,20 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
     if (pipetteBtn) {
         const newBtn = pipetteBtn.cloneNode(true);
         pipetteBtn.parentNode.replaceChild(newBtn, pipetteBtn);
-        newBtn.addEventListener('click', (e) => {
+        stateManager.addEventListener(newBtn, 'click', (e) => {
             e.stopPropagation();
             startPipette();
         });
     }
 
+    // === PREVIEW ===
     let previewInterval = null;
-
-    function getFrameDelay() {
-        if (!state.frames[state.currentFrame]) return 100;
-        const baseDelay = (state.frames[state.currentFrame].delay || 10) * 10;
-        return Math.max(20, baseDelay / state.playSpeed);
-    }
 
     function startPreview() {
         if (previewInterval) stopPreview();
-        const frameDelay = getFrameDelay();
+        const frameDelay = stateManager.getFrameDelay(stateManager.currentFrame);
         previewInterval = setInterval(() => {
-            state.currentFrame = (state.currentFrame + 1) % state.frames.length;
+            stateManager.currentFrame = (stateManager.currentFrame + 1) % stateManager.frames.length;
             drawCanvas();
             updateTimeline();
         }, frameDelay);
@@ -1879,21 +1963,17 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         if (previewBtn) previewBtn.textContent = '▶️ Preview';
     }
 
-    if (previewBtn) {
-        previewBtn.addEventListener('click', () => {
-            if (previewInterval) stopPreview();
-            else startPreview();
-            state.previewInterval = previewInterval;
-        });
-    }
+    stateManager.addEventListener(previewBtn, 'click', () => {
+        if (previewInterval) stopPreview();
+        else startPreview();
+        stateManager.previewInterval = previewInterval;
+    });
 
-    if (speedSlider && speedValue) {
-        speedSlider.addEventListener('input', (e) => {
-            state.playSpeed = parseFloat(e.target.value);
-            speedValue.textContent = state.playSpeed.toFixed(2) + 'x';
-            if (previewInterval) startPreview();
-        });
-    }
+    stateManager.addEventListener(speedSlider, 'input', (e) => {
+        stateManager.playSpeed = parseFloat(e.target.value);
+        speedValue.textContent = stateManager.playSpeed.toFixed(2) + 'x';
+        if (previewInterval) startPreview();
+    });
 
     function centerCanvas() {
         const container = canvas.parentElement;
@@ -1903,126 +1983,157 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         }
     }
 
+    // === DRAW CANVAS ===
     function drawCanvas() {
-        if (!state.frames[state.currentFrame]) return;
-        const frame = state.frames[state.currentFrame];
-        const displayWidth = state.width * state.zoom;
-        const displayHeight = state.height * state.zoom;
+        if (!stateManager.frames[stateManager.currentFrame]) return;
+
+        const frame = stateManager.frames[stateManager.currentFrame];
+        const displayWidth = stateManager.width * stateManager.zoom;
+        const displayHeight = stateManager.height * stateManager.zoom;
+
         canvas.width = displayWidth;
         canvas.height = displayHeight;
         canvas.style.width = displayWidth + 'px';
         canvas.style.height = displayHeight + 'px';
+
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        // Рисуем основное изображение
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = state.width;
-        tempCanvas.height = state.height;
+        tempCanvas.width = stateManager.width;
+        tempCanvas.height = stateManager.height;
         const tempCtx = tempCanvas.getContext('2d');
-        const imgData = new ImageData(frame.data, state.width, state.height);
-        tempCtx.putImageData(imgData, 0, 0);
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(tempCanvas, 0, 0, state.width, state.height, 0, 0, displayWidth, displayHeight);
-        if (zoomLevel) zoomLevel.textContent = Math.round(state.zoom * 100) + '%';
-        if (delayInput && state.frames[state.currentFrame]) delayInput.value = state.frames[state.currentFrame].delay;
-        if (statusEl && state.frames[state.currentFrame] && !state.isPickingColor) {
-            statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | Delay: ${state.frames[state.currentFrame].delay}cs | Speed: ${state.playSpeed.toFixed(2)}x | Zoom: ${Math.round(state.zoom * 100)}% | ${state.width}x${state.height}`;
+        try {
+            const imgData = new ImageData(frame.data, stateManager.width, stateManager.height);
+            tempCtx.putImageData(imgData, 0, 0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, 0, 0, stateManager.width, stateManager.height, 0, 0, displayWidth, displayHeight);
+        } catch(e) {
+            console.warn('[Draw] Error drawing frame:', e);
+        }
+
+        // ===== РИСУЕМ TRACE ПОВЕРХ =====
+        const trace = stateManager.traceState;
+        if (trace && trace.visible && trace.image && trace.image.complete && trace.image.naturalWidth > 0) {
+            try {
+                ctx.save();
+                ctx.globalAlpha = trace.opacity || 0.5;
+                const refW = trace.image.width * (trace.scale || 1.0) * stateManager.zoom;
+                const refH = trace.image.height * (trace.scale || 1.0) * stateManager.zoom;
+                const refX = (trace.offsetX || 0) * stateManager.zoom;
+                const refY = (trace.offsetY || 0) * stateManager.zoom;
+
+                ctx.drawImage(trace.image, refX, refY, refW, refH);
+                ctx.restore();
+
+                console.log('[Draw] Trace drawn at', refX, refY, refW, refH);
+            } catch(e) {
+                console.warn('[Draw] Error drawing trace:', e);
+            }
+        }
+
+        // Обновляем UI
+        const zoomLevel = document.getElementById('gif-zoom-level');
+        const delayInput = document.getElementById('gif-frame-delay');
+        const statusEl = document.getElementById('gif-status');
+
+        if (zoomLevel) zoomLevel.textContent = Math.round(stateManager.zoom * 100) + '%';
+        if (delayInput && stateManager.frames[stateManager.currentFrame]) {
+            delayInput.value = stateManager.frames[stateManager.currentFrame].delay;
+        }
+        if (statusEl && stateManager.frames[stateManager.currentFrame] && !stateManager.isPickingColor) {
+            const traceInfo = (trace && trace.visible && trace.image) ? ' | 🖼️ Trace ON' : '';
+            statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame].delay}cs | Speed: ${stateManager.playSpeed.toFixed(2)}x | Zoom: ${Math.round(stateManager.zoom * 100)}% | ${stateManager.width}x${stateManager.height}${traceInfo}`;
         }
     }
 
+    // === ZOOM ===
     const zoomInBtn = document.getElementById('gif-zoom-in');
     const zoomOutBtn = document.getElementById('gif-zoom-out');
     const zoomResetBtn = document.getElementById('gif-zoom-reset');
     const zoomFitBtn = document.getElementById('gif-zoom-fit');
     const resizeCanvasBtn = document.getElementById('gif-resize-canvas');
 
-    if (zoomInBtn) {
-        zoomInBtn.addEventListener('click', () => {
-            let newZoom = state.zoom + 0.25;
-            if (newZoom > 8) newZoom = 8;
-            state.zoom = newZoom;
+    stateManager.addEventListener(zoomInBtn, 'click', () => {
+        let newZoom = stateManager.zoom + 0.25;
+        if (newZoom > 8) newZoom = 8;
+        stateManager.zoom = newZoom;
+        drawCanvas();
+        centerCanvas();
+    });
+
+    stateManager.addEventListener(zoomOutBtn, 'click', () => {
+        let newZoom = stateManager.zoom - 0.25;
+        if (newZoom < 0.25) newZoom = 0.25;
+        stateManager.zoom = newZoom;
+        drawCanvas();
+    });
+
+    stateManager.addEventListener(zoomResetBtn, 'click', () => {
+        stateManager.zoom = 1;
+        drawCanvas();
+        centerCanvas();
+    });
+
+    stateManager.addEventListener(zoomFitBtn, 'click', () => {
+        const container = canvas.parentElement;
+        if (container) {
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 40;
+            const fitZoomX = containerWidth / stateManager.width;
+            const fitZoomY = containerHeight / stateManager.height;
+            const fitZoom = Math.min(fitZoomX, fitZoomY, 4);
+            stateManager.zoom = Math.max(0.25, fitZoom);
             drawCanvas();
             centerCanvas();
-        });
-    }
+        }
+    });
 
-    if (zoomOutBtn) {
-        zoomOutBtn.addEventListener('click', () => {
-            let newZoom = state.zoom - 0.25;
-            if (newZoom < 0.25) newZoom = 0.25;
-            state.zoom = newZoom;
-            drawCanvas();
-        });
-    }
-
-    if (zoomResetBtn) {
-        zoomResetBtn.addEventListener('click', () => {
-            state.zoom = 1;
-            drawCanvas();
-            centerCanvas();
-        });
-    }
-
-    if (zoomFitBtn) {
-        zoomFitBtn.addEventListener('click', () => {
-            const container = canvas.parentElement;
-            if (container) {
-                const containerWidth = container.clientWidth - 40;
-                const containerHeight = container.clientHeight - 40;
-                const fitZoomX = containerWidth / state.width;
-                const fitZoomY = containerHeight / state.height;
-                const fitZoom = Math.min(fitZoomX, fitZoomY, 4);
-                state.zoom = Math.max(0.25, fitZoom);
+    stateManager.addEventListener(resizeCanvasBtn, 'click', () => {
+        const newWidth = prompt(`Enter new width (current: ${stateManager.width}px):`, stateManager.width);
+        const newHeight = prompt(`Enter new height (current: ${stateManager.height}px):`, stateManager.height);
+        if (newWidth && newHeight) {
+            const w = parseInt(newWidth);
+            const h = parseInt(newHeight);
+            if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0 && w <= 1024 && h <= 1024) {
+                resizeGif(stateManager, w, h, statusEl);
                 drawCanvas();
-                centerCanvas();
-            }
-        });
-    }
-
-    if (resizeCanvasBtn) {
-        resizeCanvasBtn.addEventListener('click', () => {
-            const newWidth = prompt(`Enter new width (current: ${state.width}px):`, state.width);
-            const newHeight = prompt(`Enter new height (current: ${state.height}px):`, state.height);
-            if (newWidth && newHeight) {
-                const w = parseInt(newWidth);
-                const h = parseInt(newHeight);
-                if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0 && w <= 1024 && h <= 1024) {
-                    resizeGif(state, w, h, statusEl);
-                    drawCanvas();
-                    updateTimeline();
-                } else {
-                    if (statusEl) statusEl.textContent = '❌ Invalid dimensions (max 1024)';
-                }
-            }
-        });
-    }
-
-    if (canvas) {
-        canvas.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                let newZoom = state.zoom + 0.1;
-                if (newZoom > 8) newZoom = 8;
-                state.zoom = newZoom;
+                updateTimeline();
             } else {
-                let newZoom = state.zoom - 0.1;
-                if (newZoom < 0.25) newZoom = 0.25;
-                state.zoom = newZoom;
+                if (statusEl) statusEl.textContent = '❌ Invalid dimensions (max 1024)';
             }
-            drawCanvas();
-            if (e.deltaY < 0) centerCanvas();
-        });
-    }
+        }
+    });
 
+    // Wheel zoom
+    stateManager.addEventListener(canvas, 'wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            let newZoom = stateManager.zoom + 0.1;
+            if (newZoom > 8) newZoom = 8;
+            stateManager.zoom = newZoom;
+        } else {
+            let newZoom = stateManager.zoom - 0.1;
+            if (newZoom < 0.25) newZoom = 0.25;
+            stateManager.zoom = newZoom;
+        }
+        drawCanvas();
+        if (e.deltaY < 0) centerCanvas();
+    });
+
+    // === TIMELINE ===
     function updateTimeline() {
         if (!timeline) return;
         timeline.innerHTML = '';
-        state.frames.forEach((frame, idx) => {
+        stateManager.frames.forEach((frame, idx) => {
             const div = document.createElement('div');
-            div.style.cssText = `width: 90px; height: 105px; background: #11111b; border: 2px solid ${idx === state.currentFrame ? '#cba6f7' : '#313244'}; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 8px; flex-shrink: 0;`;
+            div.style.cssText = `width: 90px; height: 105px; background: #11111b; border: 2px solid ${idx === stateManager.currentFrame ? '#cba6f7' : '#313244'}; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 8px; flex-shrink: 0;`;
             const previewCanvas = document.createElement('canvas');
             previewCanvas.width = 72;
             previewCanvas.height = 72;
             const previewCtx = previewCanvas.getContext('2d');
             try {
-                const imgData = new ImageData(frame.data, state.width, state.height);
+                const imgData = new ImageData(frame.data, stateManager.width, stateManager.height);
                 previewCtx.putImageData(imgData, 0, 0);
             } catch(e) {}
             div.appendChild(previewCanvas);
@@ -2031,34 +2142,184 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             label.style.fontSize = '10px';
             label.style.marginTop = '6px';
             div.appendChild(label);
-            div.onclick = () => {
+            stateManager.addEventListener(div, 'click', () => {
                 if (previewInterval) stopPreview();
-                state.currentFrame = idx;
+                stateManager.currentFrame = idx;
                 drawCanvas();
                 updateTimeline();
-            };
+            });
             timeline.appendChild(div);
         });
     }
 
+    // === CANVAS DRAWING ===
+    stateManager.addEventListener(canvas, 'mousedown', (e) => {
+        if (stateManager.isPickingColor) return;
+        stateManager.isDrawing = true;
+        e.preventDefault();
+        const { x, y } = getPixelFromMouseEvent(e);
+        if (stateManager.tool === 'fill') floodFillAt(x, y);
+        else setPixelAt(x, y);
+    });
+
+    stateManager.addEventListener(canvas, 'mousemove', (e) => {
+        if (!stateManager.isDrawing || stateManager.tool === 'fill' || stateManager.isPickingColor) return;
+        e.preventDefault();
+        const { x, y } = getPixelFromMouseEvent(e);
+        setPixelAt(x, y);
+    });
+
+    stateManager.addEventListener(canvas, 'mouseup', () => {
+        stateManager.isDrawing = false;
+    });
+
+    stateManager.addEventListener(canvas, 'mouseleave', () => {
+        stateManager.isDrawing = false;
+    });
+
+    // === TOOLS ===
+    const toolPencil = document.getElementById('gif-tool-pencil');
+    const toolEraser = document.getElementById('gif-tool-eraser');
+    const toolFill = document.getElementById('gif-tool-fill');
+    const toolSmooth = document.getElementById('gif-tool-smooth');
+
+    stateManager.addEventListener(toolPencil, 'click', () => {
+        stateManager.tool = 'pencil';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        toolPencil.classList.add('active');
+    });
+
+    stateManager.addEventListener(toolEraser, 'click', () => {
+        stateManager.tool = 'eraser';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        toolEraser.classList.add('active');
+    });
+
+    stateManager.addEventListener(toolFill, 'click', () => {
+        stateManager.tool = 'fill';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        toolFill.classList.add('active');
+    });
+
+    stateManager.addEventListener(toolSmooth, 'click', () => {
+        smoothEdges();
+        toolSmooth.classList.add('active');
+        setTimeout(() => toolSmooth.classList.remove('active'), 500);
+    });
+
+    // === FRAME OPERATIONS ===
+    const tweenBtn = document.getElementById('gif-tween-frames');
+    const smoothAnimBtn = document.getElementById('gif-smooth-animation');
+    const clearBtn = document.getElementById('gif-clear-frame');
+    const addBtn = document.getElementById('gif-add-frame');
+    const dupBtn = document.getElementById('gif-duplicate-frame');
+    const delBtn = document.getElementById('gif-delete-frame');
+
+    stateManager.addEventListener(tweenBtn, 'click', () => {
+        tweenFrames();
+        tweenBtn.classList.add('active');
+        setTimeout(() => tweenBtn.classList.remove('active'), 500);
+    });
+
+    stateManager.addEventListener(smoothAnimBtn, 'click', () => {
+        smoothAnimation();
+        smoothAnimBtn.classList.add('active');
+        setTimeout(() => smoothAnimBtn.classList.remove('active'), 500);
+    });
+
+    stateManager.addEventListener(clearBtn, 'click', () => {
+        if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.frames[stateManager.currentFrame].data.fill(0);
+            drawCanvas();
+            updateTimeline();
+            stateManager.hasChanges = true;
+        }
+    });
+
+    stateManager.addEventListener(addBtn, 'click', () => {
+        const newData = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
+        for (let i = 3; i < newData.length; i+=4) newData[i] = 255;
+        stateManager.addFrame(newData, 10);
+        stateManager.currentFrame = stateManager.frames.length - 1;
+        drawCanvas();
+        updateTimeline();
+    });
+
+    stateManager.addEventListener(dupBtn, 'click', () => {
+        stateManager.duplicateFrame(stateManager.currentFrame);
+        stateManager.currentFrame = Math.min(stateManager.currentFrame + 1, stateManager.frames.length - 1);
+        drawCanvas();
+        updateTimeline();
+    });
+
+    stateManager.addEventListener(delBtn, 'click', () => {
+        stateManager.removeFrame(stateManager.currentFrame);
+        drawCanvas();
+        updateTimeline();
+    });
+
+    // === DELAY ===
+    stateManager.addEventListener(delayInput, 'change', () => {
+        if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.setFrameDelay(stateManager.currentFrame, parseInt(delayInput.value));
+            updateTimeline();
+        }
+    });
+
+    // === SAVE ===
+    const saveBtn = document.getElementById('gif-save');
+    stateManager.addEventListener(saveBtn, 'click', () => {
+        const framesData = stateManager.frames.map(f => ({
+            data: Array.from(f.data),
+            width: stateManager.width,
+            height: stateManager.height,
+            delay: f.delay
+        }));
+        try {
+            EditorAPI.send('gif:save:' + JSON.stringify({
+                pony_name: stateManager.ponyName,
+                sprite_name: stateManager.spriteName,
+                frames: framesData,
+                width: stateManager.width,
+                height: stateManager.height
+            }));
+            if (statusEl) statusEl.textContent = 'Saving...';
+            stateManager.hasChanges = false;
+        } catch(e) {
+            if (statusEl) statusEl.textContent = '❌ Error saving: ' + e.message;
+        }
+    });
+
+    // === CLOSE ===
+    const closeBtn = document.getElementById('gif-editor-close');
+    stateManager.addEventListener(closeBtn, 'click', () => {
+        stateManager.cleanup();
+        modal.remove();
+        window.GifEditorState = null;
+    });
+
+    // === LOAD GIF DATA ===
     function loadGifData(gifData) {
         console.log('[GIF] loadGifData called');
-        if (state.isLoading) return;
-        state.isLoading = true;
+        if (stateManager.isLoading) return;
+        stateManager.isLoading = true;
         if (previewInterval) stopPreview();
-        state.playSpeed = 1.0;
+        stateManager.playSpeed = 1.0;
         if (speedSlider) speedSlider.value = '1';
         if (speedValue) speedValue.textContent = '1.00x';
-        state.zoom = 1;
+        stateManager.zoom = 1;
         if (zoomLevel) zoomLevel.textContent = '100%';
+
         if (!gifData.frames || gifData.frames.length === 0) {
             createEmptyGif();
-            state.isLoading = false;
+            stateManager.isLoading = false;
             return;
         }
-        state.width = gifData.width;
-        state.height = gifData.height;
-        state.frames = [];
+
+        stateManager.width = gifData.width;
+        stateManager.height = gifData.height;
+        stateManager.frames = [];
+
         for (let i = 0; i < gifData.frames.length; i++) {
             const srcFrame = gifData.frames[i];
             let byteData;
@@ -2067,8 +2328,9 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
             } else if (Array.isArray(srcFrame.data)) {
                 byteData = new Uint8ClampedArray(srcFrame.data);
             } else { continue; }
-            const expectedSize = state.width * state.height * 4;
-            if (byteData.length !== expectedSize && byteData.length === state.width * state.height) {
+
+            const expectedSize = stateManager.width * stateManager.height * 4;
+            if (byteData.length !== expectedSize && byteData.length === stateManager.width * stateManager.height) {
                 const converted = new Uint8ClampedArray(expectedSize);
                 for (let j = 0; j < byteData.length; j++) {
                     const pixel = byteData[j];
@@ -2079,167 +2341,63 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                 }
                 byteData = converted;
             }
-            state.frames.push({ data: byteData, delay: srcFrame.delay || 10 });
+            stateManager.frames.push({ data: byteData, delay: srcFrame.delay || 10 });
         }
-        if (state.frames.length === 0) { createEmptyGif(); state.isLoading = false; return; }
-        state.currentFrame = 0;
+
+        if (stateManager.frames.length === 0) {
+            createEmptyGif();
+            stateManager.isLoading = false;
+            return;
+        }
+
+        stateManager.currentFrame = 0;
         drawCanvas();
         updateTimeline();
-        if (statusEl) statusEl.textContent = `Loaded ${state.frames.length} frames, ${state.width}x${state.height}`;
-        state.isLoading = false;
+        if (statusEl) statusEl.textContent = `Loaded ${stateManager.frames.length} frames, ${stateManager.width}x${stateManager.height}`;
+        stateManager.isLoading = false;
     }
 
     function createEmptyGif() {
         if (previewInterval) stopPreview();
-        state.playSpeed = 1.0;
+        stateManager.playSpeed = 1.0;
         if (speedSlider) speedSlider.value = '1';
         if (speedValue) speedValue.textContent = '1.00x';
-        state.zoom = 1;
+        stateManager.zoom = 1;
         if (zoomLevel) zoomLevel.textContent = '100%';
-        state.width = 128;
-        state.height = 128;
-        state.frames = [];
+        stateManager.width = 128;
+        stateManager.height = 128;
+        stateManager.frames = [];
         for (let i = 0; i < 2; i++) {
-            const data = new Uint8ClampedArray(state.width * state.height * 4);
+            const data = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
             for (let j = 0; j < data.length; j += 4) {
                 data[j] = 255; data[j+1] = 192; data[j+2] = 203; data[j+3] = 255;
             }
-            state.frames.push({ data, delay: 10 });
+            stateManager.frames.push({ data, delay: 10 });
         }
-        state.currentFrame = 0;
+        stateManager.currentFrame = 0;
         drawCanvas();
         updateTimeline();
-        if (statusEl) statusEl.textContent = `New GIF: ${state.frames.length} frames, ${state.width}x${state.height}`;
+        if (statusEl) statusEl.textContent = `New GIF: ${stateManager.frames.length} frames, ${stateManager.width}x${stateManager.height}`;
     }
 
-    function saveGif() {
-        const framesData = state.frames.map(f => ({ data: Array.from(f.data), width: state.width, height: state.height, delay: f.delay }));
-        EditorAPI.send('gif:save:' + JSON.stringify({ pony_name: ponyName, sprite_name: spriteName, frames: framesData, width: state.width, height: state.height }));
-        if (statusEl) statusEl.textContent = 'Saving...';
-        state.hasChanges = false;
-    }
-
-    let isDrawing = false;
-    canvas.addEventListener('mousedown', (e) => {
-        if (state.isPickingColor) return;
-        isDrawing = true;
-        e.preventDefault();
-        const { x, y } = getPixelFromMouseEvent(e);
-        if (state.tool === 'fill') floodFillAt(x, y);
-        else setPixelAt(x, y);
-    });
-    canvas.addEventListener('mousemove', (e) => {
-        if (!isDrawing || state.tool === 'fill' || state.isPickingColor) return;
-        e.preventDefault();
-        const { x, y } = getPixelFromMouseEvent(e);
-        setPixelAt(x, y);
-    });
-    canvas.addEventListener('mouseup', () => isDrawing = false);
-    canvas.addEventListener('mouseleave', () => isDrawing = false);
-
-    document.getElementById('gif-tool-pencil')?.addEventListener('click', () => {
-        state.tool = 'pencil';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('gif-tool-pencil')?.classList.add('active');
-    });
-    document.getElementById('gif-tool-eraser')?.addEventListener('click', () => {
-        state.tool = 'eraser';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('gif-tool-eraser')?.classList.add('active');
-    });
-    document.getElementById('gif-tool-fill')?.addEventListener('click', () => {
-        state.tool = 'fill';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('gif-tool-fill')?.classList.add('active');
-    });
-    document.getElementById('gif-tool-smooth')?.addEventListener('click', () => {
-        smoothEdges();
-        document.getElementById('gif-tool-smooth')?.classList.add('active');
-        setTimeout(() => document.getElementById('gif-tool-smooth')?.classList.remove('active'), 500);
-    });
-    document.getElementById('gif-tween-frames')?.addEventListener('click', () => {
-        tweenFrames();
-        document.getElementById('gif-tween-frames')?.classList.add('active');
-        setTimeout(() => document.getElementById('gif-tween-frames')?.classList.remove('active'), 500);
-    });
-    document.getElementById('gif-smooth-animation')?.addEventListener('click', () => {
-        smoothAnimation();
-        document.getElementById('gif-smooth-animation')?.classList.add('active');
-        setTimeout(() => document.getElementById('gif-smooth-animation')?.classList.remove('active'), 500);
-    });
-    document.getElementById('gif-clear-frame')?.addEventListener('click', () => {
-        if (state.frames[state.currentFrame]) {
-            state.frames[state.currentFrame].data.fill(0);
-            drawCanvas();
-            updateTimeline();
-            state.hasChanges = true;
-        }
-    });
-    document.getElementById('gif-add-frame')?.addEventListener('click', () => {
-        const newData = new Uint8ClampedArray(state.width * state.height * 4);
-        for (let i = 3; i < newData.length; i+=4) newData[i] = 255;
-        state.frames.push({ data: newData, delay: 10 });
-        state.currentFrame = state.frames.length - 1;
-        drawCanvas();
-        updateTimeline();
-        state.hasChanges = true;
-    });
-    document.getElementById('gif-duplicate-frame')?.addEventListener('click', () => {
-        if (state.frames[state.currentFrame]) {
-            const newData = new Uint8ClampedArray(state.frames[state.currentFrame].data.length);
-            newData.set(state.frames[state.currentFrame].data);
-            state.frames.splice(state.currentFrame + 1, 0, { data: newData, delay: state.frames[state.currentFrame].delay });
-            state.currentFrame++;
-            drawCanvas();
-            updateTimeline();
-            state.hasChanges = true;
-        }
-    });
-    document.getElementById('gif-delete-frame')?.addEventListener('click', () => {
-        if (state.frames.length > 1) {
-            state.frames.splice(state.currentFrame, 1);
-            if (state.currentFrame >= state.frames.length) state.currentFrame = state.frames.length - 1;
-            drawCanvas();
-            updateTimeline();
-            state.hasChanges = true;
-        }
-    });
-    if (delayInput) {
-        delayInput.addEventListener('change', () => {
-            if (state.frames[state.currentFrame]) {
-                state.frames[state.currentFrame].delay = parseInt(delayInput.value) || 10;
-                updateTimeline();
-                state.hasChanges = true;
-            }
-        });
-    }
-    document.getElementById('gif-save')?.addEventListener('click', saveGif);
-    document.getElementById('gif-editor-close')?.addEventListener('click', () => {
-        if (previewInterval) clearInterval(previewInterval);
-        modal.remove();
-        window.GifEditorState = null;
-    });
-
-    window.GifEditorState = state;
-    window.GifEditorState.loadGif = loadGifData;
-    createEmptyGif();
-    setTimeout(() => EditorAPI.send(`gif:load:${ponyName}:${spriteName}`), 100);
-    updateCurrentColorDisplay();
-
-    // Trace Reference Feature
+    // === SETUP TRACE PANEL ===
     function setupTracePanel() {
         const existingPanel = document.getElementById('trace-panel');
         if (existingPanel) existingPanel.remove();
 
-        let traceImage = null;
-        let traceVisible = true;
-        let traceOpacity = 0.5;
-        let traceScale = 1;
-        let traceOffsetX = 0;
-        let traceOffsetY = 0;
-        let traceFrames = null;
-        let traceCurrentFrame = 0;
-        let traceAnimationInterval = null;
+        const trace = stateManager.traceState;
+        trace.image = null;
+        trace.frames = null;
+        trace.currentFrame = 0;
+        trace.visible = true;
+        trace.opacity = 0.5;
+        trace.scale = 1.0;
+        trace.offsetX = 0;
+        trace.offsetY = 0;
+        if (trace.animationInterval) {
+            clearInterval(trace.animationInterval);
+            trace.animationInterval = null;
+        }
 
         const panel = document.createElement('div');
         panel.id = 'trace-panel';
@@ -2286,53 +2444,12 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
     `;
         modal.appendChild(panel);
 
-        const originalDraw = drawCanvas;
-
-        function redrawWithTrace() {
-            if (!state.frames[state.currentFrame]) return;
-            const displayWidth = state.width * state.zoom;
-            const displayHeight = state.height * state.zoom;
-            canvas.width = displayWidth;
-            canvas.height = displayHeight;
-            canvas.style.width = displayWidth + 'px';
-            canvas.style.height = displayHeight + 'px';
-            ctx.clearRect(0, 0, displayWidth, displayHeight);
-
-            if (traceVisible && traceImage && traceImage.complete) {
-                ctx.save();
-                ctx.globalAlpha = traceOpacity;
-                const refW = traceImage.width * traceScale * state.zoom;
-                const refH = traceImage.height * traceScale * state.zoom;
-                const refX = traceOffsetX * state.zoom;
-                const refY = traceOffsetY * state.zoom;
-                ctx.drawImage(traceImage, refX, refY, refW, refH);
-                ctx.restore();
-            }
-
-            const frame = state.frames[state.currentFrame];
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = state.width;
-            tempCanvas.height = state.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            const imgData = new ImageData(frame.data, state.width, state.height);
-            tempCtx.putImageData(imgData, 0, 0);
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(tempCanvas, 0, 0, state.width, state.height, 0, 0, displayWidth, displayHeight);
-
-            if (zoomLevel) zoomLevel.textContent = Math.round(state.zoom * 100) + '%';
-            if (delayInput && state.frames[state.currentFrame]) delayInput.value = state.frames[state.currentFrame].delay;
-            if (statusEl && state.frames[state.currentFrame] && !state.isPickingColor) {
-                statusEl.textContent = `Frame ${state.currentFrame+1}/${state.frames.length} | Delay: ${state.frames[state.currentFrame].delay}cs | Speed: ${state.playSpeed.toFixed(2)}x | Zoom: ${Math.round(state.zoom * 100)}% | ${state.width}x${state.height}`;
-            }
-        }
-
-        drawCanvas = redrawWithTrace;
-
+        // === ФУНКЦИИ ДЛЯ РАБОТЫ С TRACE ===
         function updatePreview() {
             const previewDiv = document.getElementById('trace-preview');
             if (!previewDiv) return;
-            if (traceImage) {
-                previewDiv.innerHTML = `<img src="${traceImage.src}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
+            if (trace.image && trace.image.complete && trace.image.naturalWidth > 0) {
+                previewDiv.innerHTML = `<img src="${trace.image.src}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
             } else {
                 previewDiv.innerHTML = '<span style="color: #a6adc8; font-size: 11px;">No reference loaded</span>';
             }
@@ -2341,469 +2458,88 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
         function updateTimelineUI() {
             const container = document.getElementById('ref-timeline');
             const infoSpan = document.getElementById('ref-frame-info');
-            if (!container || !traceFrames) return;
+            if (!container || !trace.frames) {
+                const timelineContainer = document.getElementById('ref-timeline-container');
+                if (timelineContainer) timelineContainer.style.display = 'none';
+                return;
+            }
+
             container.innerHTML = '';
-            traceFrames.forEach((frame, idx) => {
+            trace.frames.forEach((frame, idx) => {
                 const div = document.createElement('div');
                 div.className = 'ref-frame';
-                if (idx === traceCurrentFrame) div.classList.add('active');
+                if (idx === trace.currentFrame) div.classList.add('active');
                 const fcanvas = document.createElement('canvas');
                 fcanvas.width = 30;
                 fcanvas.height = 30;
                 const fctx = fcanvas.getContext('2d');
                 if (frame.imageData) {
                     fctx.putImageData(frame.imageData, 0, 0);
-                } else if (frame.canvas) {
-                    fctx.drawImage(frame.canvas, 0, 0, 30, 30);
                 }
                 div.appendChild(fcanvas);
-                div.onclick = () => {
-                    if (traceAnimationInterval) clearInterval(traceAnimationInterval);
-                    traceCurrentFrame = idx;
+                stateManager.addEventListener(div, 'click', () => {
+                    if (trace.animationInterval) clearInterval(trace.animationInterval);
+                    trace.currentFrame = idx;
                     updateImageFromFrames();
                     updateTimelineUI();
-                    redrawWithTrace();
-                };
+                    drawCanvas();
+                });
                 container.appendChild(div);
             });
-            if (infoSpan) infoSpan.textContent = `${traceCurrentFrame+1}/${traceFrames.length}`;
+            if (infoSpan) infoSpan.textContent = `${trace.currentFrame+1}/${trace.frames.length}`;
             const timelineContainer = document.getElementById('ref-timeline-container');
             if (timelineContainer) timelineContainer.style.display = 'block';
         }
 
         function updateImageFromFrames() {
-            if (!traceFrames || !traceFrames[traceCurrentFrame]) return;
-            const frame = traceFrames[traceCurrentFrame];
+            const frames = trace.frames;
+            if (!frames || !frames[trace.currentFrame]) return;
+
+            const frame = frames[trace.currentFrame];
             if (frame.imageData) {
                 const fcanvas = document.createElement('canvas');
                 fcanvas.width = frame.imageData.width;
                 fcanvas.height = frame.imageData.height;
                 const fctx = fcanvas.getContext('2d');
                 fctx.putImageData(frame.imageData, 0, 0);
+
                 const img = new Image();
                 img.onload = () => {
-                    traceImage = img;
+                    if (!document.getElementById('trace-panel')) return;
+                    trace.image = img;
                     updatePreview();
-                    redrawWithTrace();
+                    drawCanvas();
+                };
+                img.onerror = () => {
+                    console.error('[Trace] Failed to load image from frame');
                 };
                 img.src = fcanvas.toDataURL();
-            } else if (frame.canvas) {
-                const img = new Image();
-                img.onload = () => {
-                    traceImage = img;
-                    updatePreview();
-                    redrawWithTrace();
-                };
-                img.src = frame.canvas.toDataURL();
             }
         }
 
         function startAnimation() {
-            if (traceAnimationInterval) clearInterval(traceAnimationInterval);
-            if (!traceFrames || traceFrames.length <= 1) return;
-            traceAnimationInterval = setInterval(() => {
-                traceCurrentFrame = (traceCurrentFrame + 1) % traceFrames.length;
+            if (trace.animationInterval) clearInterval(trace.animationInterval);
+            if (!trace.frames || trace.frames.length <= 1) return;
+            trace.animationInterval = setInterval(() => {
+                if (!document.getElementById('trace-panel')) {
+                    clearInterval(trace.animationInterval);
+                    trace.animationInterval = null;
+                    return;
+                }
+                trace.currentFrame = (trace.currentFrame + 1) % trace.frames.length;
                 updateImageFromFrames();
                 updateTimelineUI();
-                redrawWithTrace();
             }, 100);
         }
 
         function stopAnimation() {
-            if (traceAnimationInterval) {
-                clearInterval(traceAnimationInterval);
-                traceAnimationInterval = null;
+            if (trace.animationInterval) {
+                clearInterval(trace.animationInterval);
+                trace.animationInterval = null;
             }
         }
 
-        // Улучшенный парсер GIF
-        function parseGifFrames(arrayBuffer) {
-            try {
-                const data = new Uint8Array(arrayBuffer);
-                let pos = 0;
-
-                // Проверяем заголовок GIF
-                if (data[0] !== 0x47 || data[1] !== 0x49 || data[2] !== 0x46) {
-                    console.warn('Not a valid GIF');
-                    return null;
-                }
-
-                const version = String.fromCharCode(data[3], data[4], data[5]);
-                console.log(`GIF version: ${version}`);
-                pos = 6;
-
-                // Логический дескриптор экрана
-                const width = data[pos] | (data[pos+1] << 8);
-                const height = data[pos+2] | (data[pos+3] << 8);
-                const packed = data[pos+4];
-                const backgroundColorIndex = data[pos+5];
-                pos += 7;
-
-                console.log(`GIF dimensions: ${width}x${height}`);
-
-                // Глобальная палитра
-                let globalColorTable = null;
-                const hasGlobalColorTable = (packed & 0x80) !== 0;
-                if (hasGlobalColorTable) {
-                    const colorTableSize = 2 << (packed & 0x07);
-                    globalColorTable = [];
-                    for (let i = 0; i < colorTableSize; i++) {
-                        globalColorTable.push({
-                            r: data[pos++],
-                            g: data[pos++],
-                            b: data[pos++]
-                        });
-                    }
-                }
-
-                // Функция для пропуска блоков расширений
-                function skipExtension() {
-                    let subBlockSize = data[pos++];
-                    while (subBlockSize > 0 && pos < data.length) {
-                        pos += subBlockSize;
-                        subBlockSize = data[pos++];
-                    }
-                }
-
-                // ИСПРАВЛЕННЫЙ LZW декодер
-                function decodeLZW(byteStream, minCodeSize, pixelCount) {
-                    const clearCode = 1 << minCodeSize;
-                    const eoiCode = clearCode + 1;
-                    let codeSize = minCodeSize + 1;
-
-                    // Инициализация таблицы
-                    let codeTable = [];
-                    for (let i = 0; i < (1 << minCodeSize); i++) {
-                        codeTable.push([i]);
-                    }
-                    let availableCode = clearCode + 2;
-
-                    let oldCode = -1;
-                    let output = [];
-                    let bitPos = 0;
-                    let bytePos = 0;
-                    let currentByte = 0;
-
-                    function readBits(bitsToRead) {
-                        let value = 0;
-                        let bitsRead = 0;
-
-                        while (bitsRead < bitsToRead) {
-                            if (bytePos >= byteStream.length) return -1;
-
-                            if (bitPos === 0) {
-                                currentByte = byteStream[bytePos++];
-                            }
-
-                            const bitsRemainingInByte = 8 - bitPos;
-                            const bitsToTake = Math.min(bitsToRead - bitsRead, bitsRemainingInByte);
-                            const mask = (1 << bitsToTake) - 1;
-                            const shifted = (currentByte >> bitPos) & mask;
-
-                            value |= shifted << bitsRead;
-                            bitsRead += bitsToTake;
-                            bitPos += bitsToTake;
-
-                            if (bitPos >= 8) {
-                                bitPos = 0;
-                            }
-                        }
-
-                        return value;
-                    }
-
-                    while (output.length < pixelCount) {
-                        let code = readBits(codeSize);
-                        if (code === -1 || code === eoiCode) break;
-
-                        if (code === clearCode) {
-                            // Сброс таблицы
-                            codeSize = minCodeSize + 1;
-                            codeTable = [];
-                            for (let i = 0; i < (1 << minCodeSize); i++) {
-                                codeTable.push([i]);
-                            }
-                            availableCode = clearCode + 2;
-                            oldCode = -1;
-                            continue;
-                        }
-
-                        if (oldCode === -1) {
-                            if (code < codeTable.length) {
-                                const entry = codeTable[code];
-                                output.push(...entry);
-                                oldCode = code;
-                            }
-                            continue;
-                        }
-
-                        let entry;
-                        if (code < codeTable.length) {
-                            entry = codeTable[code];
-                        } else if (code === availableCode) {
-                            // Специальный случай: код равен новому доступному
-                            const prevEntry = codeTable[oldCode];
-                            entry = [...prevEntry, prevEntry[0]];
-                        } else {
-                            break;
-                        }
-
-                        output.push(...entry);
-
-                        // Добавляем новую запись в таблицу
-                        if (availableCode < 4096) {
-                            const prevEntry = codeTable[oldCode];
-                            const newEntry = [...prevEntry, entry[0]];
-                            codeTable[availableCode] = newEntry;
-                            availableCode++;
-
-                            // Увеличиваем размер кода при необходимости
-                            if (availableCode >= (1 << codeSize) && codeSize < 12) {
-                                codeSize++;
-                            }
-                        }
-
-                        oldCode = code;
-                    }
-
-                    return output;
-                }
-
-                const frames = [];
-                let frameCount = 0;
-
-                // Создаём canvas для текущего состояния
-                let currentCanvas = document.createElement('canvas');
-                currentCanvas.width = width;
-                currentCanvas.height = height;
-                let currentCtx = currentCanvas.getContext('2d');
-                currentCtx.clearRect(0, 0, width, height);
-
-                // Храним предыдущий кадр для disposal
-                let previousFrameData = null;
-                let disposalMethod = 0;
-
-                while (pos < data.length) {
-                    const blockType = data[pos++];
-
-                    if (blockType === 0x21) { // Extension
-                        const extensionType = data[pos++];
-
-                        if (extensionType === 0xF9) { // Graphic Control Extension
-                            const blockSize = data[pos++];
-                            const packed2 = data[pos++];
-                            disposalMethod = (packed2 >> 2) & 0x07;
-                            const transparentColorFlag = (packed2 & 0x01) !== 0;
-                            const delayTime = data[pos] | (data[pos+1] << 8);
-                            const transparentColorIndex = data[pos+2];
-                            pos += 3;
-                            const terminator = data[pos++];
-
-                            // Если есть ожидающий кадр, обновляем его информацию
-                            if (frameCount > 0 && frameCount <= frames.length) {
-                                const lastFrame = frames[frames.length - 1];
-                                if (lastFrame) {
-                                    lastFrame.delay = delayTime || 10;
-                                    lastFrame.disposalMethod = disposalMethod;
-                                    lastFrame.transparentColorIndex = transparentColorFlag ? transparentColorIndex : -1;
-                                }
-                            }
-                        } else {
-                            skipExtension();
-                        }
-                        continue;
-                    } else if (blockType === 0x2C) { // Image Descriptor
-                        const left = data[pos] | (data[pos+1] << 8);
-                        const top = data[pos+2] | (data[pos+3] << 8);
-                        const frameWidth = data[pos+4] | (data[pos+5] << 8);
-                        const frameHeight = data[pos+6] | (data[pos+7] << 8);
-                        const packed2 = data[pos+8];
-                        const hasLocalColorTable = (packed2 & 0x80) !== 0;
-                        const interlaceFlag = (packed2 & 0x40) !== 0;
-                        const colorTableSize = 2 << (packed2 & 0x07);
-                        pos += 9;
-
-                        // Локальная палитра
-                        let localColorTable = null;
-                        if (hasLocalColorTable) {
-                            localColorTable = [];
-                            for (let i = 0; i < colorTableSize; i++) {
-                                localColorTable.push({
-                                    r: data[pos++],
-                                    g: data[pos++],
-                                    b: data[pos++]
-                                });
-                            }
-                        }
-
-                        const colorTable = localColorTable || globalColorTable;
-                        if (!colorTable) {
-                            console.warn('No color table available');
-                            continue;
-                        }
-
-                        // Читаем LZW минимальный код
-                        const lzwMinCodeSize = data[pos++];
-
-                        // Собираем данные изображения
-                        let imageDataBytes = [];
-                        let subBlockSize = data[pos++];
-                        while (subBlockSize > 0 && pos < data.length) {
-                            for (let i = 0; i < subBlockSize; i++) {
-                                imageDataBytes.push(data[pos + i]);
-                            }
-                            pos += subBlockSize;
-                            subBlockSize = data[pos++];
-                        }
-
-                        // Декодируем LZW
-                        const pixelCount = frameWidth * frameHeight;
-                        const decodedIndices = decodeLZW(imageDataBytes, lzwMinCodeSize, pixelCount);
-
-                        if (!decodedIndices || decodedIndices.length < pixelCount) {
-                            console.warn('Failed to decode LZW data');
-                            continue;
-                        }
-
-                        // Создаём новый canvas для кадра
-                        const frameCanvas = document.createElement('canvas');
-                        frameCanvas.width = width;
-                        frameCanvas.height = height;
-                        const frameCtx = frameCanvas.getContext('2d');
-
-                        // Применяем disposal method к предыдущему кадру
-                        if (disposalMethod === 2) {
-                            // Очищаем до фона
-                            frameCtx.clearRect(0, 0, width, height);
-                        } else if (disposalMethod === 3 && previousFrameData) {
-                            // Восстанавливаем предыдущее состояние (сложно, используем предыдущий кадр)
-                            if (frames.length > 1) {
-                                const prevFrame = frames[frames.length - 1];
-                                if (prevFrame && prevFrame.imageData) {
-                                    frameCtx.putImageData(prevFrame.imageData, 0, 0);
-                                }
-                            }
-                        } else {
-                            // Копируем текущее состояние
-                            if (currentCanvas) {
-                                frameCtx.drawImage(currentCanvas, 0, 0);
-                            }
-                        }
-
-                        // Получаем прозрачный индекс
-                        let transparentIdx = -1;
-                        if (frameCount > 0) {
-                            const lastFrame = frames[frames.length - 1];
-                            if (lastFrame) {
-                                transparentIdx = lastFrame.transparentColorIndex || -1;
-                            }
-                        }
-
-                        // Создаём данные изображения для текущего кадра
-                        const imageData = frameCtx.createImageData(frameWidth, frameHeight);
-                        const dataArray = imageData.data;
-
-                        // Рисуем пиксели с правильной интерпретацией палитры
-                        if (interlaceFlag) {
-                            // Интерлейс: 4 прохода
-                            const passOffsets = [0, 4, 2, 1];
-                            const passIncrements = [8, 8, 4, 2];
-                            let pixelIndex = 0;
-                            for (let pass = 0; pass < 4; pass++) {
-                                for (let y = passOffsets[pass]; y < frameHeight; y += passIncrements[pass]) {
-                                    for (let x = 0; x < frameWidth; x++) {
-                                        const colorIndex = decodedIndices[pixelIndex++];
-                                        const idx = (y * frameWidth + x) * 4;
-
-                                        if (colorIndex >= 0 && colorIndex < colorTable.length) {
-                                            const color = colorTable[colorIndex];
-                                            if (colorIndex === transparentIdx) {
-                                                dataArray[idx] = 0;
-                                                dataArray[idx+1] = 0;
-                                                dataArray[idx+2] = 0;
-                                                dataArray[idx+3] = 0;
-                                            } else {
-                                                dataArray[idx] = color.r;
-                                                dataArray[idx+1] = color.g;
-                                                dataArray[idx+2] = color.b;
-                                                dataArray[idx+3] = 255;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // Обычный вывод
-                            for (let y = 0; y < frameHeight; y++) {
-                                for (let x = 0; x < frameWidth; x++) {
-                                    const colorIndex = decodedIndices[y * frameWidth + x];
-                                    const idx = (y * frameWidth + x) * 4;
-
-                                    if (colorIndex >= 0 && colorIndex < colorTable.length) {
-                                        const color = colorTable[colorIndex];
-                                        if (colorIndex === transparentIdx) {
-                                            dataArray[idx] = 0;
-                                            dataArray[idx+1] = 0;
-                                            dataArray[idx+2] = 0;
-                                            dataArray[idx+3] = 0;
-                                        } else {
-                                            dataArray[idx] = color.r;
-                                            dataArray[idx+1] = color.g;
-                                            dataArray[idx+2] = color.b;
-                                            dataArray[idx+3] = 255;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // Накладываем изображение на canvas
-                        frameCtx.putImageData(imageData, left, top);
-
-                        // Сохраняем полный кадр
-                        const fullFrameData = frameCtx.getImageData(0, 0, width, height);
-
-                        // Сохраняем кадр
-                        frames.push({
-                            imageData: fullFrameData,
-                            canvas: frameCanvas,
-                            delay: 10,
-                            disposalMethod: disposalMethod,
-                            transparentColorIndex: transparentIdx,
-                            width: width,
-                            height: height
-                        });
-
-                        // Обновляем текущий canvas для следующего кадра
-                        currentCanvas = frameCanvas;
-                        currentCtx = frameCtx;
-                        previousFrameData = fullFrameData;
-                        frameCount++;
-
-                        console.log(`Extracted frame ${frameCount}`);
-
-                    } else if (blockType === 0x3B) { // Trailer
-                        break;
-                    } else {
-                        console.warn(`Unknown block type: 0x${blockType.toString(16)}`);
-                        break;
-                    }
-                }
-
-                if (frames.length === 0) {
-                    console.warn('No frames extracted from GIF');
-                    return null;
-                }
-
-                console.log(`Successfully extracted ${frames.length} frames from GIF`);
-                return frames;
-
-            } catch (error) {
-                console.error('Error parsing GIF:', error);
-                return null;
-            }
-        }
-
+        // === ЗАГРУЗКА РЕФЕРЕНСА ===
         function loadReference(type) {
             const input = document.createElement('input');
             input.type = 'file';
@@ -2812,43 +2548,108 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                 const file = e.target.files[0];
                 if (!file) return;
 
+                if (!document.getElementById('trace-panel')) {
+                    if (statusEl) statusEl.textContent = '⚠️ Trace panel closed';
+                    return;
+                }
+
                 if (type === 'gif' && file.name.toLowerCase().endsWith('.gif')) {
+                    if (statusEl) statusEl.textContent = `⏳ Loading ${file.name}...`;
+
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         try {
                             const arrayBuffer = ev.target.result;
-                            const frames = parseGifFrames(arrayBuffer);
+                            const bytes = new Uint8Array(arrayBuffer);
+                            const message = { data: Array.from(bytes) };
 
-                            if (frames && frames.length > 0) {
-                                traceFrames = frames;
-                                traceCurrentFrame = 0;
-                                updateImageFromFrames();
-                                updatePreview();
+                            window._traceGifCallback = function(result) {
+                                console.log('[Trace] Callback received, frames:', result.frames?.length);
+
+                                if (!document.getElementById('trace-panel')) {
+                                    console.log('[Trace] Panel closed, ignoring result');
+                                    return;
+                                }
+
+                                if (result.error) {
+                                    if (statusEl) statusEl.textContent = `❌ ${result.error}`;
+                                    return;
+                                }
+
+                                if (!result.frames || result.frames.length === 0) {
+                                    if (statusEl) statusEl.textContent = `❌ No frames in GIF`;
+                                    return;
+                                }
+
+                                const frames = result.frames.map(f => {
+                                    let data = f.data;
+                                    if (Array.isArray(data)) {
+                                        data = new Uint8ClampedArray(data);
+                                    }
+                                    return {
+                                        imageData: new ImageData(data, result.width, result.height),
+                                        delay: f.delay || 10
+                                    };
+                                });
+
+                                trace.frames = frames;
+                                trace.currentFrame = 0;
+
+                                const firstFrame = frames[0];
+                                if (firstFrame) {
+                                    const tempCanvas = document.createElement('canvas');
+                                    tempCanvas.width = firstFrame.imageData.width;
+                                    tempCanvas.height = firstFrame.imageData.height;
+                                    const tempCtx = tempCanvas.getContext('2d');
+                                    tempCtx.putImageData(firstFrame.imageData, 0, 0);
+                                    const dataUrl = tempCanvas.toDataURL('image/png');
+
+                                    const img = new Image();
+                                    img.onload = function() {
+                                        console.log('[Trace] ✓ Image loaded successfully');
+                                        if (!document.getElementById('trace-panel')) return;
+                                        trace.image = img;
+                                        trace.scale = 1.0;
+                                        updatePreview();
+
+                                        // МНОГОКРАТНАЯ ПЕРЕРИСОВКА
+                                        drawCanvas();
+                                        setTimeout(() => {
+                                            drawCanvas();
+                                        }, 50);
+                                        setTimeout(() => {
+                                            drawCanvas();
+                                        }, 200);
+                                        setTimeout(() => {
+                                            drawCanvas();
+                                        }, 500);
+
+                                        if (statusEl) {
+                                            statusEl.textContent = `✓ Loaded GIF: ${frames.length} frames, ${result.width}x${result.height}`;
+                                        }
+                                    };
+                                    img.onerror = function(err) {
+                                        console.error('[Trace] Image LOAD ERROR:', err);
+                                        if (statusEl) statusEl.textContent = `❌ Failed to render GIF`;
+                                    };
+                                    img.src = dataUrl;
+                                }
+
                                 updateTimelineUI();
-                                redrawWithTrace();
-                                if (statusEl) statusEl.textContent = `✓ Loaded GIF: ${file.name} (${frames.length} frames)`;
-                            } else {
-                                // Fallback: загружаем как статическое изображение
-                                const imgUrl = URL.createObjectURL(file);
-                                const img = new Image();
-                                img.onload = () => {
-                                    traceImage = img;
-                                    traceFrames = null;
-                                    traceCurrentFrame = 0;
-                                    updatePreview();
-                                    const timelineContainer = document.getElementById('ref-timeline-container');
-                                    if (timelineContainer) timelineContainer.style.display = 'none';
-                                    redrawWithTrace();
-                                    if (statusEl) statusEl.textContent = `✓ Loaded image (fallback): ${file.name}`;
-                                };
-                                img.onerror = () => {
-                                    if (statusEl) statusEl.textContent = `❌ Failed to load ${file.name}`;
-                                };
-                                img.src = imgUrl;
-                            }
+                                if (frames.length > 1) {
+                                    const animateCheckbox = document.getElementById('ref-animate');
+                                    if (animateCheckbox) animateCheckbox.checked = true;
+                                    startAnimation();
+                                }
+                            };
+
+                            const jsonData = JSON.stringify(message);
+                            console.log('[Trace] Sending parse request');
+                            EditorAPI.send(`trace:parse_gif:${jsonData}`);
+
                         } catch (error) {
-                            console.error('Error loading GIF:', error);
-                            if (statusEl) statusEl.textContent = `❌ Error loading GIF: ${error.message}`;
+                            console.error('[Trace] Error:', error);
+                            if (statusEl) statusEl.textContent = `❌ Error: ${error.message}`;
                         }
                     };
                     reader.onerror = () => {
@@ -2856,17 +2657,24 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                     };
                     reader.readAsArrayBuffer(file);
                 } else {
+                    // Static image
                     const reader = new FileReader();
                     reader.onload = (ev) => {
                         const img = new Image();
                         img.onload = () => {
-                            traceImage = img;
-                            traceFrames = null;
-                            traceCurrentFrame = 0;
+                            if (!document.getElementById('trace-panel')) return;
+                            trace.image = img;
+                            trace.frames = null;
+                            trace.currentFrame = 0;
                             updatePreview();
                             const timelineContainer = document.getElementById('ref-timeline-container');
                             if (timelineContainer) timelineContainer.style.display = 'none';
-                            redrawWithTrace();
+
+                            drawCanvas();
+                            setTimeout(() => {
+                                drawCanvas();
+                            }, 50);
+
                             if (statusEl) statusEl.textContent = `✓ Loaded image: ${file.name}`;
                         };
                         img.onerror = () => {
@@ -2874,117 +2682,210 @@ function initGifEditorEnhanced(ponyName, spriteName, modal) {
                         };
                         img.src = ev.target.result;
                     };
-                    reader.onerror = () => {
-                        if (statusEl) statusEl.textContent = `❌ Failed to read file: ${file.name}`;
-                    };
                     reader.readAsDataURL(file);
                 }
             };
             input.click();
         }
 
-        // Добавляем обработчики событий
-        document.getElementById('trace-panel-close')?.addEventListener('click', () => {
-            drawCanvas = originalDraw;
+        // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+        const closeTraceBtn = document.getElementById('trace-panel-close');
+        stateManager.addEventListener(closeTraceBtn, 'click', () => {
+            if (trace.animationInterval) {
+                clearInterval(trace.animationInterval);
+                trace.animationInterval = null;
+            }
             panel.remove();
-            redrawWithTrace();
+            drawCanvas();
         });
-        document.getElementById('trace-load-image')?.addEventListener('click', () => loadReference('image'));
-        document.getElementById('trace-load-gif')?.addEventListener('click', () => loadReference('gif'));
-        document.getElementById('trace-reset-btn')?.addEventListener('click', () => {
-            traceOffsetX = 0;
-            traceOffsetY = 0;
-            traceScale = 1;
-            document.getElementById('trace-scale-slider').value = 100;
-            document.getElementById('trace-scale-value').textContent = '100';
+
+        stateManager.addEventListener(document.getElementById('trace-load-image'), 'click', () => loadReference('image'));
+        stateManager.addEventListener(document.getElementById('trace-load-gif'), 'click', () => loadReference('gif'));
+
+        stateManager.addEventListener(document.getElementById('trace-reset-btn'), 'click', () => {
+            trace.offsetX = 0;
+            trace.offsetY = 0;
+            trace.scale = 1;
+            const slider = document.getElementById('trace-scale-slider');
+            if (slider) {
+                slider.value = 100;
+                document.getElementById('trace-scale-value').textContent = '100';
+            }
             updatePreview();
-            redrawWithTrace();
+            drawCanvas();
             if (statusEl) statusEl.textContent = 'Reference reset';
         });
-        document.getElementById('trace-opacity-slider')?.addEventListener('input', (e) => {
-            traceOpacity = e.target.value / 100;
+
+        stateManager.addEventListener(document.getElementById('trace-opacity-slider'), 'input', (e) => {
+            trace.opacity = e.target.value / 100;
             document.getElementById('trace-opacity-value').textContent = e.target.value;
-            redrawWithTrace();
+            drawCanvas();
         });
-        document.getElementById('trace-scale-slider')?.addEventListener('input', (e) => {
-            traceScale = e.target.value / 100;
+
+        stateManager.addEventListener(document.getElementById('trace-scale-slider'), 'input', (e) => {
+            trace.scale = e.target.value / 100;
             document.getElementById('trace-scale-value').textContent = e.target.value;
-            redrawWithTrace();
+            drawCanvas();
         });
-        document.getElementById('trace-visible-checkbox')?.addEventListener('change', (e) => {
-            traceVisible = e.target.checked;
-            redrawWithTrace();
+
+        stateManager.addEventListener(document.getElementById('trace-visible-checkbox'), 'change', (e) => {
+            trace.visible = e.target.checked;
+            drawCanvas();
         });
-        document.getElementById('ref-prev-frame')?.addEventListener('click', () => {
-            if (traceFrames && traceFrames.length > 0) {
-                if (traceAnimationInterval) clearInterval(traceAnimationInterval);
-                traceCurrentFrame = Math.max(0, traceCurrentFrame - 1);
+
+        stateManager.addEventListener(document.getElementById('ref-prev-frame'), 'click', () => {
+            if (trace.frames && trace.frames.length > 0) {
+                if (trace.animationInterval) clearInterval(trace.animationInterval);
+                trace.currentFrame = Math.max(0, trace.currentFrame - 1);
                 updateImageFromFrames();
                 updateTimelineUI();
-                redrawWithTrace();
             }
         });
-        document.getElementById('ref-next-frame')?.addEventListener('click', () => {
-            if (traceFrames && traceFrames.length > 0) {
-                if (traceAnimationInterval) clearInterval(traceAnimationInterval);
-                traceCurrentFrame = Math.min(traceFrames.length - 1, traceCurrentFrame + 1);
+
+        stateManager.addEventListener(document.getElementById('ref-next-frame'), 'click', () => {
+            if (trace.frames && trace.frames.length > 0) {
+                if (trace.animationInterval) clearInterval(trace.animationInterval);
+                trace.currentFrame = Math.min(trace.frames.length - 1, trace.currentFrame + 1);
                 updateImageFromFrames();
                 updateTimelineUI();
-                redrawWithTrace();
             }
         });
-        document.getElementById('ref-animate')?.addEventListener('change', (e) => {
+
+        stateManager.addEventListener(document.getElementById('ref-animate'), 'change', (e) => {
             if (e.target.checked) startAnimation();
             else stopAnimation();
         });
 
-        // Drag and drop для перемещения референса
+        // === DRAG ДЛЯ ПЕРЕМЕЩЕНИЯ ТРАССИРОВКИ ===
         let isDraggingRef = false;
         let dragStartX = 0, dragStartY = 0;
         let refStartX = 0, refStartY = 0;
 
-        canvas.addEventListener('mousedown', (e) => {
-            if (e.shiftKey && traceImage) {
+        stateManager.addEventListener(canvas, 'mousedown', (e) => {
+            if (e.shiftKey && trace.image) {
                 isDraggingRef = true;
                 dragStartX = e.clientX;
                 dragStartY = e.clientY;
-                refStartX = traceOffsetX;
-                refStartY = traceOffsetY;
+                refStartX = trace.offsetX;
+                refStartY = trace.offsetY;
                 canvas.style.cursor = 'grabbing';
                 e.preventDefault();
             }
         });
-        canvas.addEventListener('mousemove', (e) => {
+
+        stateManager.addEventListener(canvas, 'mousemove', (e) => {
             if (isDraggingRef) {
-                const dx = (e.clientX - dragStartX) / state.zoom;
-                const dy = (e.clientY - dragStartY) / state.zoom;
-                traceOffsetX = refStartX + dx;
-                traceOffsetY = refStartY + dy;
-                redrawWithTrace();
+                const dx = (e.clientX - dragStartX) / stateManager.zoom;
+                const dy = (e.clientY - dragStartY) / stateManager.zoom;
+                trace.offsetX = refStartX + dx;
+                trace.offsetY = refStartY + dy;
+                drawCanvas();
             }
         });
-        canvas.addEventListener('mouseup', () => {
+
+        stateManager.addEventListener(canvas, 'mouseup', () => {
             isDraggingRef = false;
             canvas.style.cursor = 'crosshair';
         });
-        canvas.addEventListener('wheel', (e) => {
-            if (e.shiftKey && traceImage) {
+
+        stateManager.addEventListener(canvas, 'wheel', (e) => {
+            if (e.shiftKey && trace.image) {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? -0.05 : 0.05;
-                traceScale = Math.max(0.25, Math.min(3, traceScale + delta));
+                trace.scale = Math.max(0.25, Math.min(3, trace.scale + delta));
                 const slider = document.getElementById('trace-scale-slider');
                 if (slider) {
-                    slider.value = traceScale * 100;
-                    document.getElementById('trace-scale-value').textContent = Math.round(traceScale * 100);
+                    slider.value = trace.scale * 100;
+                    document.getElementById('trace-scale-value').textContent = Math.round(trace.scale * 100);
                 }
-                redrawWithTrace();
-                if (statusEl) statusEl.textContent = `Scale: ${Math.round(traceScale * 100)}%`;
+                drawCanvas();
+                if (statusEl) statusEl.textContent = `Scale: ${Math.round(trace.scale * 100)}%`;
             }
         });
+
+        panel.style.bottom = '160px';
+        panel.style.right = '20px';
+
+        console.log('[Trace] Panel setup complete');
     }
 
+    // === TRACE REFERENCE BUTTON ===
     const traceBtn = document.getElementById('gif-trace-reference');
-    if (traceBtn) traceBtn.addEventListener('click', () => setupTracePanel());
+    stateManager.addEventListener(traceBtn, 'click', () => setupTracePanel());
+
+    // === ФИКС: ПРИНУДИТЕЛЬНАЯ ПЕРЕРИСОВКА TRACE ===
+    // Сохраняем ссылку на trace
+    const traceRef = stateManager.traceState;
+
+    // Функция для принудительной перерисовки trace
+    window.forceDrawTrace = function() {
+        const trace = stateManager.traceState;
+        if (!trace) {
+            console.log('[Trace] No trace state');
+            return;
+        }
+
+        const mainCanvas = document.getElementById('gif-main-canvas');
+        if (!mainCanvas) {
+            console.log('[Trace] Canvas not found');
+            return;
+        }
+
+        if (!trace.image) {
+            console.log('[Trace] No image');
+            return;
+        }
+
+        if (!trace.image.complete || trace.image.naturalWidth === 0) {
+            console.log('[Trace] Image not loaded');
+            return;
+        }
+
+        console.log('[Trace] Force drawing! Image:', trace.image.width, 'x', trace.image.height);
+
+        const ctx = mainCanvas.getContext('2d');
+        const zoom = stateManager.zoom || 1;
+
+        ctx.save();
+        ctx.globalAlpha = trace.opacity || 0.5;
+
+        const refW = trace.image.width * (trace.scale || 1.0) * zoom;
+        const refH = trace.image.height * (trace.scale || 1.0) * zoom;
+        const refX = (trace.offsetX || 0) * zoom;
+        const refY = (trace.offsetY || 0) * zoom;
+
+        try {
+            ctx.drawImage(trace.image, refX, refY, refW, refH);
+            console.log('[Trace] ✓ DRAWN!');
+        } catch(e) {
+            console.error('[Trace] Draw error:', e);
+        }
+
+        ctx.restore();
+    };
+
+    // Добавляем функцию для получения состояния
+    window.getTraceState = function() {
+        return stateManager.traceState;
+    };
+
+    console.log('[Trace] Debug functions added: window.forceDrawTrace(), window.getTraceState()');
+
+    // === INIT ===
+    window.GifEditorState = stateManager;
+    window.GifEditorState.loadGif = loadGifData;
+    createEmptyGif();
+    setTimeout(() => EditorAPI.send(`gif:load:${stateManager.ponyName}:${stateManager.spriteName}`), 100);
+    updateCurrentColorDisplay();
+
+    stateManager.resizeHandler = () => {
+        if (stateManager.traceState.image) {
+            drawCanvas();
+        }
+    };
+    window.addEventListener('resize', stateManager.resizeHandler);
+
+    console.log('[GIF] Editor initialized successfully');
 }
 
 console.log('[PonyEditor] Loaded with enhanced GIF editor, pony creation, GIF creation, resize, smooth edges, tweening, and temporal smoothing');

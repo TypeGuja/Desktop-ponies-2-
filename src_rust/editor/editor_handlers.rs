@@ -25,6 +25,8 @@ pub fn handle_ipc(body: &str, loader: &Arc<Mutex<DesktopPoniesLoader>>, ponies_d
         save_gif_from_editor(data, ponies_dir, sender);
     } else if let Some(data) = body.strip_prefix("gif:list:") {
         list_gifs_for_pony(data, ponies_dir, sender);
+    } else if let Some(data) = body.strip_prefix("trace:parse_gif:") {
+        parse_gif_bytes_for_trace(data, sender);
     } else if body == "editor:close" {
         println!("[Editor] Close request received");
     } else {
@@ -664,5 +666,114 @@ fn save_gif_from_editor(data: &str, ponies_dir: &PathBuf, sender: &mpsc::Sender<
         }
     }
     let response = serde_json::json!({ "type": "gif_save_error", "message": "Failed to save GIF" });
+    let _ = sender.send(response.to_string());
+}
+
+fn parse_gif_bytes_for_trace(data: &str, sender: &mpsc::Sender<String>) {
+    println!("[Editor] Parsing GIF bytes for trace - START");
+
+    if let Ok(msg) = serde_json::from_str::<serde_json::Value>(data) {
+        if let Some(bytes_array) = msg["data"].as_array() {
+            let bytes: Vec<u8> = bytes_array.iter()
+                .filter_map(|v| v.as_u64().map(|n| n as u8))
+                .collect();
+
+            if bytes.is_empty() {
+                let response = serde_json::json!({
+                    "type": "trace_gif_parsed",
+                    "error": "No data provided"
+                });
+                println!("[Editor] Sending trace error: no data");
+                let _ = sender.send(response.to_string());
+                return;
+            }
+
+            use std::io::Write;
+            let temp_dir = std::env::temp_dir();
+            let temp_file = temp_dir.join(format!("trace_{}.gif", std::process::id()));
+
+            if let Ok(mut file) = std::fs::File::create(&temp_file) {
+                let _ = file.write_all(&bytes);
+                drop(file);
+
+                let result = decode_gif_clean(&temp_file);
+                let _ = std::fs::remove_file(&temp_file);
+
+                match result {
+                    Ok((frames_data, width, height)) => {
+                        if frames_data.is_empty() {
+                            let response = serde_json::json!({
+                                "type": "trace_gif_parsed",
+                                "error": "No frames decoded"
+                            });
+                            let _ = sender.send(response.to_string());
+                            return;
+                        }
+                        // ОТПРАВЛЯЕМ ТОЛЬКО ПЕРВЫЙ КАДР
+                        let first_frame = frames_data[0].clone();
+                        let response = serde_json::json!({
+                            "type": "trace_gif_parsed",
+                            "frames": vec![first_frame],
+                            "width": width,
+                            "height": height
+                        });
+                        let response_str = response.to_string();
+                        println!("[Editor] Sending trace response (1 frame), size: {} bytes", response_str.len());
+                        let _ = sender.send(response_str);
+                        return;
+                    }
+                    Err(e) => {
+                        println!("[Editor] Trace parse error: {}, trying gif lib", e);
+                        if let Ok(mut file) = std::fs::File::create(&temp_file) {
+                            let _ = file.write_all(&bytes);
+                            drop(file);
+                            let result2 = decode_gif_with_gif_lib(&temp_file);
+                            let _ = std::fs::remove_file(&temp_file);
+
+                            match result2 {
+                                Ok((frames_data, width, height)) => {
+                                    if frames_data.is_empty() {
+                                        let response = serde_json::json!({
+                                            "type": "trace_gif_parsed",
+                                            "error": "No frames decoded (alt)"
+                                        });
+                                        let _ = sender.send(response.to_string());
+                                        return;
+                                    }
+                                    // ОТПРАВЛЯЕМ ТОЛЬКО ПЕРВЫЙ КАДР
+                                    let first_frame = frames_data[0].clone();
+                                    let response = serde_json::json!({
+                                        "type": "trace_gif_parsed",
+                                        "frames": vec![first_frame],
+                                        "width": width,
+                                        "height": height
+                                    });
+                                    let response_str = response.to_string();
+                                    println!("[Editor] Sending trace response (alt, 1 frame), size: {} bytes", response_str.len());
+                                    let _ = sender.send(response_str);
+                                    return;
+                                }
+                                Err(e2) => {
+                                    println!("[Editor] Alt trace parse error: {}", e2);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                println!("[Editor] Failed to create temp file for trace");
+            }
+        } else {
+            println!("[Editor] No data array in trace message");
+        }
+    } else {
+        println!("[Editor] Failed to parse trace message as JSON");
+    }
+
+    let response = serde_json::json!({
+        "type": "trace_gif_parsed",
+        "error": "Failed to parse GIF"
+    });
+    println!("[Editor] Sending trace error response");
     let _ = sender.send(response.to_string());
 }

@@ -146,6 +146,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.GifEditorState.loadGif(data);
                     }
                     break;
+                case 'trace_gif_parsed':
+                    console.log('[Editor] Trace GIF parsed, frames:', data.frames?.length);
+                    if (data.error) {
+                        showStatus(`❌ Trace error: ${data.error}`, true);
+                        return;
+                    }
+                    if (window._traceGifCallback) {
+                        console.log('[Editor] Calling trace callback');
+                        window._traceGifCallback(data);
+                    }
+                    break;
                 case 'gif_list':
                     console.log('[Editor] GIF list received:', data.gifs);
                     if (window._pendingGifListCallback) {
