@@ -1,4 +1,4 @@
-// src_rust/main.rs
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 // src_rust/main.rs
 use std::num::NonZeroU32;
 use std::sync::{Arc, Mutex};
