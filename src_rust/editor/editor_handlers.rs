@@ -1,4 +1,4 @@
-// src_rust/editor/editor_handlers.rs - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
+// src_rust/editor/editor_handlers.rs - БЕЗ TRACE
 
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
@@ -25,8 +25,6 @@ pub fn handle_ipc(body: &str, loader: &Arc<Mutex<DesktopPoniesLoader>>, ponies_d
         save_gif_from_editor(data, ponies_dir, sender);
     } else if let Some(data) = body.strip_prefix("gif:list:") {
         list_gifs_for_pony(data, ponies_dir, sender);
-    } else if let Some(data) = body.strip_prefix("trace:parse_gif:") {
-        parse_gif_bytes_for_trace(data, sender);
     } else if body == "editor:close" {
         println!("[Editor] Close request received");
     } else {
@@ -235,7 +233,6 @@ fn list_gifs_for_pony(data: &str, ponies_dir: &PathBuf, sender: &mpsc::Sender<St
     let _ = sender.send(response.to_string());
 }
 
-// Очистка кадра от артефактов (шумовых пикселей)
 fn clean_frame_artifacts(data: &mut [u8], width: u32, height: u32) {
     let w = width as usize;
     let h = height as usize;
@@ -244,20 +241,16 @@ fn clean_frame_artifacts(data: &mut [u8], width: u32, height: u32) {
         return;
     }
 
-    // Создаём копию для анализа
     let copy = data.to_vec();
 
-    // Проходим по всем пикселям
     for y in 0..h {
         for x in 0..w {
             let idx = (y * w + x) * 4;
 
-            // Пропускаем полностью прозрачные пиксели
             if copy[idx + 3] == 0 {
                 continue;
             }
 
-            // Считаем количество непрозрачных соседей
             let mut opaque_neighbors = 0;
 
             for dy in -1..=1 {
@@ -276,7 +269,6 @@ fn clean_frame_artifacts(data: &mut [u8], width: u32, height: u32) {
                 }
             }
 
-            // Если пиксель изолированный (менее 2 соседей) - делаем его прозрачным
             if opaque_neighbors < 2 {
                 data[idx] = 0;
                 data[idx + 1] = 0;
@@ -311,34 +303,29 @@ fn decode_gif_clean(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u32, u32)
     let mut frames_data = Vec::new();
 
     for (i, frame) in frames.into_iter().enumerate() {
-        // Получаем задержку в миллисекундах
         let (numer, denom) = frame.delay().numer_denom_ms();
         let delay_ms = numer as u16;
 
-        // GIF delay обычно в сотых долях секунды, но image возвращает в мс
-        // Конвертируем в сотые доли (стандарт GIF)
         let delay_cs = (delay_ms as f32 / 10.0).round() as u16;
-        let final_delay = if delay_cs > 0 { delay_cs } else { 10 }; // Минимум 10cs = 0.1 сек
+        let final_delay = if delay_cs > 0 { delay_cs } else { 10 };
 
         let buffer = frame.into_buffer();
 
         println!("[GIF] Frame {}: delay_ms={}, delay_cs={}", i, delay_ms, final_delay);
 
-        // Получаем сырые RGBA данные
         let mut rgba_bytes = Vec::with_capacity((width * height * 4) as usize);
         for pixel in buffer.pixels() {
-            rgba_bytes.push(pixel.0[0]); // R
-            rgba_bytes.push(pixel.0[1]); // G
-            rgba_bytes.push(pixel.0[2]); // B
-            rgba_bytes.push(pixel.0[3]); // A
+            rgba_bytes.push(pixel.0[0]);
+            rgba_bytes.push(pixel.0[1]);
+            rgba_bytes.push(pixel.0[2]);
+            rgba_bytes.push(pixel.0[3]);
         }
 
-        // Очищаем от артефактов
         clean_frame_artifacts(&mut rgba_bytes, width, height);
 
         frames_data.push(serde_json::json!({
             "data": rgba_bytes,
-            "delay": final_delay, // Задержка в сотых долях секунды
+            "delay": final_delay,
             "width": width,
             "height": height
         }));
@@ -348,7 +335,6 @@ fn decode_gif_clean(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u32, u32)
     Ok((frames_data, width, height))
 }
 
-// Альтернативный метод декодирования с использованием gif библиотеки
 fn decode_gif_with_gif_lib(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u32, u32), String> {
     use std::fs::File;
     use gif::{DecodeOptions, ColorOutput};
@@ -368,14 +354,12 @@ fn decode_gif_with_gif_lib(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u3
     let mut frames_data = Vec::new();
     let mut frame_num = 0;
 
-    // Буфер для накопления кадров
     let mut accumulated = vec![0u8; (width * height * 4) as usize];
     for i in (0..accumulated.len()).step_by(4) {
         accumulated[i + 3] = 0;
     }
 
     while let Some(frame) = gif.read_next_frame().map_err(|e| format!("Frame read error: {}", e))? {
-        // Задержка в gif библиотеке уже в сотых долях секунды
         let delay = if frame.delay > 0 { frame.delay } else { 10 };
         let left = frame.left as u32;
         let top = frame.top as u32;
@@ -385,7 +369,6 @@ fn decode_gif_with_gif_lib(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u3
         println!("[GIF Lib] Frame {}: offset=({},{}), size={}x{}, delay={}cs",
                  frame_num, left, top, frame_width, frame_height, delay);
 
-        // Накладываем новый кадр
         for y in 0..frame_height {
             for x in 0..frame_width {
                 let src_idx = ((y * frame_width + x) * 4) as usize;
@@ -412,7 +395,7 @@ fn decode_gif_with_gif_lib(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u3
 
         frames_data.push(serde_json::json!({
             "data": frame_copy,
-            "delay": delay, // Уже в сотых долях
+            "delay": delay,
             "width": width,
             "height": height
         }));
@@ -428,7 +411,6 @@ fn decode_gif_with_gif_lib(path: &PathBuf) -> Result<(Vec<serde_json::Value>, u3
     Ok((frames_data, width, height))
 }
 
-// Удаление дублирующихся кадров
 fn deduplicate_frames(frames: &[serde_json::Value]) -> Vec<serde_json::Value> {
     let mut result = Vec::new();
 
@@ -484,7 +466,6 @@ fn load_gif_for_editor(data: &str, ponies_dir: &PathBuf, sender: &mpsc::Sender<S
         println!("[Editor] File exists: {}", gif_path.exists());
 
         if gif_path.exists() {
-            // Пробуем clean-версию
             let result = decode_gif_clean(&gif_path);
 
             match result {
@@ -547,7 +528,6 @@ fn send_fallback_gif(sender: &mpsc::Sender<String>) {
     let test_height = 128;
     let mut frames = Vec::new();
 
-    // Кадр 1 - красный квадрат на прозрачном фоне
     let mut frame1 = vec![0u8; (test_width * test_height * 4) as usize];
     for y in 0..test_height {
         for x in 0..test_width {
@@ -569,7 +549,6 @@ fn send_fallback_gif(sender: &mpsc::Sender<String>) {
         "height": test_height
     }));
 
-    // Кадр 2 - синий квадрат на прозрачном фоне
     let mut frame2 = vec![0u8; (test_width * test_height * 4) as usize];
     for y in 0..test_height {
         for x in 0..test_width {
@@ -666,114 +645,5 @@ fn save_gif_from_editor(data: &str, ponies_dir: &PathBuf, sender: &mpsc::Sender<
         }
     }
     let response = serde_json::json!({ "type": "gif_save_error", "message": "Failed to save GIF" });
-    let _ = sender.send(response.to_string());
-}
-
-fn parse_gif_bytes_for_trace(data: &str, sender: &mpsc::Sender<String>) {
-    println!("[Editor] Parsing GIF bytes for trace - START");
-
-    if let Ok(msg) = serde_json::from_str::<serde_json::Value>(data) {
-        if let Some(bytes_array) = msg["data"].as_array() {
-            let bytes: Vec<u8> = bytes_array.iter()
-                .filter_map(|v| v.as_u64().map(|n| n as u8))
-                .collect();
-
-            if bytes.is_empty() {
-                let response = serde_json::json!({
-                    "type": "trace_gif_parsed",
-                    "error": "No data provided"
-                });
-                println!("[Editor] Sending trace error: no data");
-                let _ = sender.send(response.to_string());
-                return;
-            }
-
-            use std::io::Write;
-            let temp_dir = std::env::temp_dir();
-            let temp_file = temp_dir.join(format!("trace_{}.gif", std::process::id()));
-
-            if let Ok(mut file) = std::fs::File::create(&temp_file) {
-                let _ = file.write_all(&bytes);
-                drop(file);
-
-                let result = decode_gif_clean(&temp_file);
-                let _ = std::fs::remove_file(&temp_file);
-
-                match result {
-                    Ok((frames_data, width, height)) => {
-                        if frames_data.is_empty() {
-                            let response = serde_json::json!({
-                                "type": "trace_gif_parsed",
-                                "error": "No frames decoded"
-                            });
-                            let _ = sender.send(response.to_string());
-                            return;
-                        }
-                        // ОТПРАВЛЯЕМ ТОЛЬКО ПЕРВЫЙ КАДР
-                        let first_frame = frames_data[0].clone();
-                        let response = serde_json::json!({
-                            "type": "trace_gif_parsed",
-                            "frames": vec![first_frame],
-                            "width": width,
-                            "height": height
-                        });
-                        let response_str = response.to_string();
-                        println!("[Editor] Sending trace response (1 frame), size: {} bytes", response_str.len());
-                        let _ = sender.send(response_str);
-                        return;
-                    }
-                    Err(e) => {
-                        println!("[Editor] Trace parse error: {}, trying gif lib", e);
-                        if let Ok(mut file) = std::fs::File::create(&temp_file) {
-                            let _ = file.write_all(&bytes);
-                            drop(file);
-                            let result2 = decode_gif_with_gif_lib(&temp_file);
-                            let _ = std::fs::remove_file(&temp_file);
-
-                            match result2 {
-                                Ok((frames_data, width, height)) => {
-                                    if frames_data.is_empty() {
-                                        let response = serde_json::json!({
-                                            "type": "trace_gif_parsed",
-                                            "error": "No frames decoded (alt)"
-                                        });
-                                        let _ = sender.send(response.to_string());
-                                        return;
-                                    }
-                                    // ОТПРАВЛЯЕМ ТОЛЬКО ПЕРВЫЙ КАДР
-                                    let first_frame = frames_data[0].clone();
-                                    let response = serde_json::json!({
-                                        "type": "trace_gif_parsed",
-                                        "frames": vec![first_frame],
-                                        "width": width,
-                                        "height": height
-                                    });
-                                    let response_str = response.to_string();
-                                    println!("[Editor] Sending trace response (alt, 1 frame), size: {} bytes", response_str.len());
-                                    let _ = sender.send(response_str);
-                                    return;
-                                }
-                                Err(e2) => {
-                                    println!("[Editor] Alt trace parse error: {}", e2);
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                println!("[Editor] Failed to create temp file for trace");
-            }
-        } else {
-            println!("[Editor] No data array in trace message");
-        }
-    } else {
-        println!("[Editor] Failed to parse trace message as JSON");
-    }
-
-    let response = serde_json::json!({
-        "type": "trace_gif_parsed",
-        "error": "Failed to parse GIF"
-    });
-    println!("[Editor] Sending trace error response");
     let _ = sender.send(response.to_string());
 }
