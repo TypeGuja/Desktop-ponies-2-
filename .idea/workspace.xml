@@ -13,8 +13,21 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/components.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/components.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/css/editor.css" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/css/editor.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor_fix.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor_fix.patch.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_list.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/utils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,10 +44,10 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
-        <option value="HTML File" />
         <option value="CSS File" />
         <option value="JavaScript File" />
         <option value="Rust File" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -323,6 +336,11 @@
       <workItem from="1781542499335" duration="6000" />
       <workItem from="1781543145474" duration="2308000" />
       <workItem from="1781597997812" duration="8886000" />
+      <workItem from="1781616456923" duration="6577000" />
+      <workItem from="1781623194822" duration="686000" />
+      <workItem from="1781623973777" duration="5684000" />
+      <workItem from="1781684152450" duration="4087000" />
+      <workItem from="1781711446345" duration="7882000" />
     </task>
     <servers />
   </component>
