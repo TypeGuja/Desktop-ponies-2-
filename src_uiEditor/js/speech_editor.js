@@ -1,3 +1,4 @@
+// src_uiEditor/js/speech_editor.js
 const SpeechEditor = {
     speeches: [],
 
@@ -47,7 +48,6 @@ const SpeechEditor = {
     bindEvents(container) {
         if (!container) return;
 
-        // Add speech button
         const addBtn = container.querySelector('#add-speech');
         if (addBtn) {
             addBtn.addEventListener('click', () => {
@@ -63,7 +63,6 @@ const SpeechEditor = {
             });
         }
 
-        // Delete buttons
         container.querySelectorAll('.delete-speech').forEach(btn => {
             btn.addEventListener('click', () => {
                 const index = parseInt(btn.dataset.index);
@@ -73,7 +72,6 @@ const SpeechEditor = {
             });
         });
 
-        // Update name
         container.querySelectorAll('.speech-name').forEach(input => {
             input.addEventListener('change', () => {
                 const idx = parseInt(input.dataset.index);
@@ -82,7 +80,6 @@ const SpeechEditor = {
             });
         });
 
-        // Update text
         container.querySelectorAll('.speech-text').forEach(textarea => {
             textarea.addEventListener('change', () => {
                 const idx = parseInt(textarea.dataset.index);
@@ -91,7 +88,6 @@ const SpeechEditor = {
             });
         });
 
-        // Update sound
         container.querySelectorAll('.speech-sound').forEach(input => {
             input.addEventListener('change', () => {
                 const idx = parseInt(input.dataset.index);
@@ -100,7 +96,6 @@ const SpeechEditor = {
             });
         });
 
-        // Update skip
         container.querySelectorAll('.speech-skip').forEach(cb => {
             cb.addEventListener('change', () => {
                 const idx = parseInt(cb.dataset.index);
@@ -109,7 +104,6 @@ const SpeechEditor = {
             });
         });
 
-        // Update frequency
         container.querySelectorAll('.speech-frequency').forEach(input => {
             input.addEventListener('change', () => {
                 const idx = parseInt(input.dataset.index);

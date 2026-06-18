@@ -350,7 +350,6 @@ const BehaviorEditor = {
             });
         });
 
-        // Слушаем изменения полей спрайтов для перезагрузки превью
         container.querySelectorAll('.behavior-sprite-right, .behavior-sprite-left').forEach(input => {
             input.addEventListener('change', (e) => {
                 const idx = parseInt(input.dataset.index);
@@ -361,7 +360,6 @@ const BehaviorEditor = {
                     this.behaviors[idx][field] = newSprite;
                     EditorState.markModified();
 
-                    // Перезагружаем превью для этого спрайта
                     if (newSprite && newSprite.trim()) {
                         const side = field === 'sprite_right' ? 'right' : 'left';
                         const previewDiv = container.querySelector(`.sprite-preview[data-behavior-index="${idx}"][data-side="${side}"]`);

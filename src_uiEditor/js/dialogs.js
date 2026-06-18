@@ -1,6 +1,4 @@
-// src_uiEditor/js/dialogs.js - основной файл
-
-// ==================== DialogManager ====================
+// src_uiEditor/js/dialogs.js
 const DialogManager = {
     currentDialog: null,
 
@@ -35,10 +33,6 @@ const DialogManager = {
         }
     },
 
-    // ==================== Behavior Dialog ====================
-    // src_uiEditor/js/dialogs.js - добавить в DialogManager
-
-// ==================== New Pony Dialog ====================
     showNewPonyDialog: function(onSave) {
         const html = `
         <div class="dialog-overlay" id="new-pony-dialog">
@@ -79,7 +73,6 @@ const DialogManager = {
                 return;
             }
 
-            // Проверка на недопустимые символы
             const invalidChars = /[<>:"/\\|?*{}\[\],]/;
             if (invalidChars.test(name)) {
                 showStatus('Pony name contains invalid characters', true);
@@ -219,7 +212,6 @@ const DialogManager = {
             });
         });
 
-        // Загружаем превью спрайтов
         const ponyName = EditorState.currentPony;
         if (ponyName) {
             const rightSprite = document.getElementById('behavior-sprite-right').value;
@@ -233,7 +225,6 @@ const DialogManager = {
             }
         }
 
-        // Слушаем изменения полей спрайтов для обновления превью
         const rightInput = document.getElementById('behavior-sprite-right');
         const leftInput = document.getElementById('behavior-sprite-left');
         const rightPreview = document.getElementById('sprite-preview-right');
@@ -275,7 +266,6 @@ const DialogManager = {
         }
     },
 
-    // ==================== Speech Dialog ====================
     showSpeechDialog: function(speech, onSave) {
         const html = `
             <div class="dialog-overlay" id="speech-dialog">
@@ -332,7 +322,6 @@ const DialogManager = {
         });
     },
 
-    // ==================== Effect Dialog ====================
     showEffectDialog: function(effect, behaviors, onSave) {
         const directionOptions = (selected) => {
             const dirs = ['TopLeft', 'TopCenter', 'TopRight', 'MiddleLeft', 'MiddleCenter', 'MiddleRight', 'BottomLeft', 'BottomCenter', 'BottomRight'];
@@ -433,7 +422,6 @@ const DialogManager = {
         }, true);
     },
 
-    // ==================== Interaction Dialog ====================
     showInteractionDialog: function(interaction, targets, behaviors, onSave) {
         const html = `
             <div class="dialog-overlay" id="interaction-dialog">

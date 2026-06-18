@@ -1,3 +1,4 @@
+// src_uiEditor/js/effect_editor.js
 const EffectEditor = {
     effects: [],
 

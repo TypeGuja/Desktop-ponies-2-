@@ -124,27 +124,22 @@
 .gif-tool-btn {
     transition: all 0.2s ease;
 }
-
 .gif-tool-btn.active {
     background: var(--accent) !important;
     color: var(--bg-primary) !important;
     border-color: var(--accent) !important;
 }
-
 #gif-palette {
     max-width: 200px;
     overflow-x: auto;
     padding: 4px;
 }
-
 #gif-palette div {
     transition: transform 0.1s ease, border 0.1s ease;
 }
-
 #gif-palette div:hover {
     transform: scale(1.1);
 }
-
 #gif-speed-mult, #gif-zoom-level {
     font-family: monospace;
     font-weight: bold;

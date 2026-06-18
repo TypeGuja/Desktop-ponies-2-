@@ -1,3 +1,5 @@
+// src_uiEditor/js/api.js - БЕЗ TRACE
+
 const EditorAPI = {
     send: function(message) {
         console.log('[API] Sending:', message);
@@ -22,6 +24,7 @@ const EditorAPI = {
         console.warn('[Editor] No IPC handler found, message not sent:', message);
         return false;
     },
+
     loadPonies: function() { this.send('editor:load_ponies'); },
     loadPony: function(name) { this.send('editor:load_pony:' + name); },
     savePony: function(config) {
@@ -37,6 +40,7 @@ const EditorAPI = {
         };
         this.send('editor:save_pony:' + JSON.stringify(saveData));
     },
+
     showNewBehaviorDialog: function(onSave) { DialogManager.showBehaviorDialog(null, onSave); },
     showEditBehaviorDialog: function(behavior, onSave) { DialogManager.showBehaviorDialog(behavior, onSave); },
     showNewSpeechDialog: function(onSave) { DialogManager.showSpeechDialog(null, onSave); },

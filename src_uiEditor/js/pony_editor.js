@@ -1,5 +1,4 @@
-// src_uiEditor/js/pony_editor.js - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
-// + СОЗДАНИЕ НОВЫХ ПЕРСОНАЖЕЙ И GIF + АВТООБНОВЛЕНИЕ СПИСКА СПРАЙТОВ
+// src_uiEditor/js/pony_editor.js - ИСПРАВЛЕННАЯ ВЕРСИЯ С ТРЕЙСОМ
 
 const PonyEditor = {
     container: null,
@@ -11,6 +10,7 @@ const PonyEditor = {
         console.log('[PonyEditor] Initialized, container:', this.container);
 
         this.addGlobalCreateButton();
+        this.addTraceButton();
 
         if (window.EditorAPI && EditorAPI.on) {
             EditorAPI.on('pony:reloaded', (data) => this.onPonyReloaded(data));
@@ -555,164 +555,578 @@ const PonyEditor = {
             btn.classList.remove('active');
             if (btn.dataset.tab === tabName) btn.classList.add('active');
         });
+    },
+
+    // ============================================================
+    // ФУНКЦИОНАЛ ТРЕЙСА В РЕДАКТОРЕ GIF (ПРАВЫЙ НИЖНИЙ УГОЛ)
+    // ============================================================
+
+    /**
+     * Открывает панель трейса в правом нижнем углу редактора GIF
+     */
+    showTracePanel: function() {
+        const state = window.GifEditorState;
+        if (!state || !state.modal) {
+            showStatus('❌ Please open GIF editor first', true);
+            return;
+        }
+
+        // Проверяем, не открыта ли уже панель
+        if (document.getElementById('trace-panel')) {
+            document.getElementById('trace-panel').remove();
+            return;
+        }
+
+        const modal = state.modal;
+        const canvasContainer = modal.querySelector('div[style*="flex: 1; display: flex; justify-content: center;"]') ||
+            modal.querySelector('div[style*="position: relative;"]') ||
+            modal.querySelector('div[style*="flex:1"]') ||
+            modal.querySelector('div[style*="display: flex;"][style*="justify-content: center;"]');
+
+        if (!canvasContainer) {
+            showStatus('❌ Cannot find canvas container', true);
+            return;
+        }
+
+        canvasContainer.style.position = 'relative';
+
+        // Создаем канвас для рендеринга трейса (поверх основного)
+        const traceCanvas = document.createElement('canvas');
+        traceCanvas.id = 'trace-render-canvas';
+        traceCanvas.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        `;
+        canvasContainer.appendChild(traceCanvas);
+
+        // Создаем панель трейса в правом нижнем углу
+        const panel = document.createElement('div');
+        panel.id = 'trace-panel';
+        panel.style.cssText = `
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            z-index: 150;
+            background: rgba(30,30,46,0.92);
+            border: 1px solid #313244;
+            border-radius: 12px;
+            padding: 14px 16px;
+            min-width: 280px;
+            max-width: 320px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            pointer-events: all;
+            font-size: 12px;
+        `;
+
+        panel.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="color: #cba6f7; font-weight: bold; font-size: 13px;">🎯 Trace</span>
+                <div>
+                    <button id="trace-load-btn" class="btn-secondary" style="font-size: 11px; padding: 3px 10px;">📂 Load</button>
+                    <button id="trace-close-btn" class="btn-secondary" style="font-size: 11px; padding: 3px 10px; color: #f38ba8;">✕</button>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 2px;">Size</label>
+                    <input type="range" id="trace-size" min="0.1" max="3" step="0.05" value="1" style="width: 100%; height: 4px;">
+                    <span id="trace-size-value" style="font-size: 9px; color: #cba6f7; font-family: monospace;">100%</span>
+                </div>
+                <div style="flex: 1;">
+                    <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 2px;">Opacity</label>
+                    <input type="range" id="trace-opacity" min="0.05" max="1" step="0.01" value="0.4" style="width: 100%; height: 4px;">
+                    <span id="trace-opacity-value" style="font-size: 9px; color: #cba6f7; font-family: monospace;">40%</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                <button id="trace-flip-h" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↔ H</button>
+                <button id="trace-flip-v" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↕ V</button>
+                <button id="trace-grid" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">📐</button>
+                <button id="trace-reset" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↺</button>
+                <span style="color: #a6adc8; font-size: 10px; display: flex; align-items: center; margin-left: 4px;">
+                    Frames: <span id="trace-frame-count">0</span>
+                </span>
+            </div>
+            
+            <div id="trace-frames-container" style="display: flex; gap: 4px; overflow-x: auto; padding: 4px 0; max-height: 60px;">
+                <div style="color: #a6adc8; font-size: 11px; padding: 6px;">No trace loaded</div>
+            </div>
+        `;
+
+        canvasContainer.appendChild(panel);
+
+        // Состояние трейса
+        const traceState = {
+            loaded: false,
+            frames: [],
+            currentFrame: 0,
+            width: 0,
+            height: 0,
+            size: 1,
+            opacity: 0.4,
+            flipH: false,
+            flipV: false,
+            showGrid: false,
+            canvas: traceCanvas,
+            ctx: traceCanvas.getContext('2d'),
+            panel: panel,
+            animationId: null,
+            frameDelay: 100,
+            lastFrameTime: 0,
+        };
+
+        // Функция рендеринга трейса
+        function renderTrace() {
+            const canvas = traceState.canvas;
+            const ctx = traceState.ctx;
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+
+            canvas.width = rect.width || 400;
+            canvas.height = rect.height || 400;
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!traceState.loaded || traceState.frames.length === 0) return;
+
+            const frameData = traceState.frames[traceState.currentFrame];
+            if (!frameData) return;
+
+            const targetWidth = stateManager.width || 128;
+            const targetHeight = stateManager.height || 128;
+
+            const baseSize = Math.min(canvas.width / targetWidth, canvas.height / targetHeight);
+            const scale = baseSize * traceState.size;
+
+            const drawW = traceState.width * scale;
+            const drawH = traceState.height * scale;
+
+            const offsetX = (canvas.width - drawW) / 2;
+            const offsetY = (canvas.height - drawH) / 2;
+
+            ctx.globalAlpha = traceState.opacity;
+
+            let sx = 1, sy = 1;
+            if (traceState.flipH) sx = -1;
+            if (traceState.flipV) sy = -1;
+
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.scale(sx, sy);
+            ctx.translate(-canvas.width/2, -canvas.height/2);
+
+            try {
+                const imgData = new ImageData(frameData.data, traceState.width, traceState.height);
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = traceState.width;
+                tempCanvas.height = traceState.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(imgData, 0, 0);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(tempCanvas, offsetX, offsetY, drawW, drawH);
+            } catch(e) {
+                console.warn('[Trace] Render error:', e);
+            }
+
+            ctx.restore();
+            ctx.globalAlpha = 1;
+
+            if (traceState.showGrid) {
+                ctx.strokeStyle = 'rgba(203, 166, 247, 0.2)';
+                ctx.lineWidth = 1;
+                const gridSize = 32 * scale;
+                for (let x = offsetX % gridSize; x < canvas.width; x += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x, canvas.height);
+                    ctx.stroke();
+                }
+                for (let y = offsetY % gridSize; y < canvas.height; y += gridSize) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(canvas.width, y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Функция загрузки трейс GIF
+        function loadTraceGif(file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                const dataUrl = ev.target.result;
+                PonyEditor._loadTraceGifData(dataUrl, traceState, stateManager, renderTrace);
+            };
+            reader.onerror = function() {
+                showStatus('❌ Failed to read file', true);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Обработчики управления
+        const sizeSlider = document.getElementById('trace-size');
+        const opacitySlider = document.getElementById('trace-opacity');
+        const sizeValue = document.getElementById('trace-size-value');
+        const opacityValue = document.getElementById('trace-opacity-value');
+        const frameCount = document.getElementById('trace-frame-count');
+
+        sizeSlider.addEventListener('input', function() {
+            traceState.size = parseFloat(this.value);
+            sizeValue.textContent = Math.round(traceState.size * 100) + '%';
+            renderTrace();
+        });
+
+        opacitySlider.addEventListener('input', function() {
+            traceState.opacity = parseFloat(this.value);
+            opacityValue.textContent = Math.round(traceState.opacity * 100) + '%';
+            renderTrace();
+        });
+
+        document.getElementById('trace-flip-h').addEventListener('click', function() {
+            traceState.flipH = !traceState.flipH;
+            this.style.borderColor = traceState.flipH ? '#cba6f7' : '#313244';
+            renderTrace();
+        });
+
+        document.getElementById('trace-flip-v').addEventListener('click', function() {
+            traceState.flipV = !traceState.flipV;
+            this.style.borderColor = traceState.flipV ? '#cba6f7' : '#313244';
+            renderTrace();
+        });
+
+        document.getElementById('trace-grid').addEventListener('click', function() {
+            traceState.showGrid = !traceState.showGrid;
+            this.style.borderColor = traceState.showGrid ? '#cba6f7' : '#313244';
+            renderTrace();
+        });
+
+        document.getElementById('trace-reset').addEventListener('click', function() {
+            traceState.size = 1;
+            traceState.opacity = 0.4;
+            traceState.flipH = false;
+            traceState.flipV = false;
+            traceState.showGrid = false;
+            sizeSlider.value = 1;
+            opacitySlider.value = 0.4;
+            sizeValue.textContent = '100%';
+            opacityValue.textContent = '40%';
+            document.getElementById('trace-flip-h').style.borderColor = '#313244';
+            document.getElementById('trace-flip-v').style.borderColor = '#313244';
+            document.getElementById('trace-grid').style.borderColor = '#313244';
+            renderTrace();
+        });
+
+        document.getElementById('trace-load-btn').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/gif,image/webp,image/png,image/jpeg';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) loadTraceGif(file);
+            };
+            input.click();
+        });
+
+        document.getElementById('trace-close-btn').addEventListener('click', function() {
+            if (traceState.animationId) {
+                cancelAnimationFrame(traceState.animationId);
+                traceState.animationId = null;
+            }
+            panel.remove();
+            traceCanvas.remove();
+            // Переключаем состояние кнопки
+            const traceBtn = document.getElementById('gif-trace-btn');
+            if (traceBtn) traceBtn.style.borderColor = '#313244';
+        });
+
+        // Обработчик выбора кадра
+        function setupFrameClick(frameIndex) {
+            return function() {
+                traceState.currentFrame = frameIndex;
+                renderTrace();
+                const items = document.querySelectorAll('.trace-frame-item');
+                items.forEach((el, idx) => {
+                    el.style.borderColor = idx === frameIndex ? '#cba6f7' : '#313244';
+                });
+            };
+        }
+
+        // Сохраняем stateManager для доступа из загрузчика
+        PonyEditor._traceStateManager = stateManager;
+        PonyEditor._traceRenderFn = renderTrace;
+
+        // Обработчик изменения размера окна
+        const resizeHandler = function() {
+            renderTrace();
+        };
+        window.addEventListener('resize', resizeHandler);
+        traceState._resizeHandler = resizeHandler;
+
+        // Анимация кадров
+        traceState._animate = function(timestamp) {
+            if (!traceState.loaded || traceState.frames.length <= 1) {
+                traceState.animationId = requestAnimationFrame(traceState._animate);
+                return;
+            }
+
+            if (!traceState.lastFrameTime) traceState.lastFrameTime = timestamp;
+            const delta = timestamp - traceState.lastFrameTime;
+
+            if (delta >= traceState.frameDelay) {
+                traceState.lastFrameTime = timestamp;
+                traceState.currentFrame = (traceState.currentFrame + 1) % traceState.frames.length;
+                renderTrace();
+                const items = document.querySelectorAll('.trace-frame-item');
+                items.forEach((el, idx) => {
+                    el.style.borderColor = idx === traceState.currentFrame ? '#cba6f7' : '#313244';
+                });
+            }
+
+            traceState.animationId = requestAnimationFrame(traceState._animate);
+        };
+
+        // Очистка
+        traceState._cleanup = function() {
+            if (traceState.animationId) {
+                cancelAnimationFrame(traceState.animationId);
+                traceState.animationId = null;
+            }
+            window.removeEventListener('resize', resizeHandler);
+        };
+
+        showStatus('✅ Trace panel opened. Click Load to add a GIF.');
+    },
+
+    /**
+     * Загружает GIF для трейса
+     */
+    _loadTraceGifData: function(dataUrl, traceState, stateManager, renderFn) {
+        console.log('[Trace] Loading trace GIF from data URL');
+
+        // Загружаем как Image сначала
+        const img = new Image();
+        img.onload = function() {
+            console.log('[Trace] Image loaded:', img.width, 'x', img.height);
+
+            // Проверяем что изображение не слишком большое
+            let sourceImg = img;
+            if (img.width > 1024 || img.height > 1024) {
+                const canvas = document.createElement('canvas');
+                const maxSize = 512;
+                let w = img.width, h = img.height;
+                if (w > h) {
+                    if (w > maxSize) { h = h * maxSize / w; w = maxSize; }
+                } else {
+                    if (h > maxSize) { w = w * maxSize / h; h = maxSize; }
+                }
+                canvas.width = Math.round(w);
+                canvas.height = Math.round(h);
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const newImg = new Image();
+                newImg.onload = function() {
+                    PonyEditor._processTraceImage(newImg, traceState, stateManager, renderFn);
+                };
+                newImg.src = canvas.toDataURL('image/png');
+                return;
+            }
+
+            PonyEditor._processTraceImage(sourceImg, traceState, stateManager, renderFn);
+        };
+        img.onerror = function() {
+            showStatus('❌ Failed to load image', true);
+        };
+        img.src = dataUrl;
+    },
+
+    /**
+     * Обрабатывает изображение для трейса
+     */
+    _processTraceImage: function(img, traceState, stateManager, renderFn) {
+        const width = img.width;
+        const height = img.height;
+
+        console.log('[Trace] Processing image:', width, 'x', height);
+
+        // Получаем пиксельные данные
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = new Uint8ClampedArray(imageData.data);
+
+        // Создаем один кадр
+        traceState.frames = [{
+            data: data,
+            delay: 10
+        }];
+        traceState.width = width;
+        traceState.height = height;
+        traceState.currentFrame = 0;
+        traceState.loaded = true;
+        traceState.frameDelay = 100;
+
+        // Обновляем интерфейс
+        const frameCount = document.getElementById('trace-frame-count');
+        if (frameCount) frameCount.textContent = '1';
+
+        const container = document.getElementById('trace-frames-container');
+        if (container) {
+            container.innerHTML = '';
+            // Добавляем миниатюру
+            const div = document.createElement('div');
+            div.className = 'trace-frame-item';
+            div.style.cssText = `
+                width: 48px;
+                height: 56px;
+                background: #11111b;
+                border: 2px solid #cba6f7;
+                border-radius: 4px;
+                cursor: pointer;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 3px;
+                flex-shrink: 0;
+            `;
+
+            const previewCanvas = document.createElement('canvas');
+            previewCanvas.width = 40;
+            previewCanvas.height = 40;
+            const previewCtx = previewCanvas.getContext('2d');
+            try {
+                const imgData = new ImageData(data, width, height);
+                previewCtx.putImageData(imgData, 0, 0);
+            } catch(e) {}
+            div.appendChild(previewCanvas);
+
+            const label = document.createElement('span');
+            label.textContent = '1';
+            label.style.fontSize = '8px';
+            label.style.color = '#a6adc8';
+            label.style.marginTop = '1px';
+            div.appendChild(label);
+
+            div.addEventListener('click', function() {
+                traceState.currentFrame = 0;
+                renderFn();
+                document.querySelectorAll('.trace-frame-item').forEach(el => {
+                    el.style.borderColor = '#313244';
+                });
+                this.style.borderColor = '#cba6f7';
+            });
+
+            container.appendChild(div);
+        }
+
+        renderFn();
+
+        // Запускаем анимацию если есть несколько кадров
+        if (traceState.frames.length > 1) {
+            if (traceState.animationId) {
+                cancelAnimationFrame(traceState.animationId);
+            }
+            traceState.lastFrameTime = 0;
+            traceState._animate = function(timestamp) {
+                if (!traceState.loaded) return;
+                if (!traceState.lastFrameTime) traceState.lastFrameTime = timestamp;
+                const delta = timestamp - traceState.lastFrameTime;
+                if (delta >= traceState.frameDelay) {
+                    traceState.lastFrameTime = timestamp;
+                    traceState.currentFrame = (traceState.currentFrame + 1) % traceState.frames.length;
+                    renderFn();
+                    const items = document.querySelectorAll('.trace-frame-item');
+                    items.forEach((el, idx) => {
+                        el.style.borderColor = idx === traceState.currentFrame ? '#cba6f7' : '#313244';
+                    });
+                }
+                traceState.animationId = requestAnimationFrame(traceState._animate);
+            };
+            traceState.animationId = requestAnimationFrame(traceState._animate);
+        }
+
+        showStatus(`✅ Trace loaded: ${width}×${height}, ${traceState.frames.length} frame(s)`);
+    },
+
+    /**
+     * Добавляет кнопку "Trace" в интерфейс GIF редактора
+     */
+    addTraceButton: function() {
+        const checkInterval = setInterval(() => {
+            const modal = document.getElementById('gif-editor-modal');
+            if (!modal) return;
+
+            const toolbar = modal.querySelector('div[style*="padding: 8px 16px;"]') ||
+                modal.querySelector('div[style*="padding: 8px"]');
+            if (toolbar && !document.getElementById('gif-trace-btn')) {
+                clearInterval(checkInterval);
+
+                const traceBtn = document.createElement('button');
+                traceBtn.id = 'gif-trace-btn';
+                traceBtn.style.cssText = `
+                    padding: 6px 14px;
+                    background: #1e1e2e;
+                    border: 1px solid #313244;
+                    border-radius: 8px;
+                    color: #cdd6f4;
+                    cursor: pointer;
+                    font-size: 13px;
+                    transition: all 0.2s;
+                    margin-left: 4px;
+                `;
+                traceBtn.innerHTML = '🎯 Trace';
+                traceBtn.title = 'Open trace panel (bottom-right)';
+
+                traceBtn.addEventListener('click', function() {
+                    // Подсвечиваем кнопку при открытой панели
+                    const panel = document.getElementById('trace-panel');
+                    if (panel) {
+                        this.style.borderColor = '#f38ba8';
+                        panel.remove();
+                        // Удаляем канвас трейса
+                        const traceCanvas = document.getElementById('trace-render-canvas');
+                        if (traceCanvas) traceCanvas.remove();
+                        setTimeout(() => {
+                            this.style.borderColor = '#313244';
+                        }, 300);
+                        return;
+                    }
+                    this.style.borderColor = '#cba6f7';
+                    PonyEditor.showTracePanel();
+                });
+
+                const saveBtn = document.getElementById('gif-save');
+                if (saveBtn) {
+                    saveBtn.parentNode.insertBefore(traceBtn, saveBtn);
+                } else {
+                    toolbar.appendChild(traceBtn);
+                }
+
+                console.log('[Trace] Button added to GIF editor');
+            }
+        }, 500);
+
+        setTimeout(() => clearInterval(checkInterval), 30000);
     }
 };
 
 // Глобальное состояние GIF редактора
 window.GifEditorState = null;
-
-// === СТИЛИ ДЛЯ ПАНЕЛИ ТРАССИРОВКИ ===
-const traceStyles = `
-<style id="trace-styles">
-.trace-panel {
-    position: fixed;
-    bottom: 160px;
-    right: 20px;
-    background: #1e1e2e;
-    border: 1px solid #313244;
-    border-radius: 12px;
-    padding: 12px;
-    width: 260px;
-    z-index: 20005;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-.trace-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #313244;
-}
-.trace-panel-title {
-    font-size: 13px;
-    font-weight: bold;
-    color: #cba6f7;
-}
-.trace-panel-close {
-    background: none;
-    border: none;
-    color: #a6adc8;
-    cursor: pointer;
-    font-size: 16px;
-}
-.trace-panel-close:hover { color: #f38ba8; }
-.trace-preview {
-    width: 100%;
-    height: 60px;
-    background: #11111b;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-.trace-preview img, .trace-preview canvas {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-.trace-slider {
-    width: 100%;
-    margin: 8px 0;
-}
-.trace-slider label {
-    font-size: 11px;
-    color: #a6adc8;
-    display: block;
-    margin-bottom: 4px;
-}
-.trace-slider input {
-    width: 100%;
-    cursor: pointer;
-}
-.trace-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 8px 0;
-    font-size: 11px;
-}
-.trace-checkbox input {
-    width: auto;
-    margin: 0;
-}
-.trace-load-buttons {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-}
-.trace-load-buttons button {
-    flex: 1;
-    padding: 4px;
-    font-size: 10px;
-}
-.divider {
-    height: 1px;
-    background: #313244;
-    margin: 8px 0;
-}
-.ref-timeline-container {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #313244;
-    display: none;
-}
-.ref-timeline-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 10px;
-    color: #cba6f7;
-    margin-bottom: 6px;
-}
-.ref-timeline-controls {
-    display: flex;
-    gap: 6px;
-    align-items: center;
-}
-.ref-timeline-controls button {
-    background: #313244;
-    border: none;
-    border-radius: 4px;
-    color: #cdd6f4;
-    cursor: pointer;
-    padding: 2px 6px;
-    font-size: 9px;
-}
-.ref-timeline {
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    padding: 4px;
-    background: #11111b;
-    border-radius: 6px;
-}
-.ref-frame {
-    width: 40px;
-    height: 40px;
-    background: #1e1e2e;
-    border: 1px solid #313244;
-    border-radius: 4px;
-    cursor: pointer;
-    flex-shrink: 0;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.ref-frame canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-.ref-frame.active {
-    border-color: #cba6f7;
-    box-shadow: 0 0 4px #cba6f7;
-}
-</style>
-`;
 
 // === КЛАСС ДЛЯ УПРАВЛЕНИЯ СОСТОЯНИЕМ GIF РЕДАКТОРА ===
 class GifEditorStateManager {
@@ -735,17 +1149,6 @@ class GifEditorStateManager {
         this.isPickingColor = false;
         this.isDrawing = false;
         this.pipetteActive = false;
-        this.traceState = {
-            image: null,
-            visible: true,
-            opacity: 0.5,
-            scale: 1,
-            offsetX: 0,
-            offsetY: 0,
-            frames: null,
-            currentFrame: 0,
-            animationInterval: null
-        };
         this.resizeHandler = null;
         this.eventListeners = [];
         this.cleanupFunctions = [];
@@ -761,10 +1164,6 @@ class GifEditorStateManager {
             clearInterval(this.previewInterval);
             this.previewInterval = null;
         }
-        if (this.traceState.animationInterval) {
-            clearInterval(this.traceState.animationInterval);
-            this.traceState.animationInterval = null;
-        }
 
         this.eventListeners.forEach(({ element, event, handler }) => {
             element.removeEventListener(event, handler);
@@ -775,9 +1174,6 @@ class GifEditorStateManager {
             window.removeEventListener('resize', this.resizeHandler);
             this.resizeHandler = null;
         }
-
-        const tracePanel = document.getElementById('trace-panel');
-        if (tracePanel) tracePanel.remove();
 
         if (window.GifEditorState === this) {
             window.GifEditorState = null;
@@ -841,9 +1237,190 @@ class GifEditorStateManager {
         }
         return 100;
     }
+
+    loadGif(gifData) {
+        console.log('[GIF] loadGif called with data:', gifData ? 'yes' : 'no');
+        console.log('[GIF] frames count:', gifData?.frames?.length);
+
+        if (this.isLoading) return;
+        this.isLoading = true;
+
+        if (this.previewInterval) {
+            clearInterval(this.previewInterval);
+            this.previewInterval = null;
+        }
+
+        if (!gifData || !gifData.frames || gifData.frames.length === 0) {
+            console.log('[GIF] No frames, creating empty');
+            this.createEmptyGif();
+            this.isLoading = false;
+            return;
+        }
+
+        this.width = gifData.width || 128;
+        this.height = gifData.height || 128;
+        this.frames = [];
+
+        console.log('[GIF] Processing', gifData.frames.length, 'frames, size:', this.width, 'x', this.height);
+
+        for (let i = 0; i < gifData.frames.length; i++) {
+            const srcFrame = gifData.frames[i];
+            let byteData;
+
+            if (srcFrame.data instanceof Uint8Array || srcFrame.data instanceof Uint8ClampedArray) {
+                byteData = new Uint8ClampedArray(srcFrame.data);
+            } else if (Array.isArray(srcFrame.data)) {
+                byteData = new Uint8ClampedArray(srcFrame.data);
+            } else {
+                console.warn('[GIF] Frame', i, 'has unknown data type');
+                continue;
+            }
+
+            const expectedSize = this.width * this.height * 4;
+
+            if (byteData.length !== expectedSize) {
+                console.warn('[GIF] Frame', i, 'size mismatch:', byteData.length, 'vs', expectedSize);
+                if (byteData.length === this.width * this.height) {
+                    const converted = new Uint8ClampedArray(expectedSize);
+                    for (let j = 0; j < byteData.length; j++) {
+                        const val = byteData[j];
+                        converted[j*4] = val;
+                        converted[j*4+1] = val;
+                        converted[j*4+2] = val;
+                        converted[j*4+3] = 255;
+                    }
+                    byteData = converted;
+                } else {
+                    continue;
+                }
+            }
+
+            this.frames.push({
+                data: byteData,
+                delay: srcFrame.delay || 10
+            });
+        }
+
+        if (this.frames.length === 0) {
+            console.log('[GIF] No valid frames, creating empty');
+            this.createEmptyGif();
+            this.isLoading = false;
+            return;
+        }
+
+        this.currentFrame = 0;
+        this.drawCanvas();
+        this.updateTimeline();
+        const statusEl = document.getElementById('gif-status');
+        if (statusEl) statusEl.textContent = `Loaded ${this.frames.length} frames, ${this.width}x${this.height}`;
+        this.isLoading = false;
+    }
+
+    createEmptyGif() {
+        this.width = 128;
+        this.height = 128;
+        this.frames = [];
+        for (let i = 0; i < 2; i++) {
+            const data = new Uint8ClampedArray(this.width * this.height * 4);
+            for (let j = 0; j < data.length; j += 4) {
+                data[j] = 255; data[j+1] = 192; data[j+2] = 203; data[j+3] = 255;
+            }
+            this.frames.push({ data, delay: 10 });
+        }
+        this.currentFrame = 0;
+        this.drawCanvas();
+        this.updateTimeline();
+        const statusEl = document.getElementById('gif-status');
+        if (statusEl) statusEl.textContent = `New GIF: ${this.frames.length} frames, ${this.width}x${this.height}`;
+    }
+
+    drawCanvas() {
+        if (!this.frames[this.currentFrame]) return;
+
+        const canvas = document.getElementById('gif-main-canvas');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const frame = this.frames[this.currentFrame];
+        const displayWidth = this.width * this.zoom;
+        const displayHeight = this.height * this.zoom;
+
+        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+            canvas.width = displayWidth;
+            canvas.height = displayHeight;
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = displayHeight + 'px';
+            canvas.style.imageRendering = 'crisp-edges';
+            canvas.style.imageRendering = 'pixelated';
+        }
+
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.width;
+        tempCanvas.height = this.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        try {
+            const imgData = new ImageData(frame.data, this.width, this.height);
+            tempCtx.putImageData(imgData, 0, 0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, 0, 0, this.width, this.height, 0, 0, displayWidth, displayHeight);
+        } catch(e) {
+            console.warn('[Draw] Error drawing frame:', e);
+        }
+
+        const zoomLevel = document.getElementById('gif-zoom-level');
+        if (zoomLevel) zoomLevel.textContent = Math.round(this.zoom * 100) + '%';
+
+        const delayInput = document.getElementById('gif-frame-delay');
+        if (delayInput && this.frames[this.currentFrame]) {
+            delayInput.value = this.frames[this.currentFrame].delay;
+        }
+    }
+
+    updateTimeline() {
+        const timeline = document.getElementById('gif-timeline');
+        if (!timeline) return;
+
+        timeline.innerHTML = '';
+        const self = this;
+        this.frames.forEach((frame, idx) => {
+            const div = document.createElement('div');
+            div.style.cssText = `width: 90px; height: 105px; background: #11111b; border: 2px solid ${idx === self.currentFrame ? '#cba6f7' : '#313244'}; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 8px; flex-shrink: 0;`;
+
+            const previewCanvas = document.createElement('canvas');
+            previewCanvas.width = 72;
+            previewCanvas.height = 72;
+            const previewCtx = previewCanvas.getContext('2d');
+            try {
+                const imgData = new ImageData(frame.data, self.width, self.height);
+                previewCtx.putImageData(imgData, 0, 0);
+            } catch(e) {}
+            div.appendChild(previewCanvas);
+
+            const label = document.createElement('span');
+            label.textContent = `${idx+1} | ${frame.delay}cs`;
+            label.style.fontSize = '10px';
+            label.style.marginTop = '6px';
+            div.appendChild(label);
+
+            div.addEventListener('click', function() {
+                if (self.previewInterval) {
+                    clearInterval(self.previewInterval);
+                    self.previewInterval = null;
+                    const previewBtn = document.getElementById('gif-preview');
+                    if (previewBtn) previewBtn.textContent = '▶️ Preview';
+                }
+                self.currentFrame = idx;
+                self.drawCanvas();
+                self.updateTimeline();
+            });
+            timeline.appendChild(div);
+        });
+    }
 }
 
-// Функция открытия редактора GIF
+// Функция для открытия редактора GIF
 function showInlineGifEditor(ponyName, spriteName) {
     console.log('[GIF] Opening inline editor for:', ponyName, spriteName);
 
@@ -851,6 +1428,9 @@ function showInlineGifEditor(ponyName, spriteName) {
     if (existingModal) {
         if (window.GifEditorState && window.GifEditorState.previewInterval) {
             clearInterval(window.GifEditorState.previewInterval);
+        }
+        if (window.GifEditorState) {
+            window.GifEditorState.cleanup();
         }
         existingModal.remove();
         window.GifEditorState = null;
@@ -870,7 +1450,7 @@ function showInlineGifEditor(ponyName, spriteName) {
         flex-direction: column;
     `;
 
-    modal.innerHTML = traceStyles + `
+    modal.innerHTML = `
         <div style="padding: 12px 20px; background: #181825; border-bottom: 1px solid #313244; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
             <div>
                 <span style="font-size: 20px; font-weight: bold;">🎨 GIF Editor</span>
@@ -893,7 +1473,6 @@ function showInlineGifEditor(ponyName, spriteName) {
             
             <div style="width: 1px; height: 28px; background: #313244;"></div>
             
-            <button id="gif-trace-reference" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🖼️ Trace Reference</button>
             <button id="gif-preview" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">▶️ Preview</button>
             <button id="gif-save" style="padding: 6px 14px; background: #a6e3a1; border: none; border-radius: 8px; color: #1e1e2e; cursor: pointer; font-weight: bold; font-size: 13px;">💾 Save</button>
             
@@ -967,6 +1546,8 @@ function showInlineGifEditor(ponyName, spriteName) {
                 <input type="number" id="gif-frame-delay" value="10" min="1" max="100" style="width: 55px; background: #1e1e2e; border: 1px solid #313244; border-radius: 5px; padding: 4px; color: #cdd6f4; text-align: center; font-size: 12px;">
                 <span style="font-size: 11px;">cs</span>
             </div>
+            
+            <button id="gif-trace-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px; transition: all 0.2s;">🎯 Trace</button>
         </div>
         
         <div style="padding: 8px 16px; background: #0f0f17; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0;">
@@ -994,89 +1575,30 @@ function showInlineGifEditor(ponyName, spriteName) {
     const stateManager = new GifEditorStateManager(ponyName, spriteName, modal);
     window.GifEditorState = stateManager;
 
-    initGifEditorEnhanced(stateManager);
-}
-
-// Функция ресайза canvas
-function resizeGif(stateManager, newWidth, newHeight, statusEl) {
-    if (!stateManager.frames || stateManager.frames.length === 0) return;
-
-    const oldWidth = stateManager.width;
-    const oldHeight = stateManager.height;
-
-    if (newWidth === oldWidth && newHeight === oldHeight) {
-        if (statusEl) statusEl.textContent = 'Size unchanged';
-        return;
-    }
-
-    const scaleX = newWidth / oldWidth;
-    const scaleY = newHeight / oldHeight;
-
-    for (let f = 0; f < stateManager.frames.length; f++) {
-        const oldData = stateManager.frames[f].data;
-        const newData = new Uint8ClampedArray(newWidth * newHeight * 4);
-        newData.fill(0);
-
-        for (let y = 0; y < newHeight; y++) {
-            for (let x = 0; x < newWidth; x++) {
-                const srcX = Math.floor(x / scaleX);
-                const srcY = Math.floor(y / scaleY);
-
-                if (srcX >= 0 && srcX < oldWidth && srcY >= 0 && srcY < oldHeight) {
-                    const srcIdx = (srcY * oldWidth + srcX) * 4;
-                    const dstIdx = (y * newWidth + x) * 4;
-
-                    newData[dstIdx] = oldData[srcIdx];
-                    newData[dstIdx + 1] = oldData[srcIdx + 1];
-                    newData[dstIdx + 2] = oldData[srcIdx + 2];
-                    newData[dstIdx + 3] = oldData[srcIdx + 3];
-                }
+    // Добавляем обработчик для кнопки Trace
+    const traceBtn = document.getElementById('gif-trace-btn');
+    if (traceBtn) {
+        traceBtn.addEventListener('click', function() {
+            const panel = document.getElementById('trace-panel');
+            if (panel) {
+                panel.remove();
+                const traceCanvas = document.getElementById('trace-render-canvas');
+                if (traceCanvas) traceCanvas.remove();
+                this.style.borderColor = '#313244';
+                return;
             }
-        }
-
-        stateManager.frames[f].data = newData;
+            this.style.borderColor = '#cba6f7';
+            PonyEditor.showTracePanel();
+        });
     }
 
-    stateManager.width = newWidth;
-    stateManager.height = newHeight;
-    stateManager.hasChanges = true;
-
-    if (statusEl) statusEl.textContent = `✅ Resized to ${newWidth}x${newHeight}`;
-}
-
-// === УТИЛИТЫ ДЛЯ РАБОТЫ С ЦВЕТОМ ===
-function hslToRgb(h, s, l) {
-    h = h / 360;
-    let r, g, b;
-    if (s === 0) r = g = b = l;
-    else {
-        const hue2rgb = (p, q, t) => {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1/6) return p + (q - p) * 6 * t;
-            if (t < 1/2) return q;
-            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-            return p;
-        };
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-    }
-    return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };
-}
-
-function rgbToHex(r, g, b) {
-    return '#' + [r, g, b].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('').toUpperCase();
+    // Инициализируем редактор
+    initGifEditor(stateManager);
 }
 
 // === ИНИЦИАЛИЗАТОР GIF РЕДАКТОРА ===
-function initGifEditorEnhanced(stateManager) {
-    console.log('[GIF] initGifEditorEnhanced for:', stateManager.ponyName, stateManager.spriteName);
+function initGifEditor(stateManager) {
+    console.log('[GIF] initGifEditor for:', stateManager.ponyName, stateManager.spriteName);
 
     const modal = stateManager.modal;
     const canvas = document.getElementById('gif-main-canvas');
@@ -1107,10 +1629,8 @@ function initGifEditorEnhanced(stateManager) {
 
     const ctx = canvas.getContext('2d');
     let isDrawingSquare = false;
-    let isDraggingRef = false;
-    let dragStartX = 0, dragStartY = 0;
-    let refStartX = 0, refStartY = 0;
 
+    // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
     function getPixelFromMouseEvent(e) {
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
@@ -1160,8 +1680,8 @@ function initGifEditorEnhanced(stateManager) {
         }
 
         stateManager.hasChanges = true;
-        drawCanvas();
-        updateTimeline();
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
     }
 
     function floodFillAt(px, py) {
@@ -1226,208 +1746,10 @@ function initGifEditorEnhanced(stateManager) {
         }
 
         stateManager.hasChanges = true;
-        drawCanvas();
-        updateTimeline();
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
     }
 
-    // TWEENING FRAMES
-    function tweenFrames() {
-        if (stateManager.frames.length < 2) {
-            if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to tween';
-            return;
-        }
-
-        const frameList = stateManager.frames.map((_, idx) => `${idx + 1}: Frame ${idx + 1} (delay: ${_.delay}cs)`).join('\n');
-        let fromFrame = prompt(`🎬 TWEENING - Create smooth in-between frames\n\nEnter START frame number (1-${stateManager.frames.length}):\n\n${frameList}`, '1');
-        if (!fromFrame) return;
-
-        let toFrame = prompt(`Enter END frame number (1-${stateManager.frames.length}):`, String(stateManager.frames.length));
-        if (!toFrame) return;
-
-        let fromIdx = parseInt(fromFrame) - 1;
-        let toIdx = parseInt(toFrame) - 1;
-
-        if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx < 0 || toIdx >= stateManager.frames.length || fromIdx === toIdx) {
-            if (statusEl) statusEl.textContent = '❌ Invalid frame numbers';
-            return;
-        }
-
-        let steps = prompt(`How many in-between frames to generate? (1-20)`, '3');
-        if (!steps) return;
-        steps = parseInt(steps);
-        if (isNaN(steps) || steps < 1 || steps > 20) {
-            if (statusEl) statusEl.textContent = '❌ Steps must be between 1 and 20';
-            return;
-        }
-
-        const frameA = stateManager.frames[fromIdx];
-        const frameB = stateManager.frames[toIdx];
-
-        const dataA = new Uint8ClampedArray(frameA.data);
-        const dataB = new Uint8ClampedArray(frameB.data);
-        const totalPixels = stateManager.width * stateManager.height * 4;
-
-        const newFrames = [];
-
-        function lerp(a, b, t) {
-            return Math.round(a + (b - a) * t);
-        }
-
-        function interpolatePixel(idx, t) {
-            const aAlpha = dataA[idx + 3] / 255;
-            const bAlpha = dataB[idx + 3] / 255;
-            const resultAlpha = aAlpha * (1 - t) + bAlpha * t;
-
-            if (resultAlpha === 0) {
-                return [0, 0, 0, 0];
-            }
-
-            const r = ((dataA[idx] * aAlpha * (1 - t) + dataB[idx] * bAlpha * t) / resultAlpha);
-            const g = ((dataA[idx + 1] * aAlpha * (1 - t) + dataB[idx + 1] * bAlpha * t) / resultAlpha);
-            const b = ((dataA[idx + 2] * aAlpha * (1 - t) + dataB[idx + 2] * bAlpha * t) / resultAlpha);
-
-            return [
-                Math.round(Math.min(255, Math.max(0, r))),
-                Math.round(Math.min(255, Math.max(0, g))),
-                Math.round(Math.min(255, Math.max(0, b))),
-                Math.round(resultAlpha * 255)
-            ];
-        }
-
-        for (let step = 1; step <= steps; step++) {
-            const t = step / (steps + 1);
-            const newData = new Uint8ClampedArray(totalPixels);
-
-            for (let i = 0; i < totalPixels; i += 4) {
-                const interpolated = interpolatePixel(i, t);
-                newData[i] = interpolated[0];
-                newData[i + 1] = interpolated[1];
-                newData[i + 2] = interpolated[2];
-                newData[i + 3] = interpolated[3];
-            }
-
-            const delayA = frameA.delay || 10;
-            const delayB = frameB.delay || 10;
-            const interpolatedDelay = Math.round(lerp(delayA, delayB, t));
-
-            newFrames.push({
-                data: newData,
-                delay: Math.max(1, interpolatedDelay)
-            });
-        }
-
-        if (newFrames.length === 0) {
-            if (statusEl) statusEl.textContent = '❌ No frames generated';
-            return;
-        }
-
-        const insertPosition = fromIdx < toIdx ? fromIdx + 1 : toIdx + 1;
-        const sortedNewFrames = fromIdx < toIdx ? newFrames : newFrames.reverse();
-
-        stateManager.frames.splice(insertPosition, 0, ...sortedNewFrames);
-        stateManager.currentFrame = insertPosition;
-        stateManager.hasChanges = true;
-
-        drawCanvas();
-        updateTimeline();
-
-        if (statusEl) {
-            statusEl.textContent = `✓ Generated ${newFrames.length} in-between frames between frame ${fromFrame} and ${toFrame}`;
-            setTimeout(() => {
-                if (statusEl.textContent?.includes('Generated')) {
-                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
-                }
-            }, 3000);
-        }
-    }
-
-    // SMOOTH ANIMATION
-    function smoothAnimation() {
-        if (stateManager.frames.length < 2) {
-            if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to smooth animation';
-            return;
-        }
-
-        const passes = prompt('Smooth animation (temporal anti-aliasing)\nHow many smoothing passes? (1-5, recommended 2)', '2');
-        if (!passes) return;
-        const numPasses = Math.min(5, Math.max(1, parseInt(passes)));
-        if (isNaN(numPasses)) return;
-
-        const originalFrames = stateManager.frames.map(f => ({
-            data: new Uint8ClampedArray(f.data),
-            delay: f.delay
-        }));
-
-        for (let pass = 0; pass < numPasses; pass++) {
-            const newFrames = [];
-
-            for (let i = 0; i < stateManager.frames.length; i++) {
-                const current = originalFrames[i];
-                const prev = i > 0 ? originalFrames[i - 1] : null;
-                const next = i < originalFrames.length - 1 ? originalFrames[i + 1] : null;
-
-                const newData = new Uint8ClampedArray(current.data.length);
-                const totalPixels = current.data.length;
-
-                for (let j = 0; j < totalPixels; j += 4) {
-                    let r = current.data[j];
-                    let g = current.data[j + 1];
-                    let b = current.data[j + 2];
-                    let a = current.data[j + 3];
-                    let weightSum = 1;
-
-                    if (prev) {
-                        r += prev.data[j];
-                        g += prev.data[j + 1];
-                        b += prev.data[j + 2];
-                        a += prev.data[j + 3];
-                        weightSum++;
-                    }
-
-                    if (next) {
-                        r += next.data[j];
-                        g += next.data[j + 1];
-                        b += next.data[j + 2];
-                        a += next.data[j + 3];
-                        weightSum++;
-                    }
-
-                    newData[j] = Math.round(r / weightSum);
-                    newData[j + 1] = Math.round(g / weightSum);
-                    newData[j + 2] = Math.round(b / weightSum);
-                    newData[j + 3] = Math.round(a / weightSum);
-                }
-
-                newFrames.push({
-                    data: newData,
-                    delay: current.delay
-                });
-            }
-
-            for (let i = 0; i < stateManager.frames.length; i++) {
-                originalFrames[i].data.set(newFrames[i].data);
-            }
-
-            for (let i = 0; i < stateManager.frames.length; i++) {
-                stateManager.frames[i].data.set(newFrames[i].data);
-            }
-        }
-
-        stateManager.hasChanges = true;
-        drawCanvas();
-        updateTimeline();
-
-        if (statusEl) {
-            statusEl.textContent = `✓ Animation smoothed with ${numPasses} pass(es) (temporal blending)`;
-            setTimeout(() => {
-                if (statusEl.textContent?.includes('smoothed')) {
-                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
-                }
-            }, 3000);
-        }
-    }
-
-    // SMOOTH EDGES
     function smoothEdges() {
         if (!stateManager.frames[stateManager.currentFrame]) return;
 
@@ -1564,68 +1886,63 @@ function initGifEditorEnhanced(stateManager) {
             data[idx] = 0; data[idx+1] = 0; data[idx+2] = 0; data[idx+3] = 0;
         }
 
-        const afterSpikes = new Uint8ClampedArray(data);
-        const stairSmooths = [];
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const p = getPixel(x, y, afterSpikes);
-                if (!p || p.a < alphaThreshold) continue;
-                const n = isSolid(x, y-1, afterSpikes);
-                const s = isSolid(x, y+1, afterSpikes);
-                const w = isSolid(x-1, y, afterSpikes);
-                const e = isSolid(x+1, y, afterSpikes);
-                const nw = isSolid(x-1, y-1, afterSpikes);
-                const ne = isSolid(x+1, y-1, afterSpikes);
-                const sw = isSolid(x-1, y+1, afterSpikes);
-                const se = isSolid(x+1, y+1, afterSpikes);
-                if (n && w && !nw) stairSmooths.push({ x: x-1, y: y-1 });
-                if (n && e && !ne) stairSmooths.push({ x: x+1, y: y-1 });
-                if (s && w && !sw) stairSmooths.push({ x: x-1, y: y+1 });
-                if (s && e && !se) stairSmooths.push({ x: x+1, y: y+1 });
-            }
-        }
-        for (const stair of stairSmooths) {
-            if (!isSolid(stair.x, stair.y, afterSpikes)) {
-                const avgColor = getAverageColor(stair.x, stair.y, afterSpikes);
-                if (avgColor) setPixelColor(stair.x, stair.y, avgColor, data);
-            }
-        }
-
-        const finalData = new Uint8ClampedArray(data);
-        const toClean = [];
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                if (!isSolid(x, y, finalData)) continue;
-                let neighborCount = 0, diagonalCount = 0;
-                for (let dy = -1; dy <= 1; dy++) {
-                    for (let dx = -1; dx <= 1; dx++) {
-                        if (dx === 0 && dy === 0) continue;
-                        if (isSolid(x + dx, y + dy, finalData)) {
-                            if (Math.abs(dx) + Math.abs(dy) === 2) diagonalCount++;
-                            else neighborCount++;
-                        }
-                    }
-                }
-                if (neighborCount === 1 && diagonalCount === 1) toClean.push({ x, y });
-            }
-        }
-        for (const clean of toClean) {
-            const idx = (clean.y * width + clean.x) * 4;
-            data[idx] = 0; data[idx+1] = 0; data[idx+2] = 0; data[idx+3] = 0;
-        }
-
         stateManager.hasChanges = true;
-        drawCanvas();
-        updateTimeline();
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
 
         if (statusEl) {
-            statusEl.textContent = `✓ Smooth complete: +${cornersToAdd.length} outer, +${pitsToFill.length} inner, -${spikesToRemove.length} spikes, -${toClean.length} sharp`;
+            statusEl.textContent = `✓ Smooth complete`;
             setTimeout(() => {
-                if (statusEl.textContent === `✓ Smooth complete: +${cornersToAdd.length} outer, +${pitsToFill.length} inner, -${spikesToRemove.length} spikes, -${toClean.length} sharp`) {
+                if (statusEl.textContent === `✓ Smooth complete`) {
                     statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame]?.delay || 10}cs | ${stateManager.width}x${stateManager.height}`;
                 }
             }, 3000);
         }
+    }
+
+    // === ЦВЕТОВЫЕ ФУНКЦИИ ===
+    function hslToRgb(h, s, l) {
+        h = h / 360;
+        let r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        return {
+            r: Math.round(r * 255),
+            g: Math.round(g * 255),
+            b: Math.round(b * 255)
+        };
+    }
+
+    function rgbToHex(r, g, b) {
+        return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function updateCurrentColorDisplay() {
+        const bgColor = `rgba(${stateManager.currentColor.r}, ${stateManager.currentColor.g}, ${stateManager.currentColor.b}, ${stateManager.currentColor.a / 255})`;
+        if (currentColorPreview) currentColorPreview.style.backgroundColor = bgColor;
+        if (colorPreviewMini) colorPreviewMini.style.backgroundColor = bgColor;
+        if (currentRgbSpan) currentRgbSpan.textContent = `RGB(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b})`;
+        const hex = rgbToHex(stateManager.currentColor.r, stateManager.currentColor.g, stateManager.currentColor.b);
+        if (currentHexSpan) currentHexSpan.textContent = hex;
+        if (hexInput) hexInput.value = hex;
+        if (rgbaInput) rgbaInput.value = `rgba(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b},${(stateManager.currentColor.a/255).toFixed(2)})`;
+        if (alphaSlider) alphaSlider.value = stateManager.currentColor.a;
+        if (alphaValue) alphaValue.textContent = stateManager.currentColor.a;
     }
 
     function drawColorSquare() {
@@ -1645,85 +1962,174 @@ function initGifEditorEnhanced(stateManager) {
         }
     }
 
-    function updateAlphaSlider() {
-        if (alphaSlider) alphaSlider.value = stateManager.currentColor.a;
-        if (alphaValue) alphaValue.textContent = stateManager.currentColor.a;
-    }
-
-    function updateCurrentColorDisplay() {
-        const bgColor = `rgba(${stateManager.currentColor.r}, ${stateManager.currentColor.g}, ${stateManager.currentColor.b}, ${stateManager.currentColor.a / 255})`;
-        if (currentColorPreview) currentColorPreview.style.backgroundColor = bgColor;
-        if (colorPreviewMini) colorPreviewMini.style.backgroundColor = bgColor;
-        if (currentRgbSpan) currentRgbSpan.textContent = `RGB(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b})`;
-        const hex = rgbToHex(stateManager.currentColor.r, stateManager.currentColor.g, stateManager.currentColor.b);
-        if (currentHexSpan) currentHexSpan.textContent = hex;
-        if (hexInput) hexInput.value = hex;
-        if (rgbaInput) rgbaInput.value = `rgba(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b},${(stateManager.currentColor.a/255).toFixed(2)})`;
-        updateAlphaSlider();
-    }
-
-    function setColorFromRgb(r, g, b, a) {
-        stateManager.currentColor = { r, g, b, a: a !== undefined ? a : stateManager.currentColor.a };
-        updateCurrentColorDisplay();
-    }
-
-    function onColorSquareClick(e) {
-        const rect = colorSquare.getBoundingClientRect();
-        const scaleX = colorSquare.width / rect.width;
-        const scaleY = colorSquare.height / rect.height;
-        let x = (e.clientX - rect.left) * scaleX;
-        let y = (e.clientY - rect.top) * scaleY;
-        x = Math.min(Math.max(0, x), colorSquare.width - 1);
-        y = Math.min(Math.max(0, y), colorSquare.height - 1);
-        const sat = x / colorSquare.width;
-        const light = 1 - (y / colorSquare.height);
-        const rgb = hslToRgb(stateManager.currentHue, sat, light);
-        setColorFromRgb(rgb.r, rgb.g, rgb.b);
-    }
-
-    stateManager.addEventListener(colorSquare, 'mousedown', (e) => {
-        isDrawingSquare = true;
-        onColorSquareClick(e);
-    });
-    stateManager.addEventListener(colorSquare, 'mousemove', (e) => {
-        if (isDrawingSquare) onColorSquareClick(e);
-    });
-    stateManager.addEventListener(colorSquare, 'mouseup', () => isDrawingSquare = false);
-
-    stateManager.addEventListener(hueSlider, 'input', (e) => {
-        stateManager.currentHue = parseInt(e.target.value);
-        drawColorSquare();
+    // === ОБРАБОТЧИКИ СОБЫТИЙ ===
+    // Tools
+    document.getElementById('gif-tool-pencil')?.addEventListener('click', function() {
+        stateManager.tool = 'pencil';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
     });
 
-    stateManager.addEventListener(alphaSlider, 'input', (e) => {
-        stateManager.currentColor.a = parseInt(e.target.value);
-        updateCurrentColorDisplay();
+    document.getElementById('gif-tool-eraser')?.addEventListener('click', function() {
+        stateManager.tool = 'eraser';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
     });
 
-    stateManager.addEventListener(hexInput, 'change', () => {
-        let hex = hexInput.value;
-        if (!hex.startsWith('#')) hex = '#' + hex;
-        if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
-            const r = parseInt(hex.slice(1,3), 16);
-            const g = parseInt(hex.slice(3,5), 16);
-            const b = parseInt(hex.slice(5,7), 16);
-            setColorFromRgb(r, g, b);
+    document.getElementById('gif-tool-fill')?.addEventListener('click', function() {
+        stateManager.tool = 'fill';
+        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+    });
+
+    document.getElementById('gif-tool-smooth')?.addEventListener('click', function() {
+        smoothEdges();
+        this.classList.add('active');
+        setTimeout(() => this.classList.remove('active'), 500);
+    });
+
+    // Zoom
+    document.getElementById('gif-zoom-in')?.addEventListener('click', () => {
+        stateManager.zoom = Math.min(8, stateManager.zoom + 0.25);
+        stateManager.drawCanvas();
+    });
+
+    document.getElementById('gif-zoom-out')?.addEventListener('click', () => {
+        stateManager.zoom = Math.max(0.25, stateManager.zoom - 0.25);
+        stateManager.drawCanvas();
+    });
+
+    document.getElementById('gif-zoom-reset')?.addEventListener('click', () => {
+        stateManager.zoom = 1;
+        stateManager.drawCanvas();
+    });
+
+    document.getElementById('gif-zoom-fit')?.addEventListener('click', () => {
+        const container = canvas.parentElement;
+        if (container) {
+            const containerWidth = container.clientWidth - 40;
+            const containerHeight = container.clientHeight - 40;
+            const fitZoom = Math.min(containerWidth / stateManager.width, containerHeight / stateManager.height, 4);
+            stateManager.zoom = Math.max(0.25, fitZoom);
+            stateManager.drawCanvas();
         }
     });
 
-    stateManager.addEventListener(rgbaInput, 'change', () => {
-        const match = rgbaInput.value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/);
-        if (match) {
-            const r = parseInt(match[1]);
-            const g = parseInt(match[2]);
-            const b = parseInt(match[3]);
-            const a = match[4] ? Math.round(parseFloat(match[4]) * 255) : 255;
-            setColorFromRgb(r, g, b, a);
+    // Canvas wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            stateManager.zoom = Math.min(8, stateManager.zoom + 0.1);
+        } else {
+            stateManager.zoom = Math.max(0.25, stateManager.zoom - 0.1);
+        }
+        stateManager.drawCanvas();
+    });
+
+    // Canvas drawing
+    canvas.addEventListener('mousedown', (e) => {
+        if (stateManager.isPickingColor) return;
+        stateManager.isDrawing = true;
+        e.preventDefault();
+        const { x, y } = getPixelFromMouseEvent(e);
+        if (stateManager.tool === 'fill') floodFillAt(x, y);
+        else setPixelAt(x, y);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (!stateManager.isDrawing || stateManager.tool === 'fill' || stateManager.isPickingColor) return;
+        e.preventDefault();
+        const { x, y } = getPixelFromMouseEvent(e);
+        setPixelAt(x, y);
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        stateManager.isDrawing = false;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        stateManager.isDrawing = false;
+    });
+
+    // Frame operations
+    document.getElementById('gif-clear-frame')?.addEventListener('click', () => {
+        if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.frames[stateManager.currentFrame].data.fill(0);
+            stateManager.drawCanvas();
+            stateManager.updateTimeline();
+            stateManager.hasChanges = true;
         }
     });
 
-    // Color dropdown toggle
-    stateManager.addEventListener(colorBtn, 'click', (e) => {
+    document.getElementById('gif-add-frame')?.addEventListener('click', () => {
+        const newData = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
+        for (let i = 3; i < newData.length; i+=4) newData[i] = 255;
+        stateManager.addFrame(newData, 10);
+        stateManager.currentFrame = stateManager.frames.length - 1;
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
+    });
+
+    document.getElementById('gif-duplicate-frame')?.addEventListener('click', () => {
+        stateManager.duplicateFrame(stateManager.currentFrame);
+        stateManager.currentFrame = Math.min(stateManager.currentFrame + 1, stateManager.frames.length - 1);
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
+    });
+
+    document.getElementById('gif-delete-frame')?.addEventListener('click', () => {
+        stateManager.removeFrame(stateManager.currentFrame);
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
+    });
+
+    // Preview
+    let previewInterval = null;
+
+    function startPreview() {
+        if (previewInterval) stopPreview();
+        previewInterval = setInterval(() => {
+            stateManager.currentFrame = (stateManager.currentFrame + 1) % stateManager.frames.length;
+            stateManager.drawCanvas();
+            stateManager.updateTimeline();
+        }, stateManager.getFrameDelay(stateManager.currentFrame));
+        previewBtn.textContent = '⏸️ Stop';
+    }
+
+    function stopPreview() {
+        if (previewInterval) {
+            clearInterval(previewInterval);
+            previewInterval = null;
+        }
+        previewBtn.textContent = '▶️ Preview';
+    }
+
+    previewBtn?.addEventListener('click', () => {
+        if (previewInterval) stopPreview();
+        else startPreview();
+        stateManager.previewInterval = previewInterval;
+    });
+
+    // Speed slider
+    speedSlider?.addEventListener('input', (e) => {
+        stateManager.playSpeed = parseFloat(e.target.value);
+        speedValue.textContent = stateManager.playSpeed.toFixed(2) + 'x';
+        if (previewInterval) {
+            stopPreview();
+            startPreview();
+        }
+    });
+
+    // Delay input
+    delayInput?.addEventListener('change', () => {
+        if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.setFrameDelay(stateManager.currentFrame, parseInt(delayInput.value));
+            stateManager.updateTimeline();
+        }
+    });
+
+    // Color picker
+    colorBtn?.addEventListener('click', (e) => {
         e.stopPropagation();
         const isVisible = colorDropdown.style.display === 'flex';
         colorDropdown.style.display = isVisible ? 'none' : 'flex';
@@ -1734,22 +2140,88 @@ function initGifEditorEnhanced(stateManager) {
     });
 
     document.addEventListener('click', (e) => {
-        if (!colorBtn.contains(e.target) && !colorDropdown.contains(e.target)) {
+        if (!colorBtn?.contains(e.target) && !colorDropdown?.contains(e.target)) {
             colorDropdown.style.display = 'none';
         }
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && colorDropdown.style.display === 'flex') {
+        if (e.key === 'Escape' && colorDropdown?.style.display === 'flex') {
             colorDropdown.style.display = 'none';
         }
     });
 
-    // === PIPETTE FEATURE ===
-    let pipetteOverlay = null;
-    let pipetteLoupe = null;
+    colorSquare?.addEventListener('mousedown', (e) => {
+        isDrawingSquare = true;
+        const rect = colorSquare.getBoundingClientRect();
+        const scaleX = colorSquare.width / rect.width;
+        const scaleY = colorSquare.height / rect.height;
+        let x = (e.clientX - rect.left) * scaleX;
+        let y = (e.clientY - rect.top) * scaleY;
+        x = Math.min(Math.max(0, x), colorSquare.width - 1);
+        y = Math.min(Math.max(0, y), colorSquare.height - 1);
+        const sat = x / colorSquare.width;
+        const light = 1 - (y / colorSquare.height);
+        const rgb = hslToRgb(stateManager.currentHue, sat, light);
+        stateManager.currentColor = { r: rgb.r, g: rgb.g, b: rgb.b, a: stateManager.currentColor.a };
+        updateCurrentColorDisplay();
+    });
 
-    function startPipette() {
+    colorSquare?.addEventListener('mousemove', (e) => {
+        if (!isDrawingSquare) return;
+        const rect = colorSquare.getBoundingClientRect();
+        const scaleX = colorSquare.width / rect.width;
+        const scaleY = colorSquare.height / rect.height;
+        let x = (e.clientX - rect.left) * scaleX;
+        let y = (e.clientY - rect.top) * scaleY;
+        x = Math.min(Math.max(0, x), colorSquare.width - 1);
+        y = Math.min(Math.max(0, y), colorSquare.height - 1);
+        const sat = x / colorSquare.width;
+        const light = 1 - (y / colorSquare.height);
+        const rgb = hslToRgb(stateManager.currentHue, sat, light);
+        stateManager.currentColor = { r: rgb.r, g: rgb.g, b: rgb.b, a: stateManager.currentColor.a };
+        updateCurrentColorDisplay();
+    });
+
+    colorSquare?.addEventListener('mouseup', () => isDrawingSquare = false);
+
+    hueSlider?.addEventListener('input', (e) => {
+        stateManager.currentHue = parseInt(e.target.value);
+        drawColorSquare();
+    });
+
+    alphaSlider?.addEventListener('input', (e) => {
+        stateManager.currentColor.a = parseInt(e.target.value);
+        updateCurrentColorDisplay();
+    });
+
+    hexInput?.addEventListener('change', () => {
+        let hex = hexInput.value;
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+            const r = parseInt(hex.slice(1,3), 16);
+            const g = parseInt(hex.slice(3,5), 16);
+            const b = parseInt(hex.slice(5,7), 16);
+            stateManager.currentColor = { r, g, b, a: stateManager.currentColor.a };
+            updateCurrentColorDisplay();
+        }
+    });
+
+    rgbaInput?.addEventListener('change', () => {
+        const match = rgbaInput.value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([0-9.]+))?\)/);
+        if (match) {
+            const r = parseInt(match[1]);
+            const g = parseInt(match[2]);
+            const b = parseInt(match[3]);
+            const a = match[4] ? Math.round(parseFloat(match[4]) * 255) : 255;
+            stateManager.currentColor = { r, g, b, a };
+            updateCurrentColorDisplay();
+        }
+    });
+
+    // Pipette
+    document.getElementById('gif-pipette-btn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (stateManager.pipetteActive) return;
         stateManager.pipetteActive = true;
         stateManager.isPickingColor = true;
@@ -1757,10 +2229,12 @@ function initGifEditorEnhanced(stateManager) {
         if (statusEl) statusEl.textContent = '🔍 Pipette active: Click on canvas to pick color, ESC to cancel';
         canvas.style.cursor = 'crosshair';
 
-        pipetteOverlay = document.createElement('div');
-        pipetteOverlay.style.cssText = `position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: transparent; z-index: 20010; cursor: crosshair;`;
-        pipetteLoupe = document.createElement('div');
-        pipetteLoupe.style.cssText = `position: fixed; width: 150px; height: 150px; border-radius: 75px; border: 2px solid #cba6f7; background: rgba(30,30,46,0.9); box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; z-index: 20011; overflow: hidden; backdrop-filter: blur(2px);`;
+        const pipetteOverlay = document.createElement('div');
+        pipetteOverlay.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: transparent; z-index: 20010; cursor: crosshair;';
+
+        const pipetteLoupe = document.createElement('div');
+        pipetteLoupe.style.cssText = 'position: fixed; width: 150px; height: 150px; border-radius: 75px; border: 2px solid #cba6f7; background: rgba(30,30,46,0.9); box-shadow: 0 0 20px rgba(0,0,0,0.5); pointer-events: none; z-index: 20011; overflow: hidden; backdrop-filter: blur(2px);';
+
         const loupeCanvas = document.createElement('canvas');
         loupeCanvas.width = 150;
         loupeCanvas.height = 150;
@@ -1769,10 +2243,12 @@ function initGifEditorEnhanced(stateManager) {
         loupeCanvas.style.imageRendering = 'crisp-edges';
         loupeCanvas.style.imageRendering = 'pixelated';
         pipetteLoupe.appendChild(loupeCanvas);
+
         const loupeInfo = document.createElement('div');
-        loupeInfo.style.cssText = `position: absolute; bottom: 5px; left: 5px; right: 5px; background: rgba(0,0,0,0.8); color: #cba6f7; font-size: 9px; text-align: center; border-radius: 4px; padding: 3px; font-family: monospace; font-weight: bold;`;
+        loupeInfo.style.cssText = 'position: absolute; bottom: 5px; left: 5px; right: 5px; background: rgba(0,0,0,0.8); color: #cba6f7; font-size: 9px; text-align: center; border-radius: 4px; padding: 3px; font-family: monospace; font-weight: bold;';
         loupeInfo.id = 'pipette-loupe-info';
         pipetteLoupe.appendChild(loupeInfo);
+
         pipetteOverlay.appendChild(pipetteLoupe);
         document.body.appendChild(pipetteOverlay);
 
@@ -1871,35 +2347,16 @@ function initGifEditorEnhanced(stateManager) {
                 if (stateManager.frames[stateManager.currentFrame]) {
                     const frame = stateManager.frames[stateManager.currentFrame];
                     const idx = (py * stateManager.width + px) * 4;
-                    const newColor = {
+                    stateManager.currentColor = {
                         r: frame.data[idx],
                         g: frame.data[idx+1],
                         b: frame.data[idx+2],
                         a: frame.data[idx+3]
                     };
-                    stateManager.currentColor = newColor;
                     updateCurrentColorDisplay();
                     if (statusEl) {
-                        statusEl.textContent = `✓ Picked: rgba(${newColor.r},${newColor.g},${newColor.b},${newColor.a})`;
-                        setTimeout(() => {
-                            if (statusEl.textContent === `✓ Picked: rgba(${newColor.r},${newColor.g},${newColor.b},${newColor.a})`) {
-                                statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame]?.delay || 10}cs | ${stateManager.width}x${stateManager.height}`;
-                            }
-                        }, 2000);
+                        statusEl.textContent = `✓ Picked: rgba(${stateManager.currentColor.r},${stateManager.currentColor.g},${stateManager.currentColor.b},${stateManager.currentColor.a})`;
                     }
-                    const rgb = { r: newColor.r, g: newColor.g, b: newColor.b };
-                    let hue = 0;
-                    const max = Math.max(rgb.r, rgb.g, rgb.b);
-                    const min = Math.min(rgb.r, rgb.g, rgb.b);
-                    if (max !== min) {
-                        if (max === rgb.r) hue = 60 * (0 + (rgb.g - rgb.b) / (max - min));
-                        else if (max === rgb.g) hue = 60 * (2 + (rgb.b - rgb.r) / (max - min));
-                        else hue = 60 * (4 + (rgb.r - rgb.g) / (max - min));
-                        if (hue < 0) hue += 360;
-                    }
-                    stateManager.currentHue = Math.round(hue);
-                    if (hueSlider) hueSlider.value = stateManager.currentHue;
-                    drawColorSquare();
                 }
             }
             stopPipette();
@@ -1911,8 +2368,6 @@ function initGifEditorEnhanced(stateManager) {
             stateManager.isPickingColor = false;
             if (pipetteOverlay) pipetteOverlay.remove();
             if (pipetteLoupe) pipetteLoupe.remove();
-            pipetteOverlay = null;
-            pipetteLoupe = null;
             document.removeEventListener('mousemove', updateLoupe);
             document.removeEventListener('click', pickColor);
             document.removeEventListener('keydown', escHandler);
@@ -1929,167 +2384,10 @@ function initGifEditorEnhanced(stateManager) {
         document.addEventListener('mousemove', updateLoupe);
         document.addEventListener('click', pickColor);
         document.addEventListener('keydown', escHandler);
-    }
-
-    const pipetteBtn = document.getElementById('gif-pipette-btn');
-    if (pipetteBtn) {
-        const newBtn = pipetteBtn.cloneNode(true);
-        pipetteBtn.parentNode.replaceChild(newBtn, pipetteBtn);
-        stateManager.addEventListener(newBtn, 'click', (e) => {
-            e.stopPropagation();
-            startPipette();
-        });
-    }
-
-    // === PREVIEW ===
-    let previewInterval = null;
-
-    function startPreview() {
-        if (previewInterval) stopPreview();
-        const frameDelay = stateManager.getFrameDelay(stateManager.currentFrame);
-        previewInterval = setInterval(() => {
-            stateManager.currentFrame = (stateManager.currentFrame + 1) % stateManager.frames.length;
-            drawCanvas();
-            updateTimeline();
-        }, frameDelay);
-        if (previewBtn) previewBtn.textContent = '⏸️ Stop';
-    }
-
-    function stopPreview() {
-        if (previewInterval) {
-            clearInterval(previewInterval);
-            previewInterval = null;
-        }
-        if (previewBtn) previewBtn.textContent = '▶️ Preview';
-    }
-
-    stateManager.addEventListener(previewBtn, 'click', () => {
-        if (previewInterval) stopPreview();
-        else startPreview();
-        stateManager.previewInterval = previewInterval;
     });
 
-    stateManager.addEventListener(speedSlider, 'input', (e) => {
-        stateManager.playSpeed = parseFloat(e.target.value);
-        speedValue.textContent = stateManager.playSpeed.toFixed(2) + 'x';
-        if (previewInterval) startPreview();
-    });
-
-    function centerCanvas() {
-        const container = canvas.parentElement;
-        if (container) {
-            container.scrollLeft = (canvas.width - container.clientWidth) / 2;
-            container.scrollTop = (canvas.height - container.clientHeight) / 2;
-        }
-    }
-
-    // === DRAW CANVAS ===
-    function drawCanvas() {
-        if (!stateManager.frames[stateManager.currentFrame]) return;
-
-        const frame = stateManager.frames[stateManager.currentFrame];
-        const displayWidth = stateManager.width * stateManager.zoom;
-        const displayHeight = stateManager.height * stateManager.zoom;
-
-        canvas.width = displayWidth;
-        canvas.height = displayHeight;
-        canvas.style.width = displayWidth + 'px';
-        canvas.style.height = displayHeight + 'px';
-
-        ctx.clearRect(0, 0, displayWidth, displayHeight);
-
-        // Рисуем основное изображение
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = stateManager.width;
-        tempCanvas.height = stateManager.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        try {
-            const imgData = new ImageData(frame.data, stateManager.width, stateManager.height);
-            tempCtx.putImageData(imgData, 0, 0);
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(tempCanvas, 0, 0, stateManager.width, stateManager.height, 0, 0, displayWidth, displayHeight);
-        } catch(e) {
-            console.warn('[Draw] Error drawing frame:', e);
-        }
-
-        // ===== РИСУЕМ TRACE ПОВЕРХ =====
-        const trace = stateManager.traceState;
-        if (trace && trace.visible && trace.image && trace.image.complete && trace.image.naturalWidth > 0) {
-            try {
-                ctx.save();
-                ctx.globalAlpha = trace.opacity || 0.5;
-                const refW = trace.image.width * (trace.scale || 1.0) * stateManager.zoom;
-                const refH = trace.image.height * (trace.scale || 1.0) * stateManager.zoom;
-                const refX = (trace.offsetX || 0) * stateManager.zoom;
-                const refY = (trace.offsetY || 0) * stateManager.zoom;
-
-                ctx.drawImage(trace.image, refX, refY, refW, refH);
-                ctx.restore();
-
-                console.log('[Draw] Trace drawn at', refX, refY, refW, refH);
-            } catch(e) {
-                console.warn('[Draw] Error drawing trace:', e);
-            }
-        }
-
-        // Обновляем UI
-        const zoomLevel = document.getElementById('gif-zoom-level');
-        const delayInput = document.getElementById('gif-frame-delay');
-        const statusEl = document.getElementById('gif-status');
-
-        if (zoomLevel) zoomLevel.textContent = Math.round(stateManager.zoom * 100) + '%';
-        if (delayInput && stateManager.frames[stateManager.currentFrame]) {
-            delayInput.value = stateManager.frames[stateManager.currentFrame].delay;
-        }
-        if (statusEl && stateManager.frames[stateManager.currentFrame] && !stateManager.isPickingColor) {
-            const traceInfo = (trace && trace.visible && trace.image) ? ' | 🖼️ Trace ON' : '';
-            statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | Delay: ${stateManager.frames[stateManager.currentFrame].delay}cs | Speed: ${stateManager.playSpeed.toFixed(2)}x | Zoom: ${Math.round(stateManager.zoom * 100)}% | ${stateManager.width}x${stateManager.height}${traceInfo}`;
-        }
-    }
-
-    // === ZOOM ===
-    const zoomInBtn = document.getElementById('gif-zoom-in');
-    const zoomOutBtn = document.getElementById('gif-zoom-out');
-    const zoomResetBtn = document.getElementById('gif-zoom-reset');
-    const zoomFitBtn = document.getElementById('gif-zoom-fit');
-    const resizeCanvasBtn = document.getElementById('gif-resize-canvas');
-
-    stateManager.addEventListener(zoomInBtn, 'click', () => {
-        let newZoom = stateManager.zoom + 0.25;
-        if (newZoom > 8) newZoom = 8;
-        stateManager.zoom = newZoom;
-        drawCanvas();
-        centerCanvas();
-    });
-
-    stateManager.addEventListener(zoomOutBtn, 'click', () => {
-        let newZoom = stateManager.zoom - 0.25;
-        if (newZoom < 0.25) newZoom = 0.25;
-        stateManager.zoom = newZoom;
-        drawCanvas();
-    });
-
-    stateManager.addEventListener(zoomResetBtn, 'click', () => {
-        stateManager.zoom = 1;
-        drawCanvas();
-        centerCanvas();
-    });
-
-    stateManager.addEventListener(zoomFitBtn, 'click', () => {
-        const container = canvas.parentElement;
-        if (container) {
-            const containerWidth = container.clientWidth - 40;
-            const containerHeight = container.clientHeight - 40;
-            const fitZoomX = containerWidth / stateManager.width;
-            const fitZoomY = containerHeight / stateManager.height;
-            const fitZoom = Math.min(fitZoomX, fitZoomY, 4);
-            stateManager.zoom = Math.max(0.25, fitZoom);
-            drawCanvas();
-            centerCanvas();
-        }
-    });
-
-    stateManager.addEventListener(resizeCanvasBtn, 'click', () => {
+    // Resize canvas
+    document.getElementById('gif-resize-canvas')?.addEventListener('click', () => {
         const newWidth = prompt(`Enter new width (current: ${stateManager.width}px):`, stateManager.width);
         const newHeight = prompt(`Enter new height (current: ${stateManager.height}px):`, stateManager.height);
         if (newWidth && newHeight) {
@@ -2097,178 +2395,203 @@ function initGifEditorEnhanced(stateManager) {
             const h = parseInt(newHeight);
             if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0 && w <= 1024 && h <= 1024) {
                 resizeGif(stateManager, w, h, statusEl);
-                drawCanvas();
-                updateTimeline();
+                stateManager.drawCanvas();
+                stateManager.updateTimeline();
             } else {
                 if (statusEl) statusEl.textContent = '❌ Invalid dimensions (max 1024)';
             }
         }
     });
 
-    // Wheel zoom
-    stateManager.addEventListener(canvas, 'wheel', (e) => {
-        e.preventDefault();
-        if (e.deltaY < 0) {
-            let newZoom = stateManager.zoom + 0.1;
-            if (newZoom > 8) newZoom = 8;
-            stateManager.zoom = newZoom;
-        } else {
-            let newZoom = stateManager.zoom - 0.1;
-            if (newZoom < 0.25) newZoom = 0.25;
-            stateManager.zoom = newZoom;
+    // Tween frames
+    document.getElementById('gif-tween-frames')?.addEventListener('click', () => {
+        if (stateManager.frames.length < 2) {
+            if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to tween';
+            return;
         }
-        drawCanvas();
-        if (e.deltaY < 0) centerCanvas();
+
+        const frameList = stateManager.frames.map((_, idx) => `${idx + 1}: Frame ${idx + 1} (delay: ${_.delay}cs)`).join('\n');
+        let fromFrame = prompt(`🎬 TWEENING - Create smooth in-between frames\n\nEnter START frame number (1-${stateManager.frames.length}):\n\n${frameList}`, '1');
+        if (!fromFrame) return;
+
+        let toFrame = prompt(`Enter END frame number (1-${stateManager.frames.length}):`, String(stateManager.frames.length));
+        if (!toFrame) return;
+
+        let fromIdx = parseInt(fromFrame) - 1;
+        let toIdx = parseInt(toFrame) - 1;
+
+        if (isNaN(fromIdx) || isNaN(toIdx) || fromIdx < 0 || toIdx >= stateManager.frames.length || fromIdx === toIdx) {
+            if (statusEl) statusEl.textContent = '❌ Invalid frame numbers';
+            return;
+        }
+
+        let steps = prompt(`How many in-between frames to generate? (1-20)`, '3');
+        if (!steps) return;
+        steps = parseInt(steps);
+        if (isNaN(steps) || steps < 1 || steps > 20) {
+            if (statusEl) statusEl.textContent = '❌ Steps must be between 1 and 20';
+            return;
+        }
+
+        const frameA = stateManager.frames[fromIdx];
+        const frameB = stateManager.frames[toIdx];
+
+        const dataA = new Uint8ClampedArray(frameA.data);
+        const dataB = new Uint8ClampedArray(frameB.data);
+        const totalPixels = stateManager.width * stateManager.height * 4;
+
+        const newFrames = [];
+
+        for (let step = 1; step <= steps; step++) {
+            const t = step / (steps + 1);
+            const newData = new Uint8ClampedArray(totalPixels);
+
+            for (let i = 0; i < totalPixels; i += 4) {
+                const aAlpha = dataA[i + 3] / 255;
+                const bAlpha = dataB[i + 3] / 255;
+                const resultAlpha = aAlpha * (1 - t) + bAlpha * t;
+
+                if (resultAlpha === 0) {
+                    newData[i] = 0;
+                    newData[i + 1] = 0;
+                    newData[i + 2] = 0;
+                    newData[i + 3] = 0;
+                    continue;
+                }
+
+                newData[i] = Math.round(((dataA[i] * aAlpha * (1 - t) + dataB[i] * bAlpha * t) / resultAlpha));
+                newData[i + 1] = Math.round(((dataA[i + 1] * aAlpha * (1 - t) + dataB[i + 1] * bAlpha * t) / resultAlpha));
+                newData[i + 2] = Math.round(((dataA[i + 2] * aAlpha * (1 - t) + dataB[i + 2] * bAlpha * t) / resultAlpha));
+                newData[i + 3] = Math.round(resultAlpha * 255);
+            }
+
+            const delayA = frameA.delay || 10;
+            const delayB = frameB.delay || 10;
+            const interpolatedDelay = Math.round(lerp(delayA, delayB, t));
+
+            newFrames.push({
+                data: newData,
+                delay: Math.max(1, interpolatedDelay)
+            });
+        }
+
+        if (newFrames.length === 0) {
+            if (statusEl) statusEl.textContent = '❌ No frames generated';
+            return;
+        }
+
+        const insertPosition = fromIdx < toIdx ? fromIdx + 1 : toIdx + 1;
+        const sortedNewFrames = fromIdx < toIdx ? newFrames : newFrames.reverse();
+
+        stateManager.frames.splice(insertPosition, 0, ...sortedNewFrames);
+        stateManager.currentFrame = insertPosition;
+        stateManager.hasChanges = true;
+
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
+
+        if (statusEl) {
+            statusEl.textContent = `✓ Generated ${newFrames.length} in-between frames`;
+            setTimeout(() => {
+                if (statusEl.textContent?.includes('Generated')) {
+                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
+                }
+            }, 3000);
+        }
     });
 
-    // === TIMELINE ===
-    function updateTimeline() {
-        if (!timeline) return;
-        timeline.innerHTML = '';
-        stateManager.frames.forEach((frame, idx) => {
-            const div = document.createElement('div');
-            div.style.cssText = `width: 90px; height: 105px; background: #11111b; border: 2px solid ${idx === stateManager.currentFrame ? '#cba6f7' : '#313244'}; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 8px; flex-shrink: 0;`;
-            const previewCanvas = document.createElement('canvas');
-            previewCanvas.width = 72;
-            previewCanvas.height = 72;
-            const previewCtx = previewCanvas.getContext('2d');
-            try {
-                const imgData = new ImageData(frame.data, stateManager.width, stateManager.height);
-                previewCtx.putImageData(imgData, 0, 0);
-            } catch(e) {}
-            div.appendChild(previewCanvas);
-            const label = document.createElement('span');
-            label.textContent = `${idx+1} | ${frame.delay}cs`;
-            label.style.fontSize = '10px';
-            label.style.marginTop = '6px';
-            div.appendChild(label);
-            stateManager.addEventListener(div, 'click', () => {
-                if (previewInterval) stopPreview();
-                stateManager.currentFrame = idx;
-                drawCanvas();
-                updateTimeline();
-            });
-            timeline.appendChild(div);
-        });
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
     }
 
-    // === CANVAS DRAWING ===
-    stateManager.addEventListener(canvas, 'mousedown', (e) => {
-        if (stateManager.isPickingColor) return;
-        stateManager.isDrawing = true;
-        e.preventDefault();
-        const { x, y } = getPixelFromMouseEvent(e);
-        if (stateManager.tool === 'fill') floodFillAt(x, y);
-        else setPixelAt(x, y);
-    });
+    // Smooth animation
+    document.getElementById('gif-smooth-animation')?.addEventListener('click', () => {
+        if (stateManager.frames.length < 2) {
+            if (statusEl) statusEl.textContent = '⚠️ Need at least 2 frames to smooth animation';
+            return;
+        }
 
-    stateManager.addEventListener(canvas, 'mousemove', (e) => {
-        if (!stateManager.isDrawing || stateManager.tool === 'fill' || stateManager.isPickingColor) return;
-        e.preventDefault();
-        const { x, y } = getPixelFromMouseEvent(e);
-        setPixelAt(x, y);
-    });
+        const passes = prompt('Smooth animation (temporal anti-aliasing)\nHow many smoothing passes? (1-5, recommended 2)', '2');
+        if (!passes) return;
+        const numPasses = Math.min(5, Math.max(1, parseInt(passes)));
+        if (isNaN(numPasses)) return;
 
-    stateManager.addEventListener(canvas, 'mouseup', () => {
-        stateManager.isDrawing = false;
-    });
+        const originalFrames = stateManager.frames.map(f => ({
+            data: new Uint8ClampedArray(f.data),
+            delay: f.delay
+        }));
 
-    stateManager.addEventListener(canvas, 'mouseleave', () => {
-        stateManager.isDrawing = false;
-    });
+        for (let pass = 0; pass < numPasses; pass++) {
+            const newFrames = [];
 
-    // === TOOLS ===
-    const toolPencil = document.getElementById('gif-tool-pencil');
-    const toolEraser = document.getElementById('gif-tool-eraser');
-    const toolFill = document.getElementById('gif-tool-fill');
-    const toolSmooth = document.getElementById('gif-tool-smooth');
+            for (let i = 0; i < stateManager.frames.length; i++) {
+                const current = originalFrames[i];
+                const prev = i > 0 ? originalFrames[i - 1] : null;
+                const next = i < originalFrames.length - 1 ? originalFrames[i + 1] : null;
 
-    stateManager.addEventListener(toolPencil, 'click', () => {
-        stateManager.tool = 'pencil';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        toolPencil.classList.add('active');
-    });
+                const newData = new Uint8ClampedArray(current.data.length);
+                const totalPixels = current.data.length;
 
-    stateManager.addEventListener(toolEraser, 'click', () => {
-        stateManager.tool = 'eraser';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        toolEraser.classList.add('active');
-    });
+                for (let j = 0; j < totalPixels; j += 4) {
+                    let r = current.data[j];
+                    let g = current.data[j + 1];
+                    let b = current.data[j + 2];
+                    let a = current.data[j + 3];
+                    let weightSum = 1;
 
-    stateManager.addEventListener(toolFill, 'click', () => {
-        stateManager.tool = 'fill';
-        document.querySelectorAll('.gif-tool-btn').forEach(b => b.classList.remove('active'));
-        toolFill.classList.add('active');
-    });
+                    if (prev) {
+                        r += prev.data[j];
+                        g += prev.data[j + 1];
+                        b += prev.data[j + 2];
+                        a += prev.data[j + 3];
+                        weightSum++;
+                    }
 
-    stateManager.addEventListener(toolSmooth, 'click', () => {
-        smoothEdges();
-        toolSmooth.classList.add('active');
-        setTimeout(() => toolSmooth.classList.remove('active'), 500);
-    });
+                    if (next) {
+                        r += next.data[j];
+                        g += next.data[j + 1];
+                        b += next.data[j + 2];
+                        a += next.data[j + 3];
+                        weightSum++;
+                    }
 
-    // === FRAME OPERATIONS ===
-    const tweenBtn = document.getElementById('gif-tween-frames');
-    const smoothAnimBtn = document.getElementById('gif-smooth-animation');
-    const clearBtn = document.getElementById('gif-clear-frame');
-    const addBtn = document.getElementById('gif-add-frame');
-    const dupBtn = document.getElementById('gif-duplicate-frame');
-    const delBtn = document.getElementById('gif-delete-frame');
+                    newData[j] = Math.round(r / weightSum);
+                    newData[j + 1] = Math.round(g / weightSum);
+                    newData[j + 2] = Math.round(b / weightSum);
+                    newData[j + 3] = Math.round(a / weightSum);
+                }
 
-    stateManager.addEventListener(tweenBtn, 'click', () => {
-        tweenFrames();
-        tweenBtn.classList.add('active');
-        setTimeout(() => tweenBtn.classList.remove('active'), 500);
-    });
+                newFrames.push({
+                    data: newData,
+                    delay: current.delay
+                });
+            }
 
-    stateManager.addEventListener(smoothAnimBtn, 'click', () => {
-        smoothAnimation();
-        smoothAnimBtn.classList.add('active');
-        setTimeout(() => smoothAnimBtn.classList.remove('active'), 500);
-    });
+            for (let i = 0; i < stateManager.frames.length; i++) {
+                originalFrames[i].data.set(newFrames[i].data);
+            }
 
-    stateManager.addEventListener(clearBtn, 'click', () => {
-        if (stateManager.frames[stateManager.currentFrame]) {
-            stateManager.frames[stateManager.currentFrame].data.fill(0);
-            drawCanvas();
-            updateTimeline();
-            stateManager.hasChanges = true;
+            for (let i = 0; i < stateManager.frames.length; i++) {
+                stateManager.frames[i].data.set(newFrames[i].data);
+            }
+        }
+
+        stateManager.hasChanges = true;
+        stateManager.drawCanvas();
+        stateManager.updateTimeline();
+
+        if (statusEl) {
+            statusEl.textContent = `✓ Animation smoothed with ${numPasses} pass(es)`;
+            setTimeout(() => {
+                if (statusEl.textContent?.includes('smoothed')) {
+                    statusEl.textContent = `Frame ${stateManager.currentFrame+1}/${stateManager.frames.length} | ${stateManager.width}x${stateManager.height}`;
+                }
+            }, 3000);
         }
     });
 
-    stateManager.addEventListener(addBtn, 'click', () => {
-        const newData = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
-        for (let i = 3; i < newData.length; i+=4) newData[i] = 255;
-        stateManager.addFrame(newData, 10);
-        stateManager.currentFrame = stateManager.frames.length - 1;
-        drawCanvas();
-        updateTimeline();
-    });
-
-    stateManager.addEventListener(dupBtn, 'click', () => {
-        stateManager.duplicateFrame(stateManager.currentFrame);
-        stateManager.currentFrame = Math.min(stateManager.currentFrame + 1, stateManager.frames.length - 1);
-        drawCanvas();
-        updateTimeline();
-    });
-
-    stateManager.addEventListener(delBtn, 'click', () => {
-        stateManager.removeFrame(stateManager.currentFrame);
-        drawCanvas();
-        updateTimeline();
-    });
-
-    // === DELAY ===
-    stateManager.addEventListener(delayInput, 'change', () => {
-        if (stateManager.frames[stateManager.currentFrame]) {
-            stateManager.setFrameDelay(stateManager.currentFrame, parseInt(delayInput.value));
-            updateTimeline();
-        }
-    });
-
-    // === SAVE ===
-    const saveBtn = document.getElementById('gif-save');
-    stateManager.addEventListener(saveBtn, 'click', () => {
+    // Save
+    document.getElementById('gif-save')?.addEventListener('click', () => {
         const framesData = stateManager.frames.map(f => ({
             data: Array.from(f.data),
             width: stateManager.width,
@@ -2290,602 +2613,73 @@ function initGifEditorEnhanced(stateManager) {
         }
     });
 
-    // === CLOSE ===
-    const closeBtn = document.getElementById('gif-editor-close');
-    stateManager.addEventListener(closeBtn, 'click', () => {
+    // Close
+    document.getElementById('gif-editor-close')?.addEventListener('click', () => {
         stateManager.cleanup();
         modal.remove();
         window.GifEditorState = null;
     });
 
-    // === LOAD GIF DATA ===
-    function loadGifData(gifData) {
-        console.log('[GIF] loadGifData called');
-        if (stateManager.isLoading) return;
-        stateManager.isLoading = true;
-        if (previewInterval) stopPreview();
-        stateManager.playSpeed = 1.0;
-        if (speedSlider) speedSlider.value = '1';
-        if (speedValue) speedValue.textContent = '1.00x';
-        stateManager.zoom = 1;
-        if (zoomLevel) zoomLevel.textContent = '100%';
-
-        if (!gifData.frames || gifData.frames.length === 0) {
-            createEmptyGif();
-            stateManager.isLoading = false;
-            return;
-        }
-
-        stateManager.width = gifData.width;
-        stateManager.height = gifData.height;
-        stateManager.frames = [];
-
-        for (let i = 0; i < gifData.frames.length; i++) {
-            const srcFrame = gifData.frames[i];
-            let byteData;
-            if (srcFrame.data instanceof Uint8Array || srcFrame.data instanceof Uint8ClampedArray) {
-                byteData = new Uint8ClampedArray(srcFrame.data);
-            } else if (Array.isArray(srcFrame.data)) {
-                byteData = new Uint8ClampedArray(srcFrame.data);
-            } else { continue; }
-
-            const expectedSize = stateManager.width * stateManager.height * 4;
-            if (byteData.length !== expectedSize && byteData.length === stateManager.width * stateManager.height) {
-                const converted = new Uint8ClampedArray(expectedSize);
-                for (let j = 0; j < byteData.length; j++) {
-                    const pixel = byteData[j];
-                    converted[j*4] = (pixel>>16)&0xFF;
-                    converted[j*4+1] = (pixel>>8)&0xFF;
-                    converted[j*4+2] = pixel&0xFF;
-                    converted[j*4+3] = (pixel>>24)&0xFF;
-                }
-                byteData = converted;
-            }
-            stateManager.frames.push({ data: byteData, delay: srcFrame.delay || 10 });
-        }
-
-        if (stateManager.frames.length === 0) {
-            createEmptyGif();
-            stateManager.isLoading = false;
-            return;
-        }
-
-        stateManager.currentFrame = 0;
-        drawCanvas();
-        updateTimeline();
-        if (statusEl) statusEl.textContent = `Loaded ${stateManager.frames.length} frames, ${stateManager.width}x${stateManager.height}`;
-        stateManager.isLoading = false;
-    }
-
-    function createEmptyGif() {
-        if (previewInterval) stopPreview();
-        stateManager.playSpeed = 1.0;
-        if (speedSlider) speedSlider.value = '1';
-        if (speedValue) speedValue.textContent = '1.00x';
-        stateManager.zoom = 1;
-        if (zoomLevel) zoomLevel.textContent = '100%';
-        stateManager.width = 128;
-        stateManager.height = 128;
-        stateManager.frames = [];
-        for (let i = 0; i < 2; i++) {
-            const data = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
-            for (let j = 0; j < data.length; j += 4) {
-                data[j] = 255; data[j+1] = 192; data[j+2] = 203; data[j+3] = 255;
-            }
-            stateManager.frames.push({ data, delay: 10 });
-        }
-        stateManager.currentFrame = 0;
-        drawCanvas();
-        updateTimeline();
-        if (statusEl) statusEl.textContent = `New GIF: ${stateManager.frames.length} frames, ${stateManager.width}x${stateManager.height}`;
-    }
-
-    // === SETUP TRACE PANEL ===
-    function setupTracePanel() {
-        const existingPanel = document.getElementById('trace-panel');
-        if (existingPanel) existingPanel.remove();
-
-        const trace = stateManager.traceState;
-        trace.image = null;
-        trace.frames = null;
-        trace.currentFrame = 0;
-        trace.visible = true;
-        trace.opacity = 0.5;
-        trace.scale = 1.0;
-        trace.offsetX = 0;
-        trace.offsetY = 0;
-        if (trace.animationInterval) {
-            clearInterval(trace.animationInterval);
-            trace.animationInterval = null;
-        }
-
-        const panel = document.createElement('div');
-        panel.id = 'trace-panel';
-        panel.className = 'trace-panel';
-        panel.innerHTML = `
-        <div class="trace-panel-header">
-            <span class="trace-panel-title">🖼️ Trace Reference</span>
-            <button class="trace-panel-close" id="trace-panel-close">✕</button>
-        </div>
-        <div class="trace-preview" id="trace-preview">
-            <span style="color: #a6adc8; font-size: 11px;">No reference loaded</span>
-        </div>
-        <div class="trace-slider">
-            <label>Opacity: <span id="trace-opacity-value">50</span>%</label>
-            <input type="range" id="trace-opacity-slider" min="0" max="100" value="50">
-        </div>
-        <div class="trace-slider">
-            <label>Scale: <span id="trace-scale-value">100</span>%</label>
-            <input type="range" id="trace-scale-slider" min="25" max="200" value="100">
-        </div>
-        <div class="trace-checkbox">
-            <input type="checkbox" id="trace-visible-checkbox" checked>
-            <label>Show reference</label>
-        </div>
-        <div class="ref-timeline-container" id="ref-timeline-container" style="display:none">
-            <div class="ref-timeline-header">
-                <span>🎞️ GIF Frames</span>
-                <div class="ref-timeline-controls">
-                    <button id="ref-prev-frame">◀</button>
-                    <span id="ref-frame-info">1/1</span>
-                    <button id="ref-next-frame">▶</button>
-                    <label><input type="checkbox" id="ref-animate"> Auto</label>
-                </div>
-            </div>
-            <div id="ref-timeline" class="ref-timeline"></div>
-        </div>
-        <div class="divider"></div>
-        <div class="trace-load-buttons">
-            <button id="trace-load-image" class="btn-secondary">🖼️ Load Image</button>
-            <button id="trace-load-gif" class="btn-secondary">🎞️ Load GIF</button>
-        </div>
-        <button id="trace-reset-btn" class="btn-secondary" style="width:100%; margin-top:8px; padding:4px;">⟳ Reset Position</button>
-        <div style="font-size: 9px; color: #6c7086; margin-top: 8px; text-align: center;">💡 Drag image to move | Shift+Scroll to scale</div>
-    `;
-        modal.appendChild(panel);
-
-        // === ФУНКЦИИ ДЛЯ РАБОТЫ С TRACE ===
-        function updatePreview() {
-            const previewDiv = document.getElementById('trace-preview');
-            if (!previewDiv) return;
-            if (trace.image && trace.image.complete && trace.image.naturalWidth > 0) {
-                previewDiv.innerHTML = `<img src="${trace.image.src}" style="max-width:100%; max-height:100%; object-fit:contain;">`;
-            } else {
-                previewDiv.innerHTML = '<span style="color: #a6adc8; font-size: 11px;">No reference loaded</span>';
-            }
-        }
-
-        function updateTimelineUI() {
-            const container = document.getElementById('ref-timeline');
-            const infoSpan = document.getElementById('ref-frame-info');
-            if (!container || !trace.frames) {
-                const timelineContainer = document.getElementById('ref-timeline-container');
-                if (timelineContainer) timelineContainer.style.display = 'none';
-                return;
-            }
-
-            container.innerHTML = '';
-            trace.frames.forEach((frame, idx) => {
-                const div = document.createElement('div');
-                div.className = 'ref-frame';
-                if (idx === trace.currentFrame) div.classList.add('active');
-                const fcanvas = document.createElement('canvas');
-                fcanvas.width = 30;
-                fcanvas.height = 30;
-                const fctx = fcanvas.getContext('2d');
-                if (frame.imageData) {
-                    fctx.putImageData(frame.imageData, 0, 0);
-                }
-                div.appendChild(fcanvas);
-                stateManager.addEventListener(div, 'click', () => {
-                    if (trace.animationInterval) clearInterval(trace.animationInterval);
-                    trace.currentFrame = idx;
-                    updateImageFromFrames();
-                    updateTimelineUI();
-                    drawCanvas();
-                });
-                container.appendChild(div);
-            });
-            if (infoSpan) infoSpan.textContent = `${trace.currentFrame+1}/${trace.frames.length}`;
-            const timelineContainer = document.getElementById('ref-timeline-container');
-            if (timelineContainer) timelineContainer.style.display = 'block';
-        }
-
-        function updateImageFromFrames() {
-            const frames = trace.frames;
-            if (!frames || !frames[trace.currentFrame]) return;
-
-            const frame = frames[trace.currentFrame];
-            if (frame.imageData) {
-                const fcanvas = document.createElement('canvas');
-                fcanvas.width = frame.imageData.width;
-                fcanvas.height = frame.imageData.height;
-                const fctx = fcanvas.getContext('2d');
-                fctx.putImageData(frame.imageData, 0, 0);
-
-                const img = new Image();
-                img.onload = () => {
-                    if (!document.getElementById('trace-panel')) return;
-                    trace.image = img;
-                    updatePreview();
-                    drawCanvas();
-                };
-                img.onerror = () => {
-                    console.error('[Trace] Failed to load image from frame');
-                };
-                img.src = fcanvas.toDataURL();
-            }
-        }
-
-        function startAnimation() {
-            if (trace.animationInterval) clearInterval(trace.animationInterval);
-            if (!trace.frames || trace.frames.length <= 1) return;
-            trace.animationInterval = setInterval(() => {
-                if (!document.getElementById('trace-panel')) {
-                    clearInterval(trace.animationInterval);
-                    trace.animationInterval = null;
-                    return;
-                }
-                trace.currentFrame = (trace.currentFrame + 1) % trace.frames.length;
-                updateImageFromFrames();
-                updateTimelineUI();
-            }, 100);
-        }
-
-        function stopAnimation() {
-            if (trace.animationInterval) {
-                clearInterval(trace.animationInterval);
-                trace.animationInterval = null;
-            }
-        }
-
-        // === ЗАГРУЗКА РЕФЕРЕНСА ===
-        function loadReference(type) {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = type === 'gif' ? 'image/gif' : 'image/*';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                if (!document.getElementById('trace-panel')) {
-                    if (statusEl) statusEl.textContent = '⚠️ Trace panel closed';
-                    return;
-                }
-
-                if (type === 'gif' && file.name.toLowerCase().endsWith('.gif')) {
-                    if (statusEl) statusEl.textContent = `⏳ Loading ${file.name}...`;
-
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        try {
-                            const arrayBuffer = ev.target.result;
-                            const bytes = new Uint8Array(arrayBuffer);
-                            const message = { data: Array.from(bytes) };
-
-                            window._traceGifCallback = function(result) {
-                                console.log('[Trace] Callback received, frames:', result.frames?.length);
-
-                                if (!document.getElementById('trace-panel')) {
-                                    console.log('[Trace] Panel closed, ignoring result');
-                                    return;
-                                }
-
-                                if (result.error) {
-                                    if (statusEl) statusEl.textContent = `❌ ${result.error}`;
-                                    return;
-                                }
-
-                                if (!result.frames || result.frames.length === 0) {
-                                    if (statusEl) statusEl.textContent = `❌ No frames in GIF`;
-                                    return;
-                                }
-
-                                const frames = result.frames.map(f => {
-                                    let data = f.data;
-                                    if (Array.isArray(data)) {
-                                        data = new Uint8ClampedArray(data);
-                                    }
-                                    return {
-                                        imageData: new ImageData(data, result.width, result.height),
-                                        delay: f.delay || 10
-                                    };
-                                });
-
-                                trace.frames = frames;
-                                trace.currentFrame = 0;
-
-                                const firstFrame = frames[0];
-                                if (firstFrame) {
-                                    const tempCanvas = document.createElement('canvas');
-                                    tempCanvas.width = firstFrame.imageData.width;
-                                    tempCanvas.height = firstFrame.imageData.height;
-                                    const tempCtx = tempCanvas.getContext('2d');
-                                    tempCtx.putImageData(firstFrame.imageData, 0, 0);
-                                    const dataUrl = tempCanvas.toDataURL('image/png');
-
-                                    const img = new Image();
-                                    img.onload = function() {
-                                        console.log('[Trace] ✓ Image loaded successfully');
-                                        if (!document.getElementById('trace-panel')) return;
-                                        trace.image = img;
-                                        trace.scale = 1.0;
-                                        updatePreview();
-
-                                        // МНОГОКРАТНАЯ ПЕРЕРИСОВКА
-                                        drawCanvas();
-                                        setTimeout(() => {
-                                            drawCanvas();
-                                        }, 50);
-                                        setTimeout(() => {
-                                            drawCanvas();
-                                        }, 200);
-                                        setTimeout(() => {
-                                            drawCanvas();
-                                        }, 500);
-
-                                        if (statusEl) {
-                                            statusEl.textContent = `✓ Loaded GIF: ${frames.length} frames, ${result.width}x${result.height}`;
-                                        }
-                                    };
-                                    img.onerror = function(err) {
-                                        console.error('[Trace] Image LOAD ERROR:', err);
-                                        if (statusEl) statusEl.textContent = `❌ Failed to render GIF`;
-                                    };
-                                    img.src = dataUrl;
-                                }
-
-                                updateTimelineUI();
-                                if (frames.length > 1) {
-                                    const animateCheckbox = document.getElementById('ref-animate');
-                                    if (animateCheckbox) animateCheckbox.checked = true;
-                                    startAnimation();
-                                }
-                            };
-
-                            const jsonData = JSON.stringify(message);
-                            console.log('[Trace] Sending parse request');
-                            EditorAPI.send(`trace:parse_gif:${jsonData}`);
-
-                        } catch (error) {
-                            console.error('[Trace] Error:', error);
-                            if (statusEl) statusEl.textContent = `❌ Error: ${error.message}`;
-                        }
-                    };
-                    reader.onerror = () => {
-                        if (statusEl) statusEl.textContent = `❌ Failed to read file: ${file.name}`;
-                    };
-                    reader.readAsArrayBuffer(file);
-                } else {
-                    // Static image
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        const img = new Image();
-                        img.onload = () => {
-                            if (!document.getElementById('trace-panel')) return;
-                            trace.image = img;
-                            trace.frames = null;
-                            trace.currentFrame = 0;
-                            updatePreview();
-                            const timelineContainer = document.getElementById('ref-timeline-container');
-                            if (timelineContainer) timelineContainer.style.display = 'none';
-
-                            drawCanvas();
-                            setTimeout(() => {
-                                drawCanvas();
-                            }, 50);
-
-                            if (statusEl) statusEl.textContent = `✓ Loaded image: ${file.name}`;
-                        };
-                        img.onerror = () => {
-                            if (statusEl) statusEl.textContent = `❌ Failed to load ${file.name}`;
-                        };
-                        img.src = ev.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-            input.click();
-        }
-
-        // === ОБРАБОТЧИКИ СОБЫТИЙ ===
-        const closeTraceBtn = document.getElementById('trace-panel-close');
-        stateManager.addEventListener(closeTraceBtn, 'click', () => {
-            if (trace.animationInterval) {
-                clearInterval(trace.animationInterval);
-                trace.animationInterval = null;
-            }
-            panel.remove();
-            drawCanvas();
-        });
-
-        stateManager.addEventListener(document.getElementById('trace-load-image'), 'click', () => loadReference('image'));
-        stateManager.addEventListener(document.getElementById('trace-load-gif'), 'click', () => loadReference('gif'));
-
-        stateManager.addEventListener(document.getElementById('trace-reset-btn'), 'click', () => {
-            trace.offsetX = 0;
-            trace.offsetY = 0;
-            trace.scale = 1;
-            const slider = document.getElementById('trace-scale-slider');
-            if (slider) {
-                slider.value = 100;
-                document.getElementById('trace-scale-value').textContent = '100';
-            }
-            updatePreview();
-            drawCanvas();
-            if (statusEl) statusEl.textContent = 'Reference reset';
-        });
-
-        stateManager.addEventListener(document.getElementById('trace-opacity-slider'), 'input', (e) => {
-            trace.opacity = e.target.value / 100;
-            document.getElementById('trace-opacity-value').textContent = e.target.value;
-            drawCanvas();
-        });
-
-        stateManager.addEventListener(document.getElementById('trace-scale-slider'), 'input', (e) => {
-            trace.scale = e.target.value / 100;
-            document.getElementById('trace-scale-value').textContent = e.target.value;
-            drawCanvas();
-        });
-
-        stateManager.addEventListener(document.getElementById('trace-visible-checkbox'), 'change', (e) => {
-            trace.visible = e.target.checked;
-            drawCanvas();
-        });
-
-        stateManager.addEventListener(document.getElementById('ref-prev-frame'), 'click', () => {
-            if (trace.frames && trace.frames.length > 0) {
-                if (trace.animationInterval) clearInterval(trace.animationInterval);
-                trace.currentFrame = Math.max(0, trace.currentFrame - 1);
-                updateImageFromFrames();
-                updateTimelineUI();
-            }
-        });
-
-        stateManager.addEventListener(document.getElementById('ref-next-frame'), 'click', () => {
-            if (trace.frames && trace.frames.length > 0) {
-                if (trace.animationInterval) clearInterval(trace.animationInterval);
-                trace.currentFrame = Math.min(trace.frames.length - 1, trace.currentFrame + 1);
-                updateImageFromFrames();
-                updateTimelineUI();
-            }
-        });
-
-        stateManager.addEventListener(document.getElementById('ref-animate'), 'change', (e) => {
-            if (e.target.checked) startAnimation();
-            else stopAnimation();
-        });
-
-        // === DRAG ДЛЯ ПЕРЕМЕЩЕНИЯ ТРАССИРОВКИ ===
-        let isDraggingRef = false;
-        let dragStartX = 0, dragStartY = 0;
-        let refStartX = 0, refStartY = 0;
-
-        stateManager.addEventListener(canvas, 'mousedown', (e) => {
-            if (e.shiftKey && trace.image) {
-                isDraggingRef = true;
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
-                refStartX = trace.offsetX;
-                refStartY = trace.offsetY;
-                canvas.style.cursor = 'grabbing';
-                e.preventDefault();
-            }
-        });
-
-        stateManager.addEventListener(canvas, 'mousemove', (e) => {
-            if (isDraggingRef) {
-                const dx = (e.clientX - dragStartX) / stateManager.zoom;
-                const dy = (e.clientY - dragStartY) / stateManager.zoom;
-                trace.offsetX = refStartX + dx;
-                trace.offsetY = refStartY + dy;
-                drawCanvas();
-            }
-        });
-
-        stateManager.addEventListener(canvas, 'mouseup', () => {
-            isDraggingRef = false;
-            canvas.style.cursor = 'crosshair';
-        });
-
-        stateManager.addEventListener(canvas, 'wheel', (e) => {
-            if (e.shiftKey && trace.image) {
-                e.preventDefault();
-                const delta = e.deltaY > 0 ? -0.05 : 0.05;
-                trace.scale = Math.max(0.25, Math.min(3, trace.scale + delta));
-                const slider = document.getElementById('trace-scale-slider');
-                if (slider) {
-                    slider.value = trace.scale * 100;
-                    document.getElementById('trace-scale-value').textContent = Math.round(trace.scale * 100);
-                }
-                drawCanvas();
-                if (statusEl) statusEl.textContent = `Scale: ${Math.round(trace.scale * 100)}%`;
-            }
-        });
-
-        panel.style.bottom = '160px';
-        panel.style.right = '20px';
-
-        console.log('[Trace] Panel setup complete');
-    }
-
-    // === TRACE REFERENCE BUTTON ===
-    const traceBtn = document.getElementById('gif-trace-reference');
-    stateManager.addEventListener(traceBtn, 'click', () => setupTracePanel());
-
-    // === ФИКС: ПРИНУДИТЕЛЬНАЯ ПЕРЕРИСОВКА TRACE ===
-    // Сохраняем ссылку на trace
-    const traceRef = stateManager.traceState;
-
-    // Функция для принудительной перерисовки trace
-    window.forceDrawTrace = function() {
-        const trace = stateManager.traceState;
-        if (!trace) {
-            console.log('[Trace] No trace state');
-            return;
-        }
-
-        const mainCanvas = document.getElementById('gif-main-canvas');
-        if (!mainCanvas) {
-            console.log('[Trace] Canvas not found');
-            return;
-        }
-
-        if (!trace.image) {
-            console.log('[Trace] No image');
-            return;
-        }
-
-        if (!trace.image.complete || trace.image.naturalWidth === 0) {
-            console.log('[Trace] Image not loaded');
-            return;
-        }
-
-        console.log('[Trace] Force drawing! Image:', trace.image.width, 'x', trace.image.height);
-
-        const ctx = mainCanvas.getContext('2d');
-        const zoom = stateManager.zoom || 1;
-
-        ctx.save();
-        ctx.globalAlpha = trace.opacity || 0.5;
-
-        const refW = trace.image.width * (trace.scale || 1.0) * zoom;
-        const refH = trace.image.height * (trace.scale || 1.0) * zoom;
-        const refX = (trace.offsetX || 0) * zoom;
-        const refY = (trace.offsetY || 0) * zoom;
-
-        try {
-            ctx.drawImage(trace.image, refX, refY, refW, refH);
-            console.log('[Trace] ✓ DRAWN!');
-        } catch(e) {
-            console.error('[Trace] Draw error:', e);
-        }
-
-        ctx.restore();
-    };
-
-    // Добавляем функцию для получения состояния
-    window.getTraceState = function() {
-        return stateManager.traceState;
-    };
-
-    console.log('[Trace] Debug functions added: window.forceDrawTrace(), window.getTraceState()');
-
-    // === INIT ===
-    window.GifEditorState = stateManager;
-    window.GifEditorState.loadGif = loadGifData;
-    createEmptyGif();
-    setTimeout(() => EditorAPI.send(`gif:load:${stateManager.ponyName}:${stateManager.spriteName}`), 100);
-    updateCurrentColorDisplay();
+    // === ЗАГРУЗКА GIF ===
+    stateManager.createEmptyGif();
+
+    setTimeout(() => {
+        EditorAPI.send(`gif:load:${stateManager.ponyName}:${stateManager.spriteName}`);
+    }, 100);
 
     stateManager.resizeHandler = () => {
-        if (stateManager.traceState.image) {
-            drawCanvas();
-        }
+        stateManager.drawCanvas();
     };
     window.addEventListener('resize', stateManager.resizeHandler);
 
-    console.log('[GIF] Editor initialized successfully');
+    console.log('[GIF] Editor initialized');
 }
 
-console.log('[PonyEditor] Loaded with enhanced GIF editor, pony creation, GIF creation, resize, smooth edges, tweening, and temporal smoothing');
+// === ФУНКЦИЯ РЕСАЙЗА CANVAS ===
+function resizeGif(stateManager, newWidth, newHeight, statusEl) {
+    if (!stateManager.frames || stateManager.frames.length === 0) return;
+
+    const oldWidth = stateManager.width;
+    const oldHeight = stateManager.height;
+
+    if (newWidth === oldWidth && newHeight === oldHeight) {
+        if (statusEl) statusEl.textContent = 'Size unchanged';
+        return;
+    }
+
+    const scaleX = newWidth / oldWidth;
+    const scaleY = newHeight / oldHeight;
+
+    for (let f = 0; f < stateManager.frames.length; f++) {
+        const oldData = stateManager.frames[f].data;
+        const newData = new Uint8ClampedArray(newWidth * newHeight * 4);
+        newData.fill(0);
+
+        for (let y = 0; y < newHeight; y++) {
+            for (let x = 0; x < newWidth; x++) {
+                const srcX = Math.floor(x / scaleX);
+                const srcY = Math.floor(y / scaleY);
+
+                if (srcX >= 0 && srcX < oldWidth && srcY >= 0 && srcY < oldHeight) {
+                    const srcIdx = (srcY * oldWidth + srcX) * 4;
+                    const dstIdx = (y * newWidth + x) * 4;
+
+                    newData[dstIdx] = oldData[srcIdx];
+                    newData[dstIdx + 1] = oldData[srcIdx + 1];
+                    newData[dstIdx + 2] = oldData[srcIdx + 2];
+                    newData[dstIdx + 3] = oldData[srcIdx + 3];
+                }
+            }
+        }
+
+        stateManager.frames[f].data = newData;
+    }
+
+    stateManager.width = newWidth;
+    stateManager.height = newHeight;
+    stateManager.hasChanges = true;
+
+    if (statusEl) statusEl.textContent = `✅ Resized to ${newWidth}x${newHeight}`;
+}
+
+console.log('[PonyEditor] Full version with trace panel loaded');

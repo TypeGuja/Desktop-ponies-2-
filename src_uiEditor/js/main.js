@@ -1,15 +1,13 @@
-// src_uiEditor/js/main.js - ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ВЕРСИЯ
+// src_uiEditor/js/main.js - БЕЗ TRACE
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[MAIN] Setting up forced handlers');
-    console.log('Pony Editor initializing...');
+    console.log('[MAIN] Pony Editor initializing...');
 
     PonyList.init();
     PonyEditor.init();
 
     EditorAPI.loadPonies();
 
-    // Кнопка сохранения
     const saveBtn = document.getElementById('btn-save');
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
@@ -33,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Кнопка создания нового пони
     const newPonyBtn = document.getElementById('btn-new-pony');
     if (newPonyBtn) {
         newPonyBtn.addEventListener('click', () => {
@@ -57,7 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Кнопка закрытия
     const closeBtn = document.getElementById('btn-close');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
@@ -74,7 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Получение сообщений от Rust
     window.editorReceive = (message) => {
         console.log('[Editor] Received from Rust:', message.substring(0, 200));
         try {
@@ -115,19 +110,26 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('[Editor] GIF DATA RECEIVED - frames:', data.frames?.length);
                     console.log('[Editor] Sprite name:', data.sprite_name);
                     console.log('[Editor] Pony name:', data.pony_name);
-                    console.log('[Editor] First frame data type:', typeof data.frames?.[0]?.data);
-                    console.log('[Editor] First frame data length:', data.frames?.[0]?.data?.length);
 
-                    // Обновляем кэш BehaviorEditor
+                    if (window.GifEditorState) {
+                        console.log('[Editor] Found active GIF editor, loading data...');
+                        if (window.GifEditorState.loadGif) {
+                            window.GifEditorState.loadGif(data);
+                        } else {
+                            window._pendingGifData = data;
+                            console.log('[Editor] Stored pending GIF data');
+                        }
+                    } else {
+                        window._pendingGifData = data;
+                        console.log('[Editor] No active editor, stored for later');
+                    }
+
                     if (BehaviorEditor && data.pony_name) {
                         const cacheKey = `${data.pony_name}/${data.sprite_name}`;
                         BehaviorEditor.gifCache.set(cacheKey, data);
                         console.log('[Editor] Cached GIF for:', cacheKey);
 
-                        // Находим все превью и обновляем их
                         const previews = document.querySelectorAll('.sprite-preview');
-                        console.log('[Editor] Found previews:', previews.length);
-
                         previews.forEach(preview => {
                             const previewSprite = preview.dataset.sprite;
                             if (previewSprite === data.sprite_name) {
@@ -138,23 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         });
-                    }
-
-                    // Обновляем встроенный GIF редактор если он открыт
-                    if (window.GifEditorState && window.GifEditorState.loadGif) {
-                        console.log('[Editor] Passing GIF data to inline editor');
-                        window.GifEditorState.loadGif(data);
-                    }
-                    break;
-                case 'trace_gif_parsed':
-                    console.log('[Editor] Trace GIF parsed, frames:', data.frames?.length);
-                    if (data.error) {
-                        showStatus(`❌ Trace error: ${data.error}`, true);
-                        return;
-                    }
-                    if (window._traceGifCallback) {
-                        console.log('[Editor] Calling trace callback');
-                        window._traceGifCallback(data);
                     }
                     break;
                 case 'gif_list':

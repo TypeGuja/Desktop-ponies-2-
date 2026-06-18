@@ -1,3 +1,4 @@
+// src_uiEditor/js/interaction_editor.js
 const InteractionEditor = {
     render(interactions) {
         if (!interactions || interactions.length === 0) {
