@@ -13,7 +13,9 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Ponies/Aloe/stand_aloe_right.gif" beforeDir="false" afterPath="$PROJECT_DIR$/Ponies/Aloe/stand_aloe_right.gif" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -330,6 +332,7 @@
       <workItem from="1781711446345" duration="7882000" />
       <workItem from="1781778672689" duration="1375000" />
       <workItem from="1781803766204" duration="3491000" />
+      <workItem from="1781852983693" duration="6798000" />
     </task>
     <servers />
   </component>
