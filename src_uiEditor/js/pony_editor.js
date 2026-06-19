@@ -558,12 +558,9 @@ const PonyEditor = {
     },
 
     // ============================================================
-    // ФУНКЦИОНАЛ ТРЕЙСА В РЕДАКТОРЕ GIF (ПРАВЫЙ НИЖНИЙ УГОЛ)
+    // ФУНКЦИОНАЛ ТРЕЙСА - ИСПРАВЛЕННАЯ ВЕРСИЯ
     // ============================================================
 
-    /**
-     * Открывает панель трейса в правом нижнем углу редактора GIF
-     */
     showTracePanel: function() {
         const state = window.GifEditorState;
         if (!state || !state.modal) {
@@ -571,17 +568,21 @@ const PonyEditor = {
             return;
         }
 
-        // Проверяем, не открыта ли уже панель
         if (document.getElementById('trace-panel')) {
-            document.getElementById('trace-panel').remove();
+            this.closeTracePanel();
             return;
         }
 
         const modal = state.modal;
-        const canvasContainer = modal.querySelector('div[style*="flex: 1; display: flex; justify-content: center;"]') ||
-            modal.querySelector('div[style*="position: relative;"]') ||
-            modal.querySelector('div[style*="flex:1"]') ||
-            modal.querySelector('div[style*="display: flex;"][style*="justify-content: center;"]');
+
+        // Находим контейнер с канвасом
+        let canvasContainer = modal.querySelector('.gif-canvas-wrapper');
+        if (!canvasContainer) {
+            canvasContainer = modal.querySelector('div[style*="flex: 1; display: flex; justify-content: center;"]') ||
+                modal.querySelector('div[style*="position: relative;"]') ||
+                modal.querySelector('div[style*="flex:1"]') ||
+                modal.querySelector('div[style*="display: flex;"][style*="justify-content: center;"]');
+        }
 
         if (!canvasContainer) {
             showStatus('❌ Cannot find canvas container', true);
@@ -589,81 +590,211 @@ const PonyEditor = {
         }
 
         canvasContainer.style.position = 'relative';
+        canvasContainer.style.display = 'flex';
+        canvasContainer.style.justifyContent = 'center';
+        canvasContainer.style.alignItems = 'center';
 
-        // Создаем канвас для рендеринга трейса (поверх основного)
+        const mainCanvas = document.getElementById('gif-main-canvas');
+        if (!mainCanvas) {
+            showStatus('❌ Main canvas not found', true);
+            return;
+        }
+
+        // Удаляем старый трейс-канвас
+        const oldTrace = document.getElementById('trace-render-canvas');
+        if (oldTrace) oldTrace.remove();
+
+        // Создаем канвас для трейса ПОД основным
         const traceCanvas = document.createElement('canvas');
         traceCanvas.id = 'trace-render-canvas';
         traceCanvas.style.cssText = `
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 50;
-            image-rendering: crisp-edges;
-            image-rendering: pixelated;
-        `;
-        canvasContainer.appendChild(traceCanvas);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 1;
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        border: 1px solid rgba(203, 166, 247, 0.1);
+        border-radius: 8px;
+    `;
 
-        // Создаем панель трейса в правом нижнем углу
+        canvasContainer.insertBefore(traceCanvas, mainCanvas);
+
+        // Основной канвас поверх
+        mainCanvas.style.position = 'relative';
+        mainCanvas.style.zIndex = '2';
+
+        // Панель управления
         const panel = document.createElement('div');
         panel.id = 'trace-panel';
         panel.style.cssText = `
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            z-index: 150;
-            background: rgba(30,30,46,0.92);
-            border: 1px solid #313244;
-            border-radius: 12px;
-            padding: 14px 16px;
-            min-width: 280px;
-            max-width: 320px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            pointer-events: all;
-            font-size: 12px;
-        `;
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 150;
+        background: rgba(30,30,46,0.95);
+        border: 1px solid #45475a;
+        border-radius: 16px;
+        padding: 16px 18px;
+        min-width: 340px;
+        max-width: 420px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+        pointer-events: all;
+        font-size: 12px;
+        user-select: none;
+        transition: all 0.2s ease;
+    `;
 
         panel.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="color: #cba6f7; font-weight: bold; font-size: 13px;">🎯 Trace</span>
-                <div>
-                    <button id="trace-load-btn" class="btn-secondary" style="font-size: 11px; padding: 3px 10px;">📂 Load</button>
-                    <button id="trace-close-btn" class="btn-secondary" style="font-size: 11px; padding: 3px 10px; color: #f38ba8;">✕</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="color: #cba6f7; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+                <span>🎯</span> Trace Reference
+            </span>
+            <div style="display: flex; gap: 6px;">
+                <button id="trace-load-file" class="btn-secondary" style="font-size: 11px; padding: 4px 12px; background: #313244; border: 1px solid #45475a; border-radius: 6px; color: #cdd6f4; cursor: pointer; transition: all 0.2s;">
+                    📁 Load GIF
+                </button>
+                <button id="trace-use-main" class="btn-primary" style="font-size: 11px; padding: 4px 12px; background: #cba6f7; border: none; border-radius: 6px; color: #1e1e2e; cursor: pointer; font-weight: bold; transition: all 0.2s;">
+                    📋 Main GIF
+                </button>
+                <button id="trace-close-btn" class="btn-secondary" style="font-size: 11px; padding: 4px 12px; background: #313244; border: 1px solid #45475a; border-radius: 6px; color: #f38ba8; cursor: pointer; transition: all 0.2s;">
+                    ✕
+                </button>
+            </div>
+        </div>
+        
+        <div id="trace-file-status" style="font-size: 10px; color: #a6adc8; margin-bottom: 10px; padding: 4px 8px; background: #11111b; border-radius: 6px; border: 1px solid #313244; display: flex; justify-content: space-between;">
+            <span id="trace-file-name">No file loaded</span>
+            <span id="trace-file-info">—</span>
+        </div>
+        
+        <div style="display: flex; gap: 14px; margin-bottom: 12px;">
+            <div style="flex: 1;">
+                <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Size</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="range" id="trace-size" min="0.1" max="3" step="0.05" value="1" style="flex: 1; height: 4px; background: #313244; border-radius: 2px; outline: none; -webkit-appearance: none; appearance: none;">
+                    <span id="trace-size-value" style="font-size: 10px; color: #cba6f7; font-family: monospace; min-width: 36px; text-align: right;">100%</span>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 12px; margin-bottom: 10px;">
-                <div style="flex: 1;">
-                    <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 2px;">Size</label>
-                    <input type="range" id="trace-size" min="0.1" max="3" step="0.05" value="1" style="width: 100%; height: 4px;">
-                    <span id="trace-size-value" style="font-size: 9px; color: #cba6f7; font-family: monospace;">100%</span>
-                </div>
-                <div style="flex: 1;">
-                    <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 2px;">Opacity</label>
-                    <input type="range" id="trace-opacity" min="0.05" max="1" step="0.01" value="0.4" style="width: 100%; height: 4px;">
-                    <span id="trace-opacity-value" style="font-size: 9px; color: #cba6f7; font-family: monospace;">40%</span>
+            <div style="flex: 1;">
+                <label style="font-size: 10px; color: #a6adc8; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px;">Opacity</label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="range" id="trace-opacity" min="0.05" max="1" step="0.01" value="0.35" style="flex: 1; height: 4px; background: #313244; border-radius: 2px; outline: none; -webkit-appearance: none; appearance: none;">
+                    <span id="trace-opacity-value" style="font-size: 10px; color: #cba6f7; font-family: monospace; min-width: 36px; text-align: right;">35%</span>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-                <button id="trace-flip-h" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↔ H</button>
-                <button id="trace-flip-v" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↕ V</button>
-                <button id="trace-grid" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">📐</button>
-                <button id="trace-reset" class="btn-secondary" style="font-size: 10px; padding: 2px 8px;">↺</button>
-                <span style="color: #a6adc8; font-size: 10px; display: flex; align-items: center; margin-left: 4px;">
-                    Frames: <span id="trace-frame-count">0</span>
-                </span>
+        </div>
+        
+        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
+            <button id="trace-flip-h" class="trace-control-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer; transition: all 0.2s;">↔ Flip H</button>
+            <button id="trace-flip-v" class="trace-control-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer; transition: all 0.2s;">↕ Flip V</button>
+            <button id="trace-grid" class="trace-control-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer; transition: all 0.2s;">📐 Grid</button>
+            <button id="trace-reset" class="trace-control-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer; transition: all 0.2s;">↺ Reset</button>
+            <span style="color: #a6adc8; font-size: 10px; display: flex; align-items: center; margin-left: auto; gap: 4px;">
+                <span id="trace-frame-count">0</span> frames
+            </span>
+        </div>
+        
+        <div id="trace-frames-container" style="display: flex; gap: 6px; overflow-x: auto; padding: 6px 0; max-height: 80px; min-height: 60px; background: #11111b; border-radius: 8px; border: 1px solid #313244; align-items: center;">
+            <div style="color: #a6adc8; font-size: 11px; padding: 6px 12px; width: 100%; text-align: center;">Load a GIF or use Main GIF</div>
+        </div>
+        
+        <div id="trace-extra-controls" style="display: none; margin-top: 8px; border-top: 1px solid #313244; padding-top: 8px;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button id="trace-extract-all" class="trace-btn-extract" style="font-size: 10px; padding: 4px 12px; background: #1e1e2e; border: 1px solid #89b4fa; border-radius: 5px; color: #89b4fa; cursor: pointer; transition: all 0.2s;">
+                    📥 Extract All Frames
+                </button>
+                <button id="trace-extract-current" class="trace-btn-extract" style="font-size: 10px; padding: 4px 12px; background: #1e1e2e; border: 1px solid #89b4fa; border-radius: 5px; color: #89b4fa; cursor: pointer; transition: all 0.2s;">
+                    📥 Extract Current
+                </button>
+                <span style="font-size: 9px; color: #a6adc8;">(copy to main editor)</span>
             </div>
-            
-            <div id="trace-frames-container" style="display: flex; gap: 4px; overflow-x: auto; padding: 4px 0; max-height: 60px;">
-                <div style="color: #a6adc8; font-size: 11px; padding: 6px;">No trace loaded</div>
-            </div>
-        `;
+        </div>
+    `;
 
         canvasContainer.appendChild(panel);
+
+        // Стили
+        const style = document.createElement('style');
+        style.textContent = `
+        .trace-control-btn:hover {
+            background: #45475a;
+            border-color: #cba6f7;
+        }
+        .trace-control-btn.active {
+            border-color: #cba6f7;
+            background: rgba(203, 166, 247, 0.15);
+            box-shadow: 0 0 12px rgba(203, 166, 247, 0.1);
+        }
+        .trace-control-btn.active:hover {
+            background: rgba(203, 166, 247, 0.25);
+        }
+        #trace-frames-container::-webkit-scrollbar {
+            height: 4px;
+        }
+        #trace-frames-container::-webkit-scrollbar-track {
+            background: #1e1e2e;
+            border-radius: 2px;
+        }
+        #trace-frames-container::-webkit-scrollbar-thumb {
+            background: #45475a;
+            border-radius: 2px;
+        }
+        #trace-frames-container::-webkit-scrollbar-thumb:hover {
+            background: #cba6f7;
+        }
+        .trace-frame-item {
+            flex-shrink: 0;
+            cursor: pointer;
+            border: 2px solid #313244;
+            border-radius: 6px;
+            padding: 4px;
+            background: #0a0a0f;
+            transition: all 0.15s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 56px;
+        }
+        .trace-frame-item:hover {
+            border-color: #89b4fa;
+            transform: scale(1.05);
+        }
+        .trace-frame-item.active {
+            border-color: #cba6f7;
+            box-shadow: 0 0 16px rgba(203, 166, 247, 0.2);
+        }
+        .trace-frame-item canvas {
+            border-radius: 3px;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+        }
+        .trace-frame-label {
+            font-size: 8px;
+            color: #a6adc8;
+            margin-top: 2px;
+            font-family: monospace;
+        }
+        #trace-file-status.loaded {
+            border-color: #a6e3a1;
+        }
+        #trace-file-status.loaded #trace-file-name {
+            color: #a6e3a1;
+        }
+        .trace-btn-extract {
+            background: #1e1e2e !important;
+            border: 1px solid #89b4fa !important;
+            color: #89b4fa !important;
+        }
+        .trace-btn-extract:hover {
+            background: #313244 !important;
+        }
+    `;
+        document.head.appendChild(style);
+        panel._styleElement = style;
 
         // Состояние трейса
         const traceState = {
@@ -673,7 +804,7 @@ const PonyEditor = {
             width: 0,
             height: 0,
             size: 1,
-            opacity: 0.4,
+            opacity: 0.35,
             flipH: false,
             flipV: false,
             showGrid: false,
@@ -683,29 +814,460 @@ const PonyEditor = {
             animationId: null,
             frameDelay: 100,
             lastFrameTime: 0,
+            fileName: '',
+            _mainCanvas: mainCanvas,
+            _stateManager: state,
+            _resizeHandler: null,
+            _mainCanvasObserver: null,
+            _useMainGif: false,
+            _renderPending: false,
+            _forceUpdateCount: 0
         };
 
-        // Функция рендеринга трейса
+        window._traceState = traceState;
+
+        // === ФУНКЦИЯ ПРИНУДИТЕЛЬНОГО ОБНОВЛЕНИЯ ===
+        function forceUpdateTrace() {
+            console.log('[Trace] Force update trace, attempt:', traceState._forceUpdateCount++);
+
+            if (!state || !traceState) return;
+
+            const mainCanvas = document.getElementById('gif-main-canvas');
+            const traceCanvas = document.getElementById('trace-render-canvas');
+
+            if (mainCanvas && traceCanvas) {
+                // Принудительно устанавливаем размеры
+                const mainWidth = mainCanvas.width || mainCanvas.getBoundingClientRect().width || 128;
+                const mainHeight = mainCanvas.height || mainCanvas.getBoundingClientRect().height || 128;
+
+                traceCanvas.width = mainWidth;
+                traceCanvas.height = mainHeight;
+                traceCanvas.style.width = mainWidth + 'px';
+                traceCanvas.style.height = mainHeight + 'px';
+
+                // Убеждаемся что позиционирование правильное
+                traceCanvas.style.position = 'absolute';
+                traceCanvas.style.top = '50%';
+                traceCanvas.style.left = '50%';
+                traceCanvas.style.transform = 'translate(-50%, -50%)';
+                traceCanvas.style.zIndex = '1';
+                traceCanvas.style.pointerEvents = 'none';
+
+                // Обновляем state
+                if (traceState._mainCanvas) {
+                    traceState._mainCanvas = mainCanvas;
+                }
+            }
+
+            // Перерисовываем основной канвас
+            if (state.drawCanvas) {
+                state.drawCanvas();
+            }
+
+            // Перерисовываем трейс
+            renderTrace();
+
+            // Обновляем таймлайн
+            if (state.updateTimeline) {
+                state.updateTimeline();
+            }
+
+            // Принудительный reflow
+            if (mainCanvas) {
+                mainCanvas.getBoundingClientRect();
+            }
+        }
+
+        // === ФУНКЦИЯ ЗАГРУЗКИ ВНЕШНЕЙ GIF ПО ПУТИ ===
+        function loadExternalGif(file) {
+            if (!file) return;
+
+            // Пытаемся получить путь к файлу
+            let filePath = null;
+
+            if (file.path) {
+                filePath = file.path;
+            } else if (file.webkitRelativePath) {
+                filePath = file.webkitRelativePath;
+            }
+
+            console.log('[Trace] File path:', filePath);
+            const fileName = file.name;
+
+            if (filePath) {
+                const encodedPath = encodeURIComponent(filePath);
+                console.log('[Trace] Sending path to Rust:', encodedPath);
+
+                const tempHandler = function(msg) {
+                    try {
+                        const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
+                        if (data.type === 'trace_gif_data') {
+                            console.log('[Trace] Received decoded GIF from Rust, frames:', data.frames?.length);
+
+                            if (data.frames && data.frames.length > 0) {
+                                const frames = data.frames.map(f => ({
+                                    data: new Uint8ClampedArray(f.data),
+                                    delay: f.delay || 10
+                                }));
+                                applyTraceFrames(frames, data.width, data.height, fileName);
+                            } else {
+                                showStatus('❌ No frames in GIF', true);
+                            }
+
+                            if (window._originalEditorReceive) {
+                                window.editorReceive = window._originalEditorReceive;
+                                window._originalEditorReceive = null;
+                            }
+                        } else if (data.type === 'trace_gif_error') {
+                            showStatus('❌ Error decoding GIF: ' + (data.message || ''), true);
+                            if (window._originalEditorReceive) {
+                                window.editorReceive = window._originalEditorReceive;
+                                window._originalEditorReceive = null;
+                            }
+                        } else if (window._originalEditorReceive) {
+                            window._originalEditorReceive(msg);
+                        }
+                    } catch(e) {
+                        console.error('[Trace] Error in temp handler:', e);
+                        if (window._originalEditorReceive) {
+                            window._originalEditorReceive(msg);
+                        }
+                    }
+                };
+
+                window._originalEditorReceive = window.editorReceive;
+                window.editorReceive = tempHandler;
+
+                EditorAPI.send('trace:load_gif_path:' + encodedPath);
+
+                setTimeout(() => {
+                    if (window.editorReceive === tempHandler) {
+                        window.editorReceive = window._originalEditorReceive;
+                        window._originalEditorReceive = null;
+                        showStatus('❌ Timeout waiting for GIF decode', true);
+                    }
+                }, 30000);
+
+                return;
+            }
+
+            // Fallback: base64
+            console.log('[Trace] No path available, using base64 fallback');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const arrayBuffer = e.target.result;
+                    const bytes = new Uint8Array(arrayBuffer);
+
+                    let binary = '';
+                    for (let i = 0; i < bytes.length; i++) {
+                        binary += String.fromCharCode(bytes[i]);
+                    }
+                    const base64 = btoa(binary);
+
+                    const tempHandler = function(msg) {
+                        try {
+                            const data = typeof msg === 'string' ? JSON.parse(msg) : msg;
+                            if (data.type === 'trace_gif_data') {
+                                console.log('[Trace] Received decoded GIF from Rust, frames:', data.frames?.length);
+
+                                if (data.frames && data.frames.length > 0) {
+                                    const frames = data.frames.map(f => ({
+                                        data: new Uint8ClampedArray(f.data),
+                                        delay: f.delay || 10
+                                    }));
+                                    applyTraceFrames(frames, data.width, data.height, fileName);
+                                } else {
+                                    showStatus('❌ No frames in GIF', true);
+                                }
+
+                                if (window._originalEditorReceive) {
+                                    window.editorReceive = window._originalEditorReceive;
+                                    window._originalEditorReceive = null;
+                                }
+                            } else if (data.type === 'trace_gif_error') {
+                                showStatus('❌ Error decoding GIF: ' + (data.message || ''), true);
+                                if (window._originalEditorReceive) {
+                                    window.editorReceive = window._originalEditorReceive;
+                                    window._originalEditorReceive = null;
+                                }
+                            } else if (window._originalEditorReceive) {
+                                window._originalEditorReceive(msg);
+                            }
+                        } catch(e) {
+                            console.error('[Trace] Error in temp handler:', e);
+                            if (window._originalEditorReceive) {
+                                window._originalEditorReceive(msg);
+                            }
+                        }
+                    };
+
+                    window._originalEditorReceive = window.editorReceive;
+                    window.editorReceive = tempHandler;
+
+                    EditorAPI.send('trace:load_gif:' + base64);
+
+                } catch(e) {
+                    console.error('[Trace] Error loading GIF:', e);
+                    showStatus('❌ Error loading GIF: ' + e.message, true);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function applyTraceFrames(frames, width, height, fileName) {
+            console.log('[Trace] applyTraceFrames called, frames:', frames.length);
+
+            traceState.frames = frames;
+            traceState.width = width;
+            traceState.height = height;
+            traceState.currentFrame = 0;
+            traceState.loaded = true;
+            traceState.fileName = fileName || 'External GIF';
+            traceState.frameDelay = (frames[0]?.delay || 10) * 10;
+            traceState._useMainGif = false;
+            traceState._forceUpdateCount = 0;
+
+            const infoText = frames.length + ' frames, ' + width + '×' + height;
+            document.getElementById('trace-file-name').textContent = fileName || 'External GIF';
+            document.getElementById('trace-file-info').textContent = infoText;
+            document.getElementById('trace-file-status').classList.add('loaded');
+
+            // Обновляем UI с кадрами
+            PonyEditor._updateTraceUI(traceState, renderTrace);
+
+            // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ - множество попыток
+            setTimeout(function() { forceUpdateTrace(); }, 10);
+            setTimeout(function() { forceUpdateTrace(); }, 50);
+            setTimeout(function() { forceUpdateTrace(); }, 100);
+            setTimeout(function() { forceUpdateTrace(); }, 200);
+            setTimeout(function() { forceUpdateTrace(); }, 300);
+            setTimeout(function() { forceUpdateTrace(); }, 500);
+            setTimeout(function() { forceUpdateTrace(); }, 800);
+            setTimeout(function() { forceUpdateTrace(); }, 1200);
+
+            document.getElementById('trace-extra-controls').style.display = 'flex';
+
+            // Запускаем анимацию если больше 1 кадра
+            if (traceState.frames.length > 1) {
+                if (traceState.animationId) {
+                    cancelAnimationFrame(traceState.animationId);
+                    traceState.animationId = null;
+                }
+                traceState.lastFrameTime = 0;
+                animateFrames();
+            }
+
+            showStatus(`✅ Trace loaded: ${width}×${height}, ${frames.length} frames from "${fileName}"`);
+        }
+
+        function animateFrames() {
+            if (!traceState.loaded || traceState.frames.length <= 1) {
+                traceState.animationId = requestAnimationFrame(animateFrames);
+                return;
+            }
+
+            const now = performance.now();
+            if (!traceState.lastFrameTime) traceState.lastFrameTime = now;
+            const delta = now - traceState.lastFrameTime;
+
+            if (delta >= traceState.frameDelay) {
+                traceState.lastFrameTime = now;
+                traceState.currentFrame = (traceState.currentFrame + 1) % traceState.frames.length;
+                renderTrace();
+                updateFrameSelection();
+            }
+
+            traceState.animationId = requestAnimationFrame(animateFrames);
+        }
+
+        // === ОБРАБОТЧИК ЗАГРУЗКИ ФАЙЛА ===
+        document.getElementById('trace-load-file').addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/gif';
+            input.onchange = function(e) {
+                if (this.files && this.files.length > 0) {
+                    loadExternalGif(this.files[0]);
+                }
+            };
+            input.click();
+        });
+
+        // === ФУНКЦИЯ ЗАГРУЗКИ ИЗ ОСНОВНОЙ GIF ===
+        function loadTraceFromMainGif() {
+            if (!state || !state.frames || state.frames.length === 0) {
+                showStatus('❌ Main GIF has no frames', true);
+                return;
+            }
+
+            console.log('[Trace] Loading from main GIF, frames:', state.frames.length);
+
+            traceState.frames = state.frames.map(f => ({
+                data: new Uint8ClampedArray(f.data),
+                delay: f.delay || 10
+            }));
+            traceState.width = state.width;
+            traceState.height = state.height;
+            traceState.currentFrame = state.currentFrame || 0;
+            traceState.loaded = true;
+            traceState.frameDelay = (state.frames[0]?.delay || 10) * 10;
+            traceState.fileName = 'Main GIF';
+            traceState._useMainGif = true;
+            traceState._forceUpdateCount = 0;
+
+            document.getElementById('trace-file-name').textContent = 'Main GIF';
+            document.getElementById('trace-file-info').textContent = traceState.frames.length + ' frames, ' + traceState.width + '×' + traceState.height;
+            document.getElementById('trace-file-status').classList.add('loaded');
+
+            PonyEditor._updateTraceUI(traceState, renderTrace);
+
+            // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ
+            setTimeout(function() { forceUpdateTrace(); }, 10);
+            setTimeout(function() { forceUpdateTrace(); }, 50);
+            setTimeout(function() { forceUpdateTrace(); }, 100);
+            setTimeout(function() { forceUpdateTrace(); }, 200);
+            setTimeout(function() { forceUpdateTrace(); }, 500);
+
+            document.getElementById('trace-extra-controls').style.display = 'flex';
+
+            if (traceState.frames.length > 1) {
+                if (traceState.animationId) {
+                    cancelAnimationFrame(traceState.animationId);
+                    traceState.animationId = null;
+                }
+                traceState.lastFrameTime = 0;
+                animateFrames();
+            }
+
+            showStatus(`✅ Trace loaded: ${traceState.width}×${traceState.height}, ${traceState.frames.length} frames from main GIF`);
+        }
+
+        // === ЭКСПОРТ КАДРОВ В ОСНОВНОЙ РЕДАКТОР ===
+        function extractFramesToMain(mode) {
+            if (!traceState.loaded || traceState.frames.length === 0) {
+                showStatus('❌ No trace frames to extract', true);
+                return;
+            }
+
+            const stateManager = window.GifEditorState;
+            if (!stateManager) {
+                showStatus('❌ GIF editor not found', true);
+                return;
+            }
+
+            const indices = mode === 'all'
+                ? Array.from({length: traceState.frames.length}, (_, i) => i)
+                : [traceState.currentFrame];
+
+            let added = 0;
+            for (const idx of indices) {
+                if (idx >= 0 && idx < traceState.frames.length) {
+                    const srcFrame = traceState.frames[idx];
+                    let data = new Uint8ClampedArray(srcFrame.data);
+
+                    if (stateManager.width !== traceState.width || stateManager.height !== traceState.height) {
+                        data = resizeFrameData(data, traceState.width, traceState.height,
+                            stateManager.width, stateManager.height);
+                    }
+
+                    stateManager.frames.push({
+                        data: data,
+                        delay: srcFrame.delay || 10
+                    });
+                    added++;
+                }
+            }
+
+            if (added > 0) {
+                stateManager.currentFrame = stateManager.frames.length - 1;
+                stateManager.hasChanges = true;
+                stateManager.drawCanvas();
+                stateManager.updateTimeline();
+                showStatus(`✅ Extracted ${added} frame(s) from trace to main editor`);
+            } else {
+                showStatus('❌ No frames extracted', true);
+            }
+        }
+
+        function resizeFrameData(data, srcW, srcH, dstW, dstH) {
+            const newData = new Uint8ClampedArray(dstW * dstH * 4);
+            newData.fill(0);
+
+            const scaleX = srcW / dstW;
+            const scaleY = srcH / dstH;
+
+            for (let y = 0; y < dstH; y++) {
+                for (let x = 0; x < dstW; x++) {
+                    const srcX = Math.floor(x * scaleX);
+                    const srcY = Math.floor(y * scaleY);
+                    if (srcX < srcW && srcY < srcH) {
+                        const srcIdx = (srcY * srcW + srcX) * 4;
+                        const dstIdx = (y * dstW + x) * 4;
+                        newData[dstIdx] = data[srcIdx];
+                        newData[dstIdx + 1] = data[srcIdx + 1];
+                        newData[dstIdx + 2] = data[srcIdx + 2];
+                        newData[dstIdx + 3] = data[srcIdx + 3];
+                    }
+                }
+            }
+            return newData;
+        }
+
+        // === ОБРАБОТЧИКИ ЭКСПОРТА ===
+        document.getElementById('trace-extract-all').addEventListener('click', function() {
+            extractFramesToMain('all');
+        });
+
+        document.getElementById('trace-extract-current').addEventListener('click', function() {
+            extractFramesToMain('current');
+        });
+
+        // === ФУНКЦИЯ РЕНДЕРИНГА ТРЕЙСА ===
         function renderTrace() {
             const canvas = traceState.canvas;
             const ctx = traceState.ctx;
-            const container = canvas.parentElement;
-            const rect = container.getBoundingClientRect();
+            const mainCanvas = traceState._mainCanvas;
 
-            canvas.width = rect.width || 400;
-            canvas.height = rect.height || 400;
-            canvas.style.width = canvas.width + 'px';
-            canvas.style.height = canvas.height + 'px';
+            if (!mainCanvas) {
+                console.warn('[Trace] No main canvas');
+                return;
+            }
+
+            // Принудительно синхронизируем размеры с основным канвасом
+            const mainWidth = mainCanvas.width || mainCanvas.getBoundingClientRect().width || 128;
+            const mainHeight = mainCanvas.height || mainCanvas.getBoundingClientRect().height || 128;
+
+            if (canvas.width !== mainWidth || canvas.height !== mainHeight) {
+                canvas.width = mainWidth;
+                canvas.height = mainHeight;
+                canvas.style.width = mainWidth + 'px';
+                canvas.style.height = mainHeight + 'px';
+
+                // Обновляем позиционирование
+                canvas.style.position = 'absolute';
+                canvas.style.top = '50%';
+                canvas.style.left = '50%';
+                canvas.style.transform = 'translate(-50%, -50%)';
+                canvas.style.zIndex = '1';
+                canvas.style.pointerEvents = 'none';
+            }
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (!traceState.loaded || traceState.frames.length === 0) return;
+            if (!traceState.loaded || traceState.frames.length === 0) {
+                return;
+            }
 
-            const frameData = traceState.frames[traceState.currentFrame];
-            if (!frameData) return;
+            const frameIndex = traceState.currentFrame % traceState.frames.length;
+            const frameData = traceState.frames[frameIndex];
+            if (!frameData) {
+                console.warn('[Trace] No frame data for index:', frameIndex);
+                return;
+            }
 
-            const targetWidth = stateManager.width || 128;
-            const targetHeight = stateManager.height || 128;
+            const targetWidth = state.width || traceState.width;
+            const targetHeight = state.height || traceState.height;
 
             const baseSize = Math.min(canvas.width / targetWidth, canvas.height / targetHeight);
             const scale = baseSize * traceState.size;
@@ -744,7 +1306,7 @@ const PonyEditor = {
             ctx.globalAlpha = 1;
 
             if (traceState.showGrid) {
-                ctx.strokeStyle = 'rgba(203, 166, 247, 0.2)';
+                ctx.strokeStyle = 'rgba(203, 166, 247, 0.15)';
                 ctx.lineWidth = 1;
                 const gridSize = 32 * scale;
                 for (let x = offsetX % gridSize; x < canvas.width; x += gridSize) {
@@ -762,25 +1324,11 @@ const PonyEditor = {
             }
         }
 
-        // Функция загрузки трейс GIF
-        function loadTraceGif(file) {
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                const dataUrl = ev.target.result;
-                PonyEditor._loadTraceGifData(dataUrl, traceState, stateManager, renderTrace);
-            };
-            reader.onerror = function() {
-                showStatus('❌ Failed to read file', true);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Обработчики управления
+        // === УПРАВЛЕНИЕ ===
         const sizeSlider = document.getElementById('trace-size');
         const opacitySlider = document.getElementById('trace-opacity');
         const sizeValue = document.getElementById('trace-size-value');
         const opacityValue = document.getElementById('trace-opacity-value');
-        const frameCount = document.getElementById('trace-frame-count');
 
         sizeSlider.addEventListener('input', function() {
             traceState.size = parseFloat(this.value);
@@ -794,278 +1342,171 @@ const PonyEditor = {
             renderTrace();
         });
 
-        document.getElementById('trace-flip-h').addEventListener('click', function() {
-            traceState.flipH = !traceState.flipH;
-            this.style.borderColor = traceState.flipH ? '#cba6f7' : '#313244';
-            renderTrace();
-        });
+        function setupToggleButton(id, property) {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('click', function() {
+                traceState[property] = !traceState[property];
+                this.classList.toggle('active');
+                renderTrace();
+            });
+        }
 
-        document.getElementById('trace-flip-v').addEventListener('click', function() {
-            traceState.flipV = !traceState.flipV;
-            this.style.borderColor = traceState.flipV ? '#cba6f7' : '#313244';
-            renderTrace();
-        });
-
-        document.getElementById('trace-grid').addEventListener('click', function() {
-            traceState.showGrid = !traceState.showGrid;
-            this.style.borderColor = traceState.showGrid ? '#cba6f7' : '#313244';
-            renderTrace();
-        });
+        setupToggleButton('trace-flip-h', 'flipH');
+        setupToggleButton('trace-flip-v', 'flipV');
+        setupToggleButton('trace-grid', 'showGrid');
 
         document.getElementById('trace-reset').addEventListener('click', function() {
             traceState.size = 1;
-            traceState.opacity = 0.4;
+            traceState.opacity = 0.35;
             traceState.flipH = false;
             traceState.flipV = false;
             traceState.showGrid = false;
             sizeSlider.value = 1;
-            opacitySlider.value = 0.4;
+            opacitySlider.value = 0.35;
             sizeValue.textContent = '100%';
-            opacityValue.textContent = '40%';
-            document.getElementById('trace-flip-h').style.borderColor = '#313244';
-            document.getElementById('trace-flip-v').style.borderColor = '#313244';
-            document.getElementById('trace-grid').style.borderColor = '#313244';
+            opacityValue.textContent = '35%';
+            document.getElementById('trace-flip-h').classList.remove('active');
+            document.getElementById('trace-flip-v').classList.remove('active');
+            document.getElementById('trace-grid').classList.remove('active');
             renderTrace();
         });
 
-        document.getElementById('trace-load-btn').addEventListener('click', function() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/gif,image/webp,image/png,image/jpeg';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) loadTraceGif(file);
-            };
-            input.click();
+        document.getElementById('trace-use-main').addEventListener('click', function() {
+            loadTraceFromMainGif();
+            this.textContent = '✅ Loaded';
+            setTimeout(() => { this.textContent = '📋 Main GIF'; }, 2000);
         });
 
         document.getElementById('trace-close-btn').addEventListener('click', function() {
-            if (traceState.animationId) {
-                cancelAnimationFrame(traceState.animationId);
-                traceState.animationId = null;
-            }
-            panel.remove();
-            traceCanvas.remove();
-            // Переключаем состояние кнопки
-            const traceBtn = document.getElementById('gif-trace-btn');
-            if (traceBtn) traceBtn.style.borderColor = '#313244';
+            PonyEditor.closeTracePanel();
         });
 
-        // Обработчик выбора кадра
-        function setupFrameClick(frameIndex) {
-            return function() {
-                traceState.currentFrame = frameIndex;
-                renderTrace();
-                const items = document.querySelectorAll('.trace-frame-item');
-                items.forEach((el, idx) => {
-                    el.style.borderColor = idx === frameIndex ? '#cba6f7' : '#313244';
+        // Наблюдатель за изменением размера основного канваса
+        const resizeObserver = new ResizeObserver(() => {
+            console.log('[Trace] ResizeObserver triggered');
+            if (!traceState._renderPending) {
+                traceState._renderPending = true;
+                requestAnimationFrame(() => {
+                    traceState._renderPending = false;
+                    renderTrace();
                 });
-            };
-        }
+            }
+        });
+        resizeObserver.observe(mainCanvas);
+        traceState._mainCanvasObserver = resizeObserver;
 
-        // Сохраняем stateManager для доступа из загрузчика
-        PonyEditor._traceStateManager = stateManager;
-        PonyEditor._traceRenderFn = renderTrace;
-
-        // Обработчик изменения размера окна
-        const resizeHandler = function() {
-            renderTrace();
+        const resizeHandler = () => {
+            console.log('[Trace] Window resize triggered');
+            if (!traceState._renderPending) {
+                traceState._renderPending = true;
+                requestAnimationFrame(() => {
+                    traceState._renderPending = false;
+                    renderTrace();
+                });
+            }
         };
         window.addEventListener('resize', resizeHandler);
         traceState._resizeHandler = resizeHandler;
 
-        // Анимация кадров
-        traceState._animate = function(timestamp) {
-            if (!traceState.loaded || traceState.frames.length <= 1) {
-                traceState.animationId = requestAnimationFrame(traceState._animate);
-                return;
+        function updateFrameSelection() {
+            const items = document.querySelectorAll('.trace-frame-item');
+            items.forEach((el, idx) => {
+                el.classList.toggle('active', idx === traceState.currentFrame);
+            });
+            const activeItem = document.querySelector('.trace-frame-item.active');
+            const container = document.getElementById('trace-frames-container');
+            if (activeItem && container) {
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }
+        }
 
-            if (!traceState.lastFrameTime) traceState.lastFrameTime = timestamp;
-            const delta = timestamp - traceState.lastFrameTime;
+        // Автозагрузка из основной GIF при открытии
+        if (state.frames && state.frames.length > 0) {
+            setTimeout(loadTraceFromMainGif, 100);
+        }
 
-            if (delta >= traceState.frameDelay) {
-                traceState.lastFrameTime = timestamp;
-                traceState.currentFrame = (traceState.currentFrame + 1) % traceState.frames.length;
-                renderTrace();
-                const items = document.querySelectorAll('.trace-frame-item');
-                items.forEach((el, idx) => {
-                    el.style.borderColor = idx === traceState.currentFrame ? '#cba6f7' : '#313244';
-                });
-            }
-
-            traceState.animationId = requestAnimationFrame(traceState._animate);
-        };
-
-        // Очистка
-        traceState._cleanup = function() {
-            if (traceState.animationId) {
-                cancelAnimationFrame(traceState.animationId);
-                traceState.animationId = null;
-            }
-            window.removeEventListener('resize', resizeHandler);
-        };
-
-        showStatus('✅ Trace panel opened. Click Load to add a GIF.');
+        showStatus('✅ Trace panel opened. Load external GIF or use Main GIF.');
     },
 
-    /**
-     * Загружает GIF для трейса
-     */
-    _loadTraceGifData: function(dataUrl, traceState, stateManager, renderFn) {
-        console.log('[Trace] Loading trace GIF from data URL');
+    closeTracePanel: function() {
+        const panel = document.getElementById('trace-panel');
+        const traceCanvas = document.getElementById('trace-render-canvas');
 
-        // Загружаем как Image сначала
-        const img = new Image();
-        img.onload = function() {
-            console.log('[Trace] Image loaded:', img.width, 'x', img.height);
-
-            // Проверяем что изображение не слишком большое
-            let sourceImg = img;
-            if (img.width > 1024 || img.height > 1024) {
-                const canvas = document.createElement('canvas');
-                const maxSize = 512;
-                let w = img.width, h = img.height;
-                if (w > h) {
-                    if (w > maxSize) { h = h * maxSize / w; w = maxSize; }
-                } else {
-                    if (h > maxSize) { w = w * maxSize / h; h = maxSize; }
-                }
-                canvas.width = Math.round(w);
-                canvas.height = Math.round(h);
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                const newImg = new Image();
-                newImg.onload = function() {
-                    PonyEditor._processTraceImage(newImg, traceState, stateManager, renderFn);
-                };
-                newImg.src = canvas.toDataURL('image/png');
-                return;
+        if (window._traceState) {
+            if (window._traceState.animationId) {
+                cancelAnimationFrame(window._traceState.animationId);
+                window._traceState.animationId = null;
             }
+            if (window._traceState._resizeHandler) {
+                window.removeEventListener('resize', window._traceState._resizeHandler);
+            }
+            if (window._traceState._mainCanvasObserver) {
+                window._traceState._mainCanvasObserver.disconnect();
+            }
+            if (window._traceState._styleElement) {
+                window._traceState._styleElement.remove();
+            }
+        }
 
-            PonyEditor._processTraceImage(sourceImg, traceState, stateManager, renderFn);
-        };
-        img.onerror = function() {
-            showStatus('❌ Failed to load image', true);
-        };
-        img.src = dataUrl;
+        if (panel) panel.remove();
+        if (traceCanvas) traceCanvas.remove();
+
+        const traceBtn = document.getElementById('gif-trace-btn');
+        if (traceBtn) traceBtn.style.borderColor = '#313244';
+
+        window._traceState = null;
     },
 
-    /**
-     * Обрабатывает изображение для трейса
-     */
-    _processTraceImage: function(img, traceState, stateManager, renderFn) {
-        const width = img.width;
-        const height = img.height;
-
-        console.log('[Trace] Processing image:', width, 'x', height);
-
-        // Получаем пиксельные данные
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        const imageData = ctx.getImageData(0, 0, width, height);
-        const data = new Uint8ClampedArray(imageData.data);
-
-        // Создаем один кадр
-        traceState.frames = [{
-            data: data,
-            delay: 10
-        }];
-        traceState.width = width;
-        traceState.height = height;
-        traceState.currentFrame = 0;
-        traceState.loaded = true;
-        traceState.frameDelay = 100;
-
-        // Обновляем интерфейс
+    _updateTraceUI: function(traceState, renderFn) {
         const frameCount = document.getElementById('trace-frame-count');
-        if (frameCount) frameCount.textContent = '1';
-
         const container = document.getElementById('trace-frames-container');
+
+        if (frameCount) frameCount.textContent = traceState.frames.length;
+
         if (container) {
             container.innerHTML = '';
-            // Добавляем миниатюру
-            const div = document.createElement('div');
-            div.className = 'trace-frame-item';
-            div.style.cssText = `
-                width: 48px;
-                height: 56px;
-                background: #11111b;
-                border: 2px solid #cba6f7;
-                border-radius: 4px;
-                cursor: pointer;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 3px;
-                flex-shrink: 0;
-            `;
 
-            const previewCanvas = document.createElement('canvas');
-            previewCanvas.width = 40;
-            previewCanvas.height = 40;
-            const previewCtx = previewCanvas.getContext('2d');
-            try {
-                const imgData = new ImageData(data, width, height);
-                previewCtx.putImageData(imgData, 0, 0);
-            } catch(e) {}
-            div.appendChild(previewCanvas);
+            traceState.frames.forEach((frame, idx) => {
+                const div = document.createElement('div');
+                div.className = 'trace-frame-item' + (idx === traceState.currentFrame ? ' active' : '');
 
-            const label = document.createElement('span');
-            label.textContent = '1';
-            label.style.fontSize = '8px';
-            label.style.color = '#a6adc8';
-            label.style.marginTop = '1px';
-            div.appendChild(label);
-
-            div.addEventListener('click', function() {
-                traceState.currentFrame = 0;
-                renderFn();
-                document.querySelectorAll('.trace-frame-item').forEach(el => {
-                    el.style.borderColor = '#313244';
-                });
-                this.style.borderColor = '#cba6f7';
-            });
-
-            container.appendChild(div);
-        }
-
-        renderFn();
-
-        // Запускаем анимацию если есть несколько кадров
-        if (traceState.frames.length > 1) {
-            if (traceState.animationId) {
-                cancelAnimationFrame(traceState.animationId);
-            }
-            traceState.lastFrameTime = 0;
-            traceState._animate = function(timestamp) {
-                if (!traceState.loaded) return;
-                if (!traceState.lastFrameTime) traceState.lastFrameTime = timestamp;
-                const delta = timestamp - traceState.lastFrameTime;
-                if (delta >= traceState.frameDelay) {
-                    traceState.lastFrameTime = timestamp;
-                    traceState.currentFrame = (traceState.currentFrame + 1) % traceState.frames.length;
-                    renderFn();
-                    const items = document.querySelectorAll('.trace-frame-item');
-                    items.forEach((el, idx) => {
-                        el.style.borderColor = idx === traceState.currentFrame ? '#cba6f7' : '#313244';
-                    });
+                const previewCanvas = document.createElement('canvas');
+                previewCanvas.width = 48;
+                previewCanvas.height = 48;
+                const previewCtx = previewCanvas.getContext('2d');
+                try {
+                    const imgData = new ImageData(frame.data, traceState.width, traceState.height);
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = traceState.width;
+                    tempCanvas.height = traceState.height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCtx.putImageData(imgData, 0, 0);
+                    previewCtx.imageSmoothingEnabled = false;
+                    previewCtx.drawImage(tempCanvas, 0, 0, traceState.width, traceState.height, 0, 0, 48, 48);
+                } catch(e) {
+                    console.warn('[Trace] Preview render error:', e);
                 }
-                traceState.animationId = requestAnimationFrame(traceState._animate);
-            };
-            traceState.animationId = requestAnimationFrame(traceState._animate);
-        }
 
-        showStatus(`✅ Trace loaded: ${width}×${height}, ${traceState.frames.length} frame(s)`);
+                div.appendChild(previewCanvas);
+
+                const label = document.createElement('span');
+                label.className = 'trace-frame-label';
+                label.textContent = `#${idx + 1}`;
+                div.appendChild(label);
+
+                div.addEventListener('click', function() {
+                    traceState.currentFrame = idx;
+                    renderFn();
+                    document.querySelectorAll('.trace-frame-item').forEach(el => el.classList.remove('active'));
+                    this.classList.add('active');
+                });
+
+                container.appendChild(div);
+            });
+        }
     },
 
-    /**
-     * Добавляет кнопку "Trace" в интерфейс GIF редактора
-     */
     addTraceButton: function() {
         const checkInterval = setInterval(() => {
             const modal = document.getElementById('gif-editor-modal');
@@ -1079,31 +1520,24 @@ const PonyEditor = {
                 const traceBtn = document.createElement('button');
                 traceBtn.id = 'gif-trace-btn';
                 traceBtn.style.cssText = `
-                    padding: 6px 14px;
-                    background: #1e1e2e;
-                    border: 1px solid #313244;
-                    border-radius: 8px;
-                    color: #cdd6f4;
-                    cursor: pointer;
-                    font-size: 13px;
-                    transition: all 0.2s;
-                    margin-left: 4px;
-                `;
+                padding: 6px 14px;
+                background: #1e1e2e;
+                border: 1px solid #313244;
+                border-radius: 8px;
+                color: #cdd6f4;
+                cursor: pointer;
+                font-size: 13px;
+                transition: all 0.2s;
+                margin-left: 4px;
+            `;
                 traceBtn.innerHTML = '🎯 Trace';
-                traceBtn.title = 'Open trace panel (bottom-right)';
+                traceBtn.title = 'Open trace panel - load external GIF or use main';
 
                 traceBtn.addEventListener('click', function() {
-                    // Подсвечиваем кнопку при открытой панели
                     const panel = document.getElementById('trace-panel');
                     if (panel) {
-                        this.style.borderColor = '#f38ba8';
-                        panel.remove();
-                        // Удаляем канвас трейса
-                        const traceCanvas = document.getElementById('trace-render-canvas');
-                        if (traceCanvas) traceCanvas.remove();
-                        setTimeout(() => {
-                            this.style.borderColor = '#313244';
-                        }, 300);
+                        PonyEditor.closeTracePanel();
+                        this.style.borderColor = '#313244';
                         return;
                     }
                     this.style.borderColor = '#cba6f7';
@@ -1124,6 +1558,10 @@ const PonyEditor = {
         setTimeout(() => clearInterval(checkInterval), 30000);
     }
 };
+
+// ============================================================
+// ОСТАЛЬНОЙ КОД (GifEditorStateManager, showInlineGifEditor, initGifEditor, resizeGif)
+// ============================================================
 
 // Глобальное состояние GIF редактора
 window.GifEditorState = null;
@@ -1376,6 +1814,23 @@ class GifEditorStateManager {
         if (delayInput && this.frames[this.currentFrame]) {
             delayInput.value = this.frames[this.currentFrame].delay;
         }
+
+        // Обновляем трейс после отрисовки
+        if (window._traceState && window._traceState.loaded) {
+            // Синхронизируем текущий кадр трейса с основным
+            if (window._traceState.frames.length > 0) {
+                window._traceState.currentFrame = this.currentFrame % window._traceState.frames.length;
+                if (!window._traceState._renderPending) {
+                    window._traceState._renderPending = true;
+                    requestAnimationFrame(() => {
+                        window._traceState._renderPending = false;
+                        if (window._traceState && window._traceState.loaded) {
+                            renderTrace();
+                        }
+                    });
+                }
+            }
+        }
     }
 
     updateTimeline() {
@@ -1396,6 +1851,7 @@ class GifEditorStateManager {
                 const imgData = new ImageData(frame.data, self.width, self.height);
                 previewCtx.putImageData(imgData, 0, 0);
             } catch(e) {}
+
             div.appendChild(previewCanvas);
 
             const label = document.createElement('span');
@@ -1557,7 +2013,7 @@ function showInlineGifEditor(ponyName, spriteName) {
             <button id="gif-delete-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➖ Delete Frame</button>
         </div>
         
-        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px; position: relative;">
+        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px; position: relative;" class="gif-canvas-wrapper">
             <canvas id="gif-main-canvas" style="image-rendering: crisp-edges; image-rendering: pixelated; border: 2px solid #313244; border-radius: 8px; cursor: crosshair; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></canvas>
         </div>
         
@@ -1581,9 +2037,7 @@ function showInlineGifEditor(ponyName, spriteName) {
         traceBtn.addEventListener('click', function() {
             const panel = document.getElementById('trace-panel');
             if (panel) {
-                panel.remove();
-                const traceCanvas = document.getElementById('trace-render-canvas');
-                if (traceCanvas) traceCanvas.remove();
+                PonyEditor.closeTracePanel();
                 this.style.borderColor = '#313244';
                 return;
             }
@@ -1602,10 +2056,8 @@ function initGifEditor(stateManager) {
 
     const modal = stateManager.modal;
     const canvas = document.getElementById('gif-main-canvas');
-    const timeline = document.getElementById('gif-timeline');
     const statusEl = document.getElementById('gif-status');
     const delayInput = document.getElementById('gif-frame-delay');
-    const zoomLevel = document.getElementById('gif-zoom-level');
     const currentColorPreview = document.getElementById('gif-current-color-preview');
     const currentRgbSpan = document.getElementById('gif-current-rgb');
     const currentHexSpan = document.getElementById('gif-current-hex');
@@ -2618,6 +3070,7 @@ function initGifEditor(stateManager) {
         stateManager.cleanup();
         modal.remove();
         window.GifEditorState = null;
+        PonyEditor.closeTracePanel();
     });
 
     // === ЗАГРУЗКА GIF ===
@@ -2682,4 +3135,90 @@ function resizeGif(stateManager, newWidth, newHeight, statusEl) {
     if (statusEl) statusEl.textContent = `✅ Resized to ${newWidth}x${newHeight}`;
 }
 
-console.log('[PonyEditor] Full version with trace panel loaded');
+// Функция для рендеринга трейса из глобального состояния
+function renderTrace() {
+    if (window._traceState) {
+        const canvas = window._traceState.canvas;
+        const ctx = window._traceState.ctx;
+        const mainCanvas = window._traceState._mainCanvas;
+        const state = window._traceState._stateManager;
+
+        if (!mainCanvas) return;
+
+        // Синхронизируем размеры с основным канвасом
+        canvas.width = mainCanvas.width;
+        canvas.height = mainCanvas.height;
+        canvas.style.width = mainCanvas.style.width || mainCanvas.width + 'px';
+        canvas.style.height = mainCanvas.style.height || mainCanvas.height + 'px';
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (!window._traceState.loaded || window._traceState.frames.length === 0) return;
+
+        const frameIndex = window._traceState.currentFrame % window._traceState.frames.length;
+        const frameData = window._traceState.frames[frameIndex];
+        if (!frameData) return;
+
+        const targetWidth = state.width || window._traceState.width;
+        const targetHeight = state.height || window._traceState.height;
+
+        const baseSize = Math.min(canvas.width / targetWidth, canvas.height / targetHeight);
+        const scale = baseSize * window._traceState.size;
+
+        const drawW = window._traceState.width * scale;
+        const drawH = window._traceState.height * scale;
+
+        const offsetX = (canvas.width - drawW) / 2;
+        const offsetY = (canvas.height - drawH) / 2;
+
+        ctx.globalAlpha = window._traceState.opacity;
+
+        let sx = 1, sy = 1;
+        if (window._traceState.flipH) sx = -1;
+        if (window._traceState.flipV) sy = -1;
+
+        ctx.save();
+        ctx.translate(canvas.width/2, canvas.height/2);
+        ctx.scale(sx, sy);
+        ctx.translate(-canvas.width/2, -canvas.height/2);
+
+        try {
+            const imgData = new ImageData(frameData.data, window._traceState.width, window._traceState.height);
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = window._traceState.width;
+            tempCanvas.height = window._traceState.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(imgData, 0, 0);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(tempCanvas, offsetX, offsetY, drawW, drawH);
+        } catch(e) {
+            console.warn('[Trace] Render error:', e);
+        }
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        if (window._traceState.showGrid) {
+            ctx.strokeStyle = 'rgba(203, 166, 247, 0.15)';
+            ctx.lineWidth = 1;
+            const gridSize = 32 * scale;
+            for (let x = offsetX % gridSize; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = offsetY % gridSize; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+    }
+}
+
+// Делаем renderTrace глобальной для вызова из drawCanvas
+window.renderTrace = renderTrace;
+
+console.log('[PonyEditor] Full version with trace panel and external GIF load loaded');
