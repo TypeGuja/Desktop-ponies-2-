@@ -1,4 +1,4 @@
-// src_rust/editor/editor_handlers.rs - БЕЗ TRACE
+// src_rust/editor/editor_handlers.rs - ПОЛНАЯ ВЕРСИЯ С TRACE ОБРАБОТЧИКАМИ
 
 use std::sync::{Arc, Mutex};
 use std::path::PathBuf;
@@ -21,6 +21,10 @@ pub fn handle_ipc(body: &str, loader: &Arc<Mutex<DesktopPoniesLoader>>, ponies_d
         delete_pony(pony_name, ponies_dir, sender);
     } else if let Some(data) = body.strip_prefix("gif:load:") {
         load_gif_for_editor(data, ponies_dir, sender);
+    } else if let Some(path) = body.strip_prefix("trace:load_gif_path:") {
+        handle_trace_gif_path(path, sender);
+    } else if let Some(data) = body.strip_prefix("trace:load_gif:") {
+        handle_trace_gif_base64(data, sender);
     } else if let Some(data) = body.strip_prefix("gif:save:") {
         save_gif_from_editor(data, ponies_dir, sender);
     } else if let Some(data) = body.strip_prefix("gif:list:") {
@@ -232,6 +236,140 @@ fn list_gifs_for_pony(data: &str, ponies_dir: &PathBuf, sender: &mpsc::Sender<St
     let response = json!({ "type": "gif_list", "gifs": gifs, "pony_name": data });
     let _ = sender.send(response.to_string());
 }
+
+// ============================================================
+// TRACE ОБРАБОТЧИКИ
+// ============================================================
+
+/// Обработчик загрузки внешней GIF по пути (основной способ)
+fn handle_trace_gif_path(path_encoded: &str, sender: &mpsc::Sender<String>) {
+    println!("[Editor] === TRACE LOAD GIF FROM PATH ===");
+
+    // Декодируем URL-encoded путь
+    let path = match urlencoding::decode(path_encoded) {
+        Ok(p) => p.to_string(),
+        Err(e) => {
+            println!("[Editor] Path decode error: {}", e);
+            let _ = sender.send(json!({
+                "type": "trace_gif_error",
+                "message": format!("Path decode error: {}", e)
+            }).to_string());
+            return;
+        }
+    };
+
+    println!("[Editor] Path: {}", path);
+
+    let gif_path = std::path::PathBuf::from(&path);
+    if !gif_path.exists() {
+        println!("[Editor] File not found: {}", path);
+        let _ = sender.send(json!({
+            "type": "trace_gif_error",
+            "message": format!("File not found: {}", path)
+        }).to_string());
+        return;
+    }
+
+    // Декодируем GIF через существующий парсер
+    match decode_gif_clean(&gif_path) {
+        Ok((frames_data, width, height)) => {
+            println!("[Editor] Trace decoded {} frames, {}x{}", frames_data.len(), width, height);
+
+            let response = json!({
+                "type": "trace_gif_data",
+                "frames": frames_data,
+                "width": width,
+                "height": height
+            });
+
+            let _ = sender.send(response.to_string());
+        }
+        Err(e) => {
+            println!("[Editor] Decode error: {}", e);
+            let _ = sender.send(json!({
+                "type": "trace_gif_error",
+                "message": format!("GIF decode error: {}", e)
+            }).to_string());
+        }
+    }
+}
+
+/// Обработчик загрузки внешней GIF через base64 (fallback)
+fn handle_trace_gif_base64(base64_data: &str, sender: &mpsc::Sender<String>) {
+    println!("[Editor] === TRACE LOAD GIF FROM BASE64 ===");
+    println!("[Editor] Base64 data length: {}", base64_data.len());
+
+    // Декодируем base64
+    use base64::decode;
+    let bytes = match decode(base64_data) {
+        Ok(b) => b,
+        Err(e) => {
+            println!("[Editor] Base64 decode error: {}", e);
+            let _ = sender.send(json!({
+                "type": "trace_gif_error",
+                "message": format!("Base64 decode error: {}", e)
+            }).to_string());
+            return;
+        }
+    };
+
+    println!("[Editor] Decoded {} bytes", bytes.len());
+
+    // Сохраняем во временный файл
+    use std::fs::File;
+    use std::io::Write;
+    use std::env::temp_dir;
+    use std::time::SystemTime;
+
+    let temp_path = temp_dir().join(format!("trace_{}.gif", SystemTime::now().elapsed().unwrap().as_millis()));
+    println!("[Editor] Temp file: {:?}", temp_path);
+
+    if let Ok(mut file) = File::create(&temp_path) {
+        if let Err(e) = file.write_all(&bytes) {
+            let _ = sender.send(json!({
+                "type": "trace_gif_error",
+                "message": format!("Write error: {}", e)
+            }).to_string());
+            return;
+        }
+    } else {
+        let _ = sender.send(json!({
+            "type": "trace_gif_error",
+            "message": "Failed to create temp file"
+        }).to_string());
+        return;
+    }
+
+    // Декодируем GIF через существующий парсер
+    match decode_gif_clean(&temp_path) {
+        Ok((frames_data, width, height)) => {
+            println!("[Editor] Trace decoded {} frames, {}x{}", frames_data.len(), width, height);
+
+            // Удаляем временный файл
+            let _ = std::fs::remove_file(&temp_path);
+
+            let response = json!({
+                "type": "trace_gif_data",
+                "frames": frames_data,
+                "width": width,
+                "height": height
+            });
+
+            let _ = sender.send(response.to_string());
+        }
+        Err(e) => {
+            println!("[Editor] Decode error: {}", e);
+            let _ = sender.send(json!({
+                "type": "trace_gif_error",
+                "message": format!("GIF decode error: {}", e)
+            }).to_string());
+        }
+    }
+}
+
+// ============================================================
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С GIF
+// ============================================================
 
 fn clean_frame_artifacts(data: &mut [u8], width: u32, height: u32) {
     let w = width as usize;
