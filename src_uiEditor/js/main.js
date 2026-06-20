@@ -1,4 +1,4 @@
-// src_uiEditor/js/main.js - БЕЗ TRACE
+// src_uiEditor/js/main.js - ИСПРАВЛЕННАЯ ВЕРСИЯ (ТОЛЬКО ИЗМЕНЕННАЯ ЧАСТЬ)
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[MAIN] Pony Editor initializing...');
@@ -158,6 +158,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'gif_save_error':
                     showStatus(`✗ ${data.message}`, true);
                     break;
+                case 'gif_created':
+                    console.log('[Editor] GIF created:', data);
+                    showStatus(`✓ ${data.message}`);
+                    if (data.pony_name) {
+                        setTimeout(() => {
+                            EditorAPI.send(`gif:load:${data.pony_name}:${data.sprite_name}`);
+                        }, 500);
+                    }
+                    break;
+                // ============================================================
+                // ДОБАВЛЯЕМ ОБРАБОТЧИКИ ДЛЯ TRACE
+                // ============================================================
+                case 'trace_gif_data':
+                    console.log('[Editor] TRACE GIF DATA RECEIVED - frames:', data.frames?.length);
+                    console.log('[Editor] TRACE size:', data.width, 'x', data.height);
+
+                    if (window._traceState) {
+                        console.log('[Editor] Applying trace frames...');
+                        if (data.frames && data.frames.length > 0) {
+                            const frames = data.frames.map(f => ({
+                                data: new Uint8ClampedArray(f.data),
+                                delay: f.delay || 10
+                            }));
+
+                            // Применяем кадры к трейсу
+                            if (typeof window.applyTraceFrames === 'function') {
+                                window.applyTraceFrames(frames, data.width, data.height, data.fileName || 'External GIF');
+                            } else {
+                                // Если функция не определена, сохраняем данные
+                                window._pendingTraceData = data;
+                                console.log('[Editor] Stored pending trace data');
+                            }
+                        }
+                    } else {
+                        window._pendingTraceData = data;
+                        console.log('[Editor] No trace state, stored for later');
+                    }
+                    break;
+
+                case 'trace_gif_error':
+                    console.error('[Editor] TRACE ERROR:', data.message);
+                    showStatus(`❌ Trace error: ${data.message}`, true);
+                    break;
+
                 case 'error':
                     showStatus(`✗ Error: ${data.message}`, true);
                     break;
