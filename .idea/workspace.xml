@@ -12,10 +12,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -333,7 +330,9 @@
       <workItem from="1781803766204" duration="3491000" />
       <workItem from="1781852983693" duration="6798000" />
       <workItem from="1781875405632" duration="4403000" />
-      <workItem from="1781937973709" duration="3892000" />
+      <workItem from="1781937973709" duration="4487000" />
+      <workItem from="1782046002245" duration="167000" />
+      <workItem from="1783053930575" duration="528000" />
     </task>
     <servers />
   </component>
