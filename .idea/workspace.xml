@@ -13,6 +13,27 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/debug_editor.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/ai_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/ai_server.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/btcx.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/btcx.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/emotion_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/emotion_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/llm_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/llm_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/pony_personalities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/pony_personalities.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/rule_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/rule_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/server.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/stt_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/stt_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_py/tts_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/tts_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/context_menu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/context_menu.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/monitor_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/monitor_manager.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -169,39 +190,19 @@
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63343/characters.json/src_uiEditor/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
-    <configuration name="speech_editor.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" working-dir="$PROJECT_DIR$/src_uiEditor/js">
+    <configuration name="main.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src_uiEditor/js/main.js" working-dir="$PROJECT_DIR$/src_uiEditor/js">
       <method v="2" />
     </configuration>
-    <configuration name="main (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="Desktop-ponies-2-" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/DPP2serverUDP/Client" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/DPP2serverUDP/Client/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
+    <configuration name="speech_editor.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/src_uiEditor/js/speech_editor.js" working-dir="$PROJECT_DIR$/src_uiEditor/js">
       <method v="2" />
     </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Cargo.Run desktop-ponies-rs" />
+        <item itemvalue="Node.js.main.js" />
         <item itemvalue="JavaScript Debug.index.html" />
         <item itemvalue="Node.js.speech_editor.js" />
         <item itemvalue="JavaScript Debug.gif_editor.html" />
-        <item itemvalue="Python.main (1)" />
       </list>
     </recent_temporary>
   </component>
@@ -333,6 +334,12 @@
       <workItem from="1781937973709" duration="4487000" />
       <workItem from="1782046002245" duration="167000" />
       <workItem from="1783053930575" duration="528000" />
+      <workItem from="1784877778628" duration="912000" />
+      <workItem from="1785490750216" duration="156000" />
+      <workItem from="1786481759363" duration="1076000" />
+      <workItem from="1786485277443" duration="631000" />
+      <workItem from="1786517401045" duration="5155000" />
+      <workItem from="1786536251336" duration="248000" />
     </task>
     <servers />
   </component>
@@ -357,6 +364,11 @@
           <url>file://$PROJECT_DIR$/DPP2serverUDP/Client/reserve/graphic_client.py</url>
           <line>5</line>
           <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/src_py/rule_engine.py</url>
+          <line>1</line>
+          <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

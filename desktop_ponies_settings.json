@@ -1,0 +1,7 @@
+{
+  "selected_monitors": [],
+  "pony_limit": 50,
+  "spawn_on_start": [],
+  "fps_limit": 60,
+  "drag_behavior_fallback": true
+}
