@@ -43,14 +43,31 @@ impl MonitorManager {
             .and_then(|m| m.name())
             .unwrap_or_default();
 
+        // ИСПРАВЛЕНО: раньше ID монитора был просто "monitor_{index}", хотя
+        // комментарий обещал "стабильный ID из имени". Индекс в перечислении
+        // мониторов не стабилен между перезапусками (при отключении/смене
+        // порядка мониторов), из-за чего сохранённый в настройках выбор
+        // мониторов после переподключения мог применяться не к тем экранам.
+        // Теперь ID строится из имени монитора, а дубликаты (несколько
+        // одинаковых моделей) получают числовой суффикс.
+        let mut name_counts: HashMap<String, usize> = HashMap::new();
+
         for (index, monitor) in available_monitors.iter().enumerate() {
             let name = monitor.name().unwrap_or_else(|| format!("Monitor {}", index + 1));
             let size = monitor.size();
             let position = monitor.position();
             let scale = monitor.scale_factor();
 
-            // Генерируем стабильный ID из имени
-            let id = format!("monitor_{}", index);
+            let slug: String = name.chars()
+                .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+                .collect();
+            let occurrence = name_counts.entry(slug.clone()).or_insert(0);
+            let id = if *occurrence == 0 {
+                format!("monitor_{}", slug)
+            } else {
+                format!("monitor_{}_{}", slug, occurrence)
+            };
+            *occurrence += 1;
 
             let is_primary = name == primary_name;
 

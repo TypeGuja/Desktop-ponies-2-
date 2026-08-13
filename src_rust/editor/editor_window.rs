@@ -88,7 +88,14 @@ impl EditorWindow {
             escaped, escaped
         );
 
-        println!("[Editor] Sending to WebView: {}", &message[..message.len().min(200)]);
+        // ИСПРАВЛЕНО: срез по байтовому индексу мог упасть посреди
+        // многобайтового UTF-8 символа (например, кириллицы в тексте пони)
+        // и вызвать панику "byte index is not a char boundary".
+        let mut cut = message.len().min(200);
+        while cut > 0 && !message.is_char_boundary(cut) {
+            cut -= 1;
+        }
+        println!("[Editor] Sending to WebView: {}", &message[..cut]);
         let _ = self.webview.evaluate_script(&js);
     }
 

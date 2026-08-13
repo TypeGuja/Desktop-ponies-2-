@@ -1,14 +1,38 @@
 // src_rust/context_menu.rs
 
+// ДОБАВЛЕНО: раньше 180.0/28.0/4.0 (ширина меню/высота пункта/отступ) были
+// продублированы как "магические числа" в трёх местах (hit_test,
+// is_point_inside, main.rs::render_context_menu), и их легко было развести
+// в разные стороны при правке одного места без другого. Вынесены в общие
+// константы + helper menu_size(), которым main.rs тоже пользуется при
+// создании отдельного окна-хитбокса меню.
+pub const MENU_WIDTH: f32 = 180.0;
+pub const ITEM_HEIGHT: f32 = 28.0;
+pub const MENU_PADDING: f32 = 4.0;
+
+/// Полный размер меню (ширина, высота) в пикселях для данного числа пунктов.
+pub fn menu_size(item_count: usize) -> (u32, u32) {
+    let height = item_count as f32 * ITEM_HEIGHT + MENU_PADDING * 2.0;
+    (MENU_WIDTH as u32, height.ceil() as u32)
+}
+
+// ИЗМЕНЕНО: сверился с настоящим оригиналом контекстного меню
+// (DesktopPonyAnimator.vb::CreatePonyMenu/DisplayPonyMenu — не Pony.vb).
+// Добавлены RemoveEvery (соответствует "Remove Every {name}" в оригинале) и
+// настоящий выбор конкретного пони при добавлении (подменю, как
+// "Add Pony" → список в оригинале) вместо мгновенного случайного спавна.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PonyAction {
-    Drag,
-    Boop,
-    Feed,
-    Pet,
-    ChangeDirection,
+    Remove,
+    RemoveEvery,
     ToggleSleep,
-    SendHome,
+    ToggleSleepAll,
+    OpenAddPonyMenu,
+    SpawnRandomPony,
+    SpawnNamedPony(String),
+    BackToMainMenu,
+    ReturnToMenu,
+    Exit,
 }
 
 #[derive(Clone, Debug)]
@@ -45,24 +69,65 @@ impl ContextMenu {
             y: 0.0,
             pony_index: None,
             pony_name: None,
-            items: vec![
-                MenuItem::new("👆 Взять", PonyAction::Drag),
-                MenuItem::new("👃 Боп!", PonyAction::Boop),
-                MenuItem::new("🍎 Покормить", PonyAction::Feed),
-                MenuItem::new("✋ Погладить", PonyAction::Pet),
-                MenuItem::new("↔ Развернуть", PonyAction::ChangeDirection),
-                MenuItem::new("😴 Спать", PonyAction::ToggleSleep),
-                MenuItem::new("🏠 Отправить домой", PonyAction::SendHome),
-            ],
+            // Пункты пересобираются в show() под конкретного пони (Remove
+            // должен показывать его имя) — здесь достаточно пустого списка,
+            // он не отображается, пока меню не открыто.
+            items: Vec::new(),
         }
     }
 
-    pub fn show(&mut self, x: f32, y: f32, pony_index: usize, pony_name: &str) {
+    // ИЗМЕНЕНО: пункты меню собираются заново при каждом открытии — не
+    // только из-за имени в "Remove", но и потому что подписи Sleep/Pause и
+    // Sleep/Pause All должны переключаться на "Wake up/Resume" в зависимости
+    // от текущего состояния (как в оригинале, DisplayPonyMenu), а не быть
+    // статичными.
+    pub fn show(&mut self, x: f32, y: f32, pony_index: usize, pony_name: &str,
+                is_sleeping: bool, all_sleeping: bool) {
         self.visible = true;
         self.x = x;
         self.y = y;
         self.pony_index = Some(pony_index);
         self.pony_name = Some(pony_name.to_string());
+        self.items = Self::build_main_items(pony_name, is_sleeping, all_sleeping);
+    }
+
+    /// Пересобирает пункты в главный список (используется и при первом
+    /// открытии, и при возврате из подменю "Add Pony" кнопкой "← Back").
+    pub fn show_main_menu(&mut self, is_sleeping: bool, all_sleeping: bool) {
+        let pony_name = self.pony_name.clone().unwrap_or_default();
+        self.items = Self::build_main_items(&pony_name, is_sleeping, all_sleeping);
+    }
+
+    fn build_main_items(pony_name: &str, is_sleeping: bool, all_sleeping: bool) -> Vec<MenuItem> {
+        vec![
+            MenuItem::new(&format!("🗑 Remove ({})", pony_name), PonyAction::Remove),
+            MenuItem::new(&format!("🗑 Remove Every ({})", pony_name), PonyAction::RemoveEvery),
+            MenuItem::new(
+                if is_sleeping { "☀ Wake up/Resume" } else { "💤 Sleep/Pause" },
+                PonyAction::ToggleSleep,
+            ),
+            MenuItem::new(
+                if all_sleeping { "☀ Wake up/Resume All" } else { "💤 Sleep/Pause All" },
+                PonyAction::ToggleSleepAll,
+            ),
+            MenuItem::new("➕ Add Pony ▸", PonyAction::OpenAddPonyMenu),
+            MenuItem::new("🏠 Return to Menu", PonyAction::ReturnToMenu),
+            MenuItem::new("✖ Exit", PonyAction::Exit),
+        ]
+    }
+
+    // ДОБАВЛЕНО: подменю выбора конкретного пони для добавления — аналог
+    // "Add Pony" → список пони в оригинале (там ещё и по тегам сгруппировано,
+    // здесь для простоты плоский список, но выбор конкретного пони, а не
+    // мгновенный случайный спавн, сохранён).
+    pub fn show_add_pony_list(&mut self, pony_names: &[String]) {
+        let mut items = Vec::with_capacity(pony_names.len() + 2);
+        items.push(MenuItem::new("🎲 Random", PonyAction::SpawnRandomPony));
+        for name in pony_names {
+            items.push(MenuItem::new(name, PonyAction::SpawnNamedPony(name.clone())));
+        }
+        items.push(MenuItem::new("← Back", PonyAction::BackToMainMenu));
+        self.items = items;
     }
 
     pub fn hide(&mut self) {
@@ -71,41 +136,34 @@ impl ContextMenu {
         self.pony_name = None;
     }
 
-    pub fn hit_test(&self, mouse_x: f32, mouse_y: f32) -> Option<usize> {
+    // ИСПРАВЛЕНО: раньше hit_test принимал координаты мыши в системе
+    // координат ГЛАВНОГО окна и сам вычитал self.x/self.y, потому что меню
+    // рисовалось прямо на поверхности главного окна. Теперь у меню
+    // собственное окно-хитбокс (см. MenuWindow в main.rs), и координаты
+    // клика уже приходят локальными для этого окна (0,0 — левый верхний
+    // угол меню) — вычитать self.x/self.y больше не нужно, поэтому и сам
+    // метод стал проще и надёжнее (не зависит от синхронизации между
+    // положением окна меню и хранимыми self.x/self.y).
+    pub fn hit_test(&self, local_x: f32, local_y: f32) -> Option<usize> {
         if !self.visible {
             return None;
         }
 
-        let item_height = 28.0;
-        let menu_width = 180.0;
-        let padding = 4.0;
-
-        let menu_height = self.items.len() as f32 * item_height + padding * 2.0;
-
-        if mouse_x >= self.x && mouse_x <= self.x + menu_width &&
-            mouse_y >= self.y && mouse_y <= self.y + menu_height {
-            let rel_y = mouse_y - self.y - padding;
-            if rel_y >= 0.0 {
-                let index = (rel_y / item_height) as usize;
-                if index < self.items.len() && self.items[index].enabled {
-                    return Some(index);
-                }
-            }
+        if local_x < 0.0 || local_x > MENU_WIDTH {
+            return None;
         }
-        None
-    }
 
-    pub fn is_point_inside(&self, x: f32, y: f32) -> bool {
-        if !self.visible {
-            return false;
+        let rel_y = local_y - MENU_PADDING;
+        if rel_y < 0.0 {
+            return None;
         }
-        let item_height = 28.0;
-        let menu_width = 180.0;
-        let padding = 4.0;
-        let menu_height = self.items.len() as f32 * item_height + padding * 2.0;
 
-        x >= self.x && x <= self.x + menu_width &&
-            y >= self.y && y <= self.y + menu_height
+        let index = (rel_y / ITEM_HEIGHT) as usize;
+        if index < self.items.len() && self.items[index].enabled {
+            Some(index)
+        } else {
+            None
+        }
     }
 
     /// Получить действие по индексу

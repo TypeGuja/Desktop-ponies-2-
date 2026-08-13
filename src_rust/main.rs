@@ -21,6 +21,7 @@ mod settings;
 mod performance;
 mod context_menu;
 mod editor;
+mod bitmap_font;
 
 use loader::{DesktopPoniesLoader, MovementType, Behavior, GifAnimation, GifFrameData};
 use monitor_manager::MonitorManager;
@@ -78,11 +79,26 @@ struct InteractionWindow {
     pony_index: usize,
 }
 
+// ДОБАВЛЕНО: отдельное окно-хитбокс для контекстного меню, по аналогии с
+// InteractionWindow у каждого пони. Раньше клики по пунктам меню ловились
+// через временное включение cursor_hittest(true) на ГЛАВНОМ окне целиком
+// (см. историю в close_context_menu/handle_click) — это грубый обходной
+// путь: пока меню открыто, главное окно переставало быть "прозрачным для
+// кликов" на всей своей площади, что могло цеплять клики совсем не по
+// меню. Теперь у меню своё маленькое AlwaysOnTop-окно, всегда кликабельное,
+// а главное окно остаётся click-through постоянно.
+struct MenuWindow {
+    window: Arc<winit::window::Window>,
+    surface: Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>,
+}
+
 struct App {
     ponies: Vec<Pony>,
     main_window: Option<Arc<winit::window::Window>>,
     main_surface: Option<Surface<Arc<winit::window::Window>, Arc<winit::window::Window>>>,
     interaction_windows: Vec<InteractionWindow>,
+    // ДОБАВЛЕНО: отдельный хитбокс контекстного меню (см. MenuWindow выше).
+    menu_window: Option<MenuWindow>,
     ui_window: Option<Arc<winit::window::Window>>,
     _webview: Option<wry::WebView>,
     last_frame: Instant,
@@ -98,6 +114,12 @@ struct App {
     right_mouse_down: bool,
     grabbed_pony: Option<usize>,
     context_menu: ContextMenu,
+    // ДОБАВЛЕНО: локальные координаты мыши относительно окна-хитбокса
+    // меню (0,0 — левый верхний угол меню) — отдельно от mouse_x/mouse_y,
+    // которые остаются в системе координат главного окна и используются
+    // для пони/interaction-окон.
+    menu_mouse_x: f32,
+    menu_mouse_y: f32,
     perf: PerformanceMonitor,
     frame_counter: u64,
     fps_limit: u32,
@@ -185,7 +207,10 @@ fn build_html(loader: &DesktopPoniesLoader, monitors: &MonitorManager, fps_limit
 
 impl App {
     fn spawn_pony(&mut self, name: &str, event_loop: &winit::event_loop::ActiveEventLoop) {
-        while self.ponies.len() >= 50 {
+        // ИСПРАВЛЕНО: лимит пони был захардкожен (50) и игнорировал
+        // settings.pony_limit, настраиваемый пользователем/UI.
+        let pony_limit = self.settings.pony_limit.max(1);
+        while self.ponies.len() >= pony_limit {
             self.remove_pony(0, event_loop);
         }
 
@@ -216,8 +241,19 @@ impl App {
         };
 
         let animation = self.loader.load_pony_frames(name, &sprite_name);
-        let speed = first_behavior.speed * 60.0;
-        let angle = fastrand::f32() * std::f32::consts::TAU;
+        // ИСПРАВЛЕНО: раньше здесь тоже брался полностью случайный угол
+        // 0..360° вне зависимости от типа движения поведения — см. подробный
+        // комментарий у random_velocity_for_movement(). Сначала определяем
+        // movement_type (он же используется ниже для самого поля Pony), и
+        // считаем вектор скорости через тот же helper, что и при смене
+        // поведения — так поведение только что заспавненного пони сразу
+        // соответствует своему типу движения, а не общей "диагонали".
+        let spawn_movement_type = MovementType::parse(&first_behavior.movement);
+        let speed = match spawn_movement_type {
+            MovementType::None | MovementType::Sleep => 0.0,
+            _ => first_behavior.speed * 60.0,
+        };
+        let (spawn_vx, spawn_vy) = random_velocity_for_movement(&spawn_movement_type, speed);
 
         let (screen_w, screen_h) = self.main_window.as_ref()
             .map(|w| {
@@ -230,7 +266,11 @@ impl App {
 
         // Применяем настройки анимации из поведения
         let animation_speed_mult = first_behavior.set_animation_speed.unwrap_or(1.0);
-        let prevent_loop = first_behavior.do_not_repeat_animations;
+        // ИСПРАВЛЕНО: тот же баг с перепутанными полями ini, что и в
+        // change_pony_behavior() — здесь бралось do_not_repeat_animations
+        // вместо настоящего prevent_loop, из-за чего только что заспавненный
+        // пони мог зацикливать гифку, даже если в .ini prevent_loop=true.
+        let prevent_loop = first_behavior.prevent_loop;
         let fixed_fps = first_behavior.set_fps;
 
         // Сохраняем размеры ДО перемещения animation
@@ -240,8 +280,8 @@ impl App {
         self.ponies.push(Pony {
             x: fastrand::f32() * (screen_w - 200.0) + 100.0,
             y: fastrand::f32() * (screen_h - 200.0) + 100.0,
-            vx: angle.cos() * speed,
-            vy: angle.sin() * speed,
+            vx: spawn_vx,
+            vy: spawn_vy,
             animation,  // перемещаем здесь
             current_frame: 0,
             frame_timer: 0.0,
@@ -254,7 +294,7 @@ impl App {
             config_name: name.to_string(),
             current_behavior: first_behavior.name.clone(),
             available_behaviors,
-            movement_type: MovementType::parse(&first_behavior.movement),
+            movement_type: spawn_movement_type,
             behavior_timer: first_behavior.min_duration + fastrand::f32() * (first_behavior.max_duration - first_behavior.min_duration),
             grabbed: false,
             interaction_state: None,
@@ -320,6 +360,69 @@ impl App {
         }
     }
 
+    // ДОБАВЛЕНО: создаёт отдельное окно-хитбокс для контекстного меню,
+    // позиционированное поверх текущих координат self.context_menu
+    // (которые уже выставлены вызовом ContextMenu::show() перед этим).
+    // Координаты меню (context_menu.x/y) хранятся в системе координат
+    // главного окна — переводим их в экранные так же, как это делает
+    // update_interaction_windows() для окон пони.
+    fn create_menu_window(&mut self, event_loop: &winit::event_loop::ActiveEventLoop) {
+        self.destroy_menu_window();
+
+        let (menu_w, menu_h) = context_menu::menu_size(self.context_menu.items.len());
+
+        let main_pos = self.main_window.as_ref()
+            .and_then(|w| w.outer_position().ok())
+            .unwrap_or(PhysicalPosition::new(0, 0));
+
+        let screen_x = main_pos.x + self.context_menu.x as i32;
+        let screen_y = main_pos.y + self.context_menu.y as i32;
+
+        let attrs = WindowAttributes::default()
+            .with_title("Pony Context Menu")
+            .with_decorations(false)
+            .with_transparent(true)
+            .with_visible(false)
+            .with_inner_size(LogicalSize::new(menu_w as f64, menu_h as f64))
+            .with_position(PhysicalPosition::new(screen_x, screen_y))
+            .with_window_level(WindowLevel::AlwaysOnTop);
+
+        if let Ok(window) = event_loop.create_window(attrs) {
+            let mw = Arc::new(window);
+            // Постоянно кликабельное окно — это и есть тот самый отдельный
+            // хитбокс, который просил пользователь (аналог InteractionWindow).
+            mw.set_cursor_hittest(true).ok();
+
+            if let Ok(ctx) = Context::new(mw.clone()) {
+                if let Ok(surface) = Surface::new(&ctx, mw.clone()) {
+                    self.menu_window = Some(MenuWindow { window: mw.clone(), surface });
+                    mw.set_visible(true);
+                    println!("[Menu] Hitbox window created at ({},{}) {}x{}", screen_x, screen_y, menu_w, menu_h);
+                }
+            }
+        } else {
+            eprintln!("[Error] Failed to create context menu hitbox window");
+        }
+    }
+
+    fn destroy_menu_window(&mut self) {
+        if let Some(mw) = self.menu_window.take() {
+            mw.window.set_visible(false);
+        }
+    }
+
+    // ДОБАВЛЕНО: нужно для подменю "Add Pony" — когда список пунктов меню
+    // меняется БЕЗ закрытия окна (переход в подменю выбора пони и обратно),
+    // сам OS-размер окна-хитбокса тоже надо подогнать под новое число
+    // пунктов, иначе окно останется прежнего (меньшего/большего) размера, и
+    // часть пунктов физически не поместится в кликабельную область.
+    fn resize_menu_window_for_items(&mut self) {
+        if let Some(mw) = &self.menu_window {
+            let (w, h) = context_menu::menu_size(self.context_menu.items.len());
+            let _ = mw.window.request_inner_size(PhysicalSize::new(w, h));
+        }
+    }
+
     fn remove_pony(&mut self, index: usize, _event_loop: &winit::event_loop::ActiveEventLoop) {
         if index < self.ponies.len() {
             println!("[Remove] Removing pony #{}", index);
@@ -368,12 +471,16 @@ impl App {
                         let _ = iw.window.set_outer_position(PhysicalPosition::new(x.max(0), y.max(0)));
                         let _ = iw.window.request_inner_size(PhysicalSize::new(w, h));
 
-                        let is_sleeping = matches!(pony.interaction_state, Some(InteractionState::Sleeping));
-                        let should_show = !is_sleeping;
-
+                        // ИСПРАВЛЕНО: раньше окно-хитбокс пони принудительно скрывалось
+                        // на время сна (should_show = !is_sleeping) — из-за этого
+                        // спящего пони нельзя было ни навести, ни кликнуть правой
+                        // кнопкой, чтобы разбудить: хитбокс буквально пропадал с
+                        // экрана, хотя сам пони оставался виден на главном окне.
+                        // Хитбокс должен оставаться кликабельным всегда, пока пони
+                        // не удалён — сон не должен отключать взаимодействие с ним.
                         let is_visible = iw.window.is_visible().unwrap_or(false);
-                        if should_show != is_visible {
-                            iw.window.set_visible(should_show);
+                        if !is_visible {
+                            iw.window.set_visible(true);
                         }
                     }
                 }
@@ -425,82 +532,101 @@ impl App {
         }
     }
 
+    // ИСПРАВЛЕНО: полностью переписано под отдельное окно-хитбокс меню.
+    // Раньше меню рисовалось поверх поверхности главного окна абсолютными
+    // координатами (menu_x/menu_y) — теперь рисуется в СВОЁМ окне локальными
+    // координатами (0,0 — левый верхний угол), размер окна = размеру меню.
+    //
+    // ИСПРАВЛЕНО (текст): раньше пункты меню были просто закрашенными
+    // прямоугольниками без единой буквы ("просто окошко" — как и заметил
+    // пользователь), потому что softbuffer не умеет рисовать текст сам по
+    // себе, и никакой текстовый рендеринг реализован не был. Теперь подписи
+    // рисуются через bitmap_font::draw_text (см. src_rust/bitmap_font.rs).
+    //
+    // ИСПРАВЛЕНО (оформление): цветовая схема переведена на светлую
+    // Win10-подобную (светло-серый фон, тонкая серая рамка, светло-голубое
+    // выделение при наведении с голубой рамкой) вместо тёмной Catppuccin-схемы.
     fn render_context_menu(&mut self) {
         if !self.context_menu.visible {
             return;
         }
 
-        if let Some(surface) = &mut self.main_surface {
-            if let Some(window) = &self.main_window {
-                let size = window.inner_size();
-                if let (Some(sw), Some(sh)) = (NonZeroU32::new(size.width), NonZeroU32::new(size.height)) {
-                    if let Ok(mut buffer) = surface.buffer_mut() {
-                        let bw = sw.get() as usize;
-                        let bh = sh.get() as usize;
+        let Some(mw) = &mut self.menu_window else { return; };
 
-                        let menu_x = self.context_menu.x as usize;
-                        let menu_y = self.context_menu.y as usize;
-                        let menu_width = 180;
-                        let item_height = 28;
-                        let padding = 4;
+        let (menu_w, menu_h) = context_menu::menu_size(self.context_menu.items.len());
+        let (Some(sw), Some(sh)) = (NonZeroU32::new(menu_w), NonZeroU32::new(menu_h)) else { return; };
 
-                        let bg_color = 0x00000000;
-                        let border_color = 0x00000000;
-                        let hover_color = 0x00000000;
+        if mw.surface.resize(sw, sh).is_err() {
+            return;
+        }
 
-                        let total_height = self.context_menu.items.len() * item_height + padding * 2;
+        if let Ok(mut buffer) = mw.surface.buffer_mut() {
+            let bw = sw.get() as usize;
+            let bh = sh.get() as usize;
 
-                        if menu_x + menu_width > bw || menu_y + total_height > bh {
-                            return;
+            // Палитра в духе классического контекстного меню Windows 10.
+            let bg_color: u32 = 0xFFF3F3F3;
+            let border_color: u32 = 0xFF8B8B8B;
+            let hover_bg: u32 = 0xFFE0EEFB;
+            let hover_border: u32 = 0xFFA6D8FF;
+            let text_color: u32 = 0xFF1B1B1B;
+            let disabled_text_color: u32 = 0xFFA3A3A3;
+            let sep_color: u32 = 0xFFE3E3E3;
+
+            for y in 0..bh {
+                let row = y * bw;
+                let is_h_border = y == 0 || y == bh - 1;
+                for x in 0..bw {
+                    let is_border = is_h_border || x == 0 || x == bw - 1;
+                    buffer[row + x] = if is_border { border_color } else { bg_color };
+                }
+            }
+
+            let hover_idx = self.context_menu.hit_test(self.menu_mouse_x, self.menu_mouse_y);
+            let item_h = context_menu::ITEM_HEIGHT as usize;
+            let padding = context_menu::MENU_PADDING as usize;
+            let item_count = self.context_menu.items.len();
+
+            for i in 0..item_count {
+                let item_y = padding + i * item_h;
+                let item = &self.context_menu.items[i];
+                let is_hover = Some(i) == hover_idx && item.enabled;
+
+                if is_hover {
+                    let y0 = item_y;
+                    let y1 = (item_y + item_h).min(bh.saturating_sub(1));
+                    for y in y0..y1 {
+                        let row = y * bw;
+                        for x in 2..bw.saturating_sub(2) {
+                            buffer[row + x] = hover_bg;
                         }
+                    }
+                    if y0 < bh {
+                        let row = y0 * bw;
+                        for x in 2..bw.saturating_sub(2) { buffer[row + x] = hover_border; }
+                    }
+                    if y1 > 0 && y1 - 1 < bh {
+                        let row = (y1 - 1) * bw;
+                        for x in 2..bw.saturating_sub(2) { buffer[row + x] = hover_border; }
+                    }
+                }
 
-                        for y in menu_y..(menu_y + total_height).min(bh) {
-                            for x in menu_x..(menu_x + menu_width).min(bw) {
-                                if x == menu_x || x == menu_x + menu_width - 1 ||
-                                    y == menu_y || y == menu_y + total_height - 1 {
-                                    buffer[y * bw + x] = border_color;
-                                } else {
-                                    buffer[y * bw + x] = bg_color;
-                                }
-                            }
+                let color = if item.enabled { text_color } else { disabled_text_color };
+                let text_y = item_y as i32 + (item_h as i32 - bitmap_font::GLYPH_H) / 2;
+                bitmap_font::draw_text(&mut buffer, bw, bh, padding as i32 + 8, text_y, &item.label, color, 1);
+
+                if i < item_count - 1 {
+                    let sep_y = item_y + item_h - 1;
+                    if sep_y < bh {
+                        let row = sep_y * bw;
+                        for x in (padding + 4)..bw.saturating_sub(padding + 4) {
+                            buffer[row + x] = sep_color;
                         }
-
-                        let hover_idx = self.context_menu.hit_test(self.mouse_x, self.mouse_y);
-
-                        for i in 0..self.context_menu.items.len() {
-                            let item_y = menu_y + padding + i * item_height;
-                            let item = &self.context_menu.items[i];
-
-                            let item_bg = if Some(i) == hover_idx && item.enabled {
-                                hover_color
-                            } else if !item.enabled {
-                                0xCC555555
-                            } else {
-                                bg_color
-                            };
-
-                            for y in item_y..(item_y + item_height).min(bh) {
-                                let row_start = y * bw;
-                                for x in (menu_x + 1)..(menu_x + menu_width - 1).min(bw) {
-                                    buffer[row_start + x] = item_bg;
-                                }
-                            }
-
-                            if i < self.context_menu.items.len() - 1 {
-                                let sep_y = item_y + item_height - 1;
-                                if sep_y < bh {
-                                    let row_start = sep_y * bw;
-                                    for x in (menu_x + padding)..(menu_x + menu_width - padding).min(bw) {
-                                        buffer[row_start + x] = 0xFF555555;
-                                    }
-                                }
-                            }
-                        }
-
-                        buffer.present().unwrap();
                     }
                 }
             }
+
+            let _ = buffer.present();
         }
     }
 
@@ -563,14 +689,37 @@ impl App {
         }
     }
 
-    fn handle_click(&mut self, pony_index: usize, button: MouseButton, pressed: bool) {
+    // ИСПРАВЛЕНО: правая кнопка мыши раньше вообще не обрабатывалась, поэтому
+    // ContextMenu::show()/execute_pony_action() никогда не вызывались, и всё
+    // контекстное меню (Взять/Боп/Покормить/Погладить/...) было недоступно.
+    //
+    // ИСПРАВЛЕНО (хитбокс меню): раньше здесь же временно возвращали
+    // cursor_hittest(false) главному окну — это была обратная сторона
+    // временного включения hit-test на главном окне при открытии меню.
+    // Теперь у меню собственное окно (MenuWindow), поэтому главное окно
+    // просто никогда не трогается — оно всегда click-through.
+    fn close_context_menu(&mut self) {
+        self.context_menu.hide();
+        self.destroy_menu_window();
+    }
+
+    fn handle_click(&mut self, pony_index: usize, button: MouseButton, pressed: bool, event_loop: &winit::event_loop::ActiveEventLoop) {
         match button {
             MouseButton::Left => {
                 if pressed {
                     self.mouse_down = true;
 
+                    // ИСПРАВЛЕНО: раньше здесь пытались вычислить пункт меню
+                    // из hit_test(self.mouse_x, self.mouse_y) — координат
+                    // мыши В ГЛАВНОМ ОКНЕ — хотя это событие приходит с
+                    // interaction-окна конкретного пони, а не с окна меню.
+                    // Теперь у меню отдельный хитбокс (см. WindowEvent для
+                    // menu_window_idx ниже), где клики по пунктам меню
+                    // обрабатываются с правильными локальными координатами.
+                    // Клик по пони, пока меню открыто, просто закрывает меню
+                    // (стандартное поведение — клик "мимо" меню его закрывает).
                     if self.context_menu.visible {
-                        self.context_menu.hide();
+                        self.close_context_menu();
                         return;
                     }
 
@@ -613,6 +762,27 @@ impl App {
                             println!("[Drag] === DRAG RELEASED for pony #{} '{}' ===",
                                      idx, pony_name);
                         }
+                    }
+                }
+            }
+            MouseButton::Right => {
+                if pressed {
+                    if self.context_menu.visible {
+                        self.close_context_menu();
+                    } else if pony_index < self.ponies.len() {
+                        let pony_name = self.ponies[pony_index].config_name.clone();
+                        // ДОБАВЛЕНО: подписи Sleep/Pause и Sleep/Pause All
+                        // должны переключаться в зависимости от текущего
+                        // состояния (как в оригинале, DisplayPonyMenu) —
+                        // считаем состояние прямо перед открытием меню.
+                        let is_sleeping = matches!(self.ponies[pony_index].interaction_state, Some(InteractionState::Sleeping));
+                        let all_sleeping = !self.ponies.is_empty()
+                            && self.ponies.iter().all(|p| matches!(p.interaction_state, Some(InteractionState::Sleeping)));
+                        self.context_menu.show(self.mouse_x, self.mouse_y, pony_index, &pony_name, is_sleeping, all_sleeping);
+                        // ДОБАВЛЕНО: отдельный хитбокс для меню вместо
+                        // временного hit-test на главном окне.
+                        self.create_menu_window(event_loop);
+                        println!("[Menu] Opened context menu for pony #{} '{}'", pony_index, pony_name);
                     }
                 }
             }
@@ -665,6 +835,14 @@ impl App {
             } else {
                 println!("[Drag] ✗ Sprite file not found: {:?}", sprite_path);
             }
+        }
+
+        // ИСПРАВЛЕНО: settings.drag_behavior_fallback раньше нигде не читался,
+        // поэтому ускоряющий "фолбэк" при отсутствии drag-спрайта включался
+        // всегда, даже если пользователь отключил его в настройках.
+        if !self.settings.drag_behavior_fallback {
+            println!("[Drag] ⚠ No drag sprite for '{}', fallback disabled in settings", pony_name);
+            return;
         }
 
         println!("[Drag] ⚠ No drag sprite for '{}', using speed-up effect", pony_name);
@@ -721,93 +899,118 @@ impl App {
         }
     }
 
-    fn execute_pony_action(&mut self, pony_index: usize, action: PonyAction) {
-        if pony_index >= self.ponies.len() {
-            return;
-        }
-
+    // ИЗМЕНЕНО: набор действий меню ПКМ сокращён по запросу пользователя —
+    // вместо Drag/Boop/Feed/Pet/ChangeDirection теперь Remove/ToggleSleep/
+    // ToggleSleepAll/AddPony/ReturnToMenu/Exit. Понадобился event_loop
+    // (для Exit и для remove_pony/create_menu_window по цепочке), поэтому
+    // сигнатура расширена — единственный вызов (в window_event) его уже имеет.
+    fn execute_pony_action(&mut self, pony_index: usize, action: PonyAction, event_loop: &winit::event_loop::ActiveEventLoop) {
         match action {
-            PonyAction::Drag => {
-                let pony = &mut self.ponies[pony_index];
-                pony.grabbed = true;
-                pony.movement_type = MovementType::Dragged;
-                self.grabbed_pony = Some(pony_index);
-
-                if pony.original_frame_duration.is_none() {
-                    pony.original_frame_duration = Some(pony.animation.default_delay);
+            PonyAction::Remove => {
+                if pony_index < self.ponies.len() {
+                    println!("[Action] Remove pony #{}", pony_index);
+                    self.remove_pony(pony_index, event_loop);
                 }
-                pony.animation_speed_mult = 1.5;
-
-                println!("[Action] Drag pony #{}", pony_index);
             }
-            PonyAction::Boop => {
-                let p = &mut self.ponies[pony_index];
-                p.vy = -250.0;
-                p.vx = if fastrand::bool() { 100.0 } else { -100.0 };
-                p.frame_timer = 0.0;
-                p.movement_type = MovementType::HorizontalOnly;
-                p.interaction_state = Some(InteractionState::Booped { timer: 2.0 });
-                p.behavior_timer = 2.0;
-                p.animation_speed_mult = 1.2;
-                println!("[Action] Boop pony #{}", pony_index);
-            }
-            PonyAction::Feed => {
-                let p = &mut self.ponies[pony_index];
-                let speed_mult = 1.8;
-                p.vx *= speed_mult;
-                p.vy *= speed_mult;
-                if p.original_frame_duration.is_none() {
-                    p.original_frame_duration = Some(p.animation.default_delay);
+            // ДОБАВЛЕНО: соответствует "Remove Every {name}" в оригинале
+            // (DesktopPonyAnimator.vb) — удаляет ВСЕ заспавненные копии
+            // именно этого пони (сравнение по имени конфига), а не только
+            // ту, по которой кликнули правой кнопкой. Раньше такого пункта
+            // не было вообще.
+            PonyAction::RemoveEvery => {
+                if pony_index >= self.ponies.len() { return; }
+                let target_name = self.ponies[pony_index].config_name.clone();
+                let mut indices: Vec<usize> = self.ponies.iter().enumerate()
+                    .filter(|(_, p)| p.config_name == target_name)
+                    .map(|(i, _)| i)
+                    .collect();
+                // Удаляем от старшего индекса к младшему, чтобы удаление
+                // одного пони не сдвигало индексы ещё не обработанных.
+                indices.sort_unstable_by(|a, b| b.cmp(a));
+                println!("[Action] Remove Every ({}) → {} ponies", target_name, indices.len());
+                for idx in indices {
+                    self.remove_pony(idx, event_loop);
                 }
-                p.animation_speed_mult = 1.6;
-                p.interaction_state = Some(InteractionState::Fed {
-                    timer: 3.0,
-                    original_speed_mult: speed_mult,
-                });
-                p.behavior_timer = 3.0;
-                println!("[Action] Feed pony #{}", pony_index);
             }
-            PonyAction::Pet => {
-                let p = &mut self.ponies[pony_index];
-                p.vx = 0.0;
-                p.vy = 0.0;
-                p.movement_type = MovementType::None;
-                if p.original_frame_duration.is_none() {
-                    p.original_frame_duration = Some(p.animation.default_delay);
-                }
-                p.animation_speed_mult = 0.5;
-                p.interaction_state = Some(InteractionState::Petted { timer: 4.0 });
-                p.behavior_timer = 5.0;
-                println!("[Action] Pet pony #{}", pony_index);
-            }
-            PonyAction::ChangeDirection => {
-                let p = &mut self.ponies[pony_index];
-                p.facing_right = !p.facing_right;
-                p.vx *= -1.0;
-                println!("[Action] Change direction pony #{}", pony_index);
-            }
+            // ИСПРАВЛЕНО: раньше "сон" просто замораживал текущий кадр
+            // (animation_speed_mult = 0.0) поверх ЛЮБОЙ анимации, которая
+            // играла в момент клика — пони застывал статичной картинкой той
+            // анимации, что была активна, а не показывал анимацию сна. Теперь
+            // enter_sleep()/wake_up() переключают на настоящее Sleep-поведение
+            // из .ini (как _sleepBehavior в оригинале, Pony.vb) — гифка сна
+            // проигрывается по-настоящему.
             PonyAction::ToggleSleep => {
-                let p = &mut self.ponies[pony_index];
-                let is_sleeping = matches!(p.interaction_state, Some(InteractionState::Sleeping));
-
+                if pony_index >= self.ponies.len() { return; }
+                let is_sleeping = matches!(self.ponies[pony_index].interaction_state, Some(InteractionState::Sleeping));
                 if is_sleeping {
-                    p.interaction_state = None;
-                    p.movement_type = MovementType::None;
-                    p.behavior_timer = 0.0;
-                    p.animation_speed_mult = 1.0;
+                    wake_up(&mut self.ponies[pony_index]);
                     println!("[Action] Wake up pony #{}", pony_index);
                 } else {
-                    p.vx = 0.0;
-                    p.vy = 0.0;
-                    p.movement_type = MovementType::Sleep;
-                    p.interaction_state = Some(InteractionState::Sleeping);
-                    p.behavior_timer = 999999.0;
-                    p.animation_speed_mult = 0.0;
+                    enter_sleep(&mut self.ponies[pony_index], &mut self.loader);
                     println!("[Action] Sleep pony #{}", pony_index);
                 }
             }
-            PonyAction::SendHome => {
-                println!("[Action] Send home pony #{}", pony_index);
+            // ДОБАВЛЕНО: усыпить/разбудить сразу всех пони. Если хотя бы
+            // один сейчас не спит — усыпляем всех; если уже все спят —
+            // будим всех (единая кнопка-переключатель, а не два отдельных
+            // пункта меню).
+            PonyAction::ToggleSleepAll => {
+                let any_awake = self.ponies.iter()
+                    .any(|p| !matches!(p.interaction_state, Some(InteractionState::Sleeping)));
+
+                for i in 0..self.ponies.len() {
+                    let is_sleeping = matches!(self.ponies[i].interaction_state, Some(InteractionState::Sleeping));
+                    if any_awake && !is_sleeping {
+                        enter_sleep(&mut self.ponies[i], &mut self.loader);
+                    } else if !any_awake && is_sleeping {
+                        wake_up(&mut self.ponies[i]);
+                    }
+                }
+                println!("[Action] Sleep/Pause All → {}", if any_awake { "sleeping all" } else { "waking all" });
+            }
+            // ИЗМЕНЕНО: "Add Pony" теперь настоящее подменю (см.
+            // ContextMenu::show_add_pony_list, обрабатывается отдельно в
+            // window_event до попадания сюда) — можно выбрать конкретного
+            // пони, а не только случайного. Оба варианта используют тот же
+            // spawn_queue, которым пользуется главная панель (webview) —
+            // заспавнится на следующем RedrawRequested.
+            PonyAction::SpawnRandomPony => {
+                let available: Vec<String> = self.loader.configs.iter().map(|c| c.name.clone()).collect();
+                if available.is_empty() {
+                    println!("[Action] Add Pony: no pony configs available");
+                } else {
+                    let idx = fastrand::usize(0..available.len());
+                    let name = available[idx].clone();
+                    println!("[Action] Add Pony (random) → {}", name);
+                    self.spawn_queue.lock().unwrap().push(name);
+                    let _ = self.proxy.send_event(UserEvent::RequestRedraw);
+                }
+            }
+            PonyAction::SpawnNamedPony(name) => {
+                println!("[Action] Add Pony → {}", name);
+                self.spawn_queue.lock().unwrap().push(name);
+                let _ = self.proxy.send_event(UserEvent::RequestRedraw);
+            }
+            // Обрабатываются напрямую в обработчике клика по меню (см.
+            // window_event) до вызова execute_pony_action — сюда попасть
+            // не должны, но матч обязан быть исчерпывающим.
+            PonyAction::OpenAddPonyMenu | PonyAction::BackToMainMenu => {}
+            // ДОБАВЛЕНО: возвращает/поднимает главную панель управления
+            // (webview-окно со списком пони/мониторов), которая могла
+            // оказаться скрытой за окнами пони.
+            PonyAction::ReturnToMenu => {
+                if let Some(w) = &self.ui_window {
+                    w.set_visible(true);
+                    w.focus_window();
+                    println!("[Action] Return to Menu");
+                }
+            }
+            // ДОБАВЛЕНО: полный выход из приложения — сохраняем настройки,
+            // как и при закрытии главного окна (WindowEvent::CloseRequested).
+            PonyAction::Exit => {
+                println!("[Action] Exit");
+                self.settings.save(&self.settings_path);
+                event_loop.exit();
             }
         }
     }
@@ -860,7 +1063,10 @@ impl App {
     }
 
     fn render_all_windows(&mut self) {
-        let frame_duration = std::time::Duration::from_secs_f64(1.0 / self.fps_limit as f64);
+        // ИСПРАВЛЕНО: защита от деления на ноль/паники Duration::from_secs_f64,
+        // если fps_limit когда-нибудь окажется равен 0 (например, из будущего
+        // кода или повреждённого settings-файла).
+        let frame_duration = std::time::Duration::from_secs_f64(1.0 / self.fps_limit.max(1) as f64);
         if self.frame_timer.elapsed() < frame_duration {
             return;
         }
@@ -947,116 +1153,152 @@ impl App {
 
 // ==================== UPDATE PONIES С НОВОЙ ЛОГИКОЙ АНИМАЦИИ ====================
 
+// ИСПРАВЛЕНО (вся функция переписана): раньше выбор следующего поведения был
+// собственным изобретением — 15%-й шанс "форсированной редкой" анимации
+// (uniform-выбор среди ВСЕХ поведений, включая отключённые/недостижимые) плюс
+// отдельный проход по вероятностям. Это не соответствовало оригиналу и на
+// практике перекашивало распределение поведений: с одной стороны, поведения
+// с маленьким Chance каждый пятый-шестой раз выбирались наравне с частыми
+// (это и есть форс 15%), с другой — из-за раннего `break` при первом
+// совпадении `rand_val <= 0.0` реальные веса не всегда соблюдались корректно.
+// Пользователь просил свериться с оригиналом (Pony.vb) — там выбор поведения
+// это Pony.GetCandidateBehavior(): равномерно-взвешенный случайный выбор по
+// накопленной вероятности (Chance) среди ВСЕХ доступных поведений, без каких-
+// либо искусственных "форсирований". Это и реализовано ниже в
+// weighted_choose_behavior(), а сама функция module-level, чтобы её могли
+// использовать все места выбора поведения (не только эта функция).
 fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     if pony.grabbed { return; }
     if pony.interaction_state.is_some() { return; }
     if pony.available_behaviors.is_empty() { return; }
 
-    // Запоминаем текущее поведение
     let old_behavior_name = pony.current_behavior.clone();
 
-    // НОВОЕ: Шанс на принудительный показ редкой анимации (15%)
-    let force_rare = fastrand::f32() < 0.15;
+    // ДОБАВЛЕНО: это, вероятнее всего, ГЛАВНАЯ причина «не все анимации из
+    // .ini проигрываются». Поле linked_behavior (LinkedBehavior в оригинале)
+    // парсилось из .ini и даже редактировалось в редакторе, но во время
+    // самой игры нигде не читалось — то есть цепочки поведений (например,
+    // "сесть" → "сидит" → "встать", где промежуточные шаги специально
+    // сделаны с Chance=0, чтобы их НИКОГДА не выбирал случайный выбор, а
+    // только явный переход по цепочке) были полностью нерабочими: шаги с
+    // Chance=0 не выбирались случайно (это правильно), но и по цепочке на
+    // них никто не переходил (это баг) — то есть такие поведения не
+    // проигрывались НИКОГДА. В оригинале (Pony.vb::StepOnce) при истечении
+    // текущего поведения ПЕРВЫМ делом проверяется его LinkedBehavior — если
+    // задан и найден среди доступных поведений, переход происходит на него
+    // НАПРЯМУЮ, без какого-либо случайного выбора. Портируем это здесь же,
+    // до вызова взвешенного случайного выбора.
+    if let Some(linked) = find_linked_behavior(pony) {
+        println!("[Behavior] {} → {} (linked from {})", pony.config_name, linked.name, old_behavior_name);
+        apply_chosen_behavior(pony, loader, &linked);
+        return;
+    }
 
-    let chosen = if force_rare {
-        // Принудительно выбираем случайное поведение
-        let idx = fastrand::usize(0..pony.available_behaviors.len());
-        &pony.available_behaviors[idx]
-    } else {
-        // Обычный выбор по вероятностям
-        let total_prob: f32 = pony.available_behaviors.iter().map(|b| b.probability).sum();
-        if total_prob <= 0.0 { return; }
-
-        let mut rand_val = fastrand::f32() * total_prob;
-        let mut chosen = &pony.available_behaviors[0];
-
-        for behavior in &pony.available_behaviors {
-            rand_val -= behavior.probability;
-            if rand_val <= 0.0 {
-                chosen = behavior;
-                break;
-            }
-        }
-        chosen
+    let mut chosen = match weighted_choose_behavior(&pony.available_behaviors) {
+        Some(b) => b,
+        None => return,
     };
 
-    // НОВОЕ: Проверка на повторение одной и той же анимации
-    if chosen.name == old_behavior_name {
+    let repeats_previous = chosen.name == old_behavior_name;
+    if repeats_previous {
         pony.current_behavior_repeat_count += 1;
-
-        // Если одна и та же анимация выбрана 2+ раз подряд - принудительно меняем
-        if pony.current_behavior_repeat_count >= 2 {
-            println!("[Skip Repeat] {} repeated {}x, forcing change",
-                     pony.config_name, pony.current_behavior_repeat_count);
-
-            // Выбираем другое случайное поведение (не текущее)
-            let other_behaviors: Vec<&Behavior> = pony.available_behaviors.iter()
-                .filter(|b| b.name != old_behavior_name)
-                .collect();
-
-            if !other_behaviors.is_empty() {
-                let idx = fastrand::usize(0..other_behaviors.len());
-                let new_chosen = other_behaviors[idx];
-
-                // Сбрасываем счётчик
-                pony.current_behavior_repeat_count = 0;
-
-                // Загружаем новую анимацию
-                let sprite_name = if !new_chosen.sprite_right.is_empty() {
-                    &new_chosen.sprite_right
-                } else {
-                    &new_chosen.sprite_left
-                };
-                let animation = loader.load_pony_frames(&pony.config_name, sprite_name);
-                let width = animation.width;
-                let height = animation.height;
-
-                pony.animation = animation;
-                pony.width = width;
-                pony.height = height;
-                pony.current_frame = 0;
-                pony.frame_timer = 0.0;
-                pony.current_behavior = new_chosen.name.clone();
-                pony.movement_type = MovementType::parse(&new_chosen.movement);
-                pony.behavior_timer = new_chosen.min_duration + fastrand::f32() * (new_chosen.max_duration - new_chosen.min_duration);
-                pony.animation_speed_mult = new_chosen.set_animation_speed.unwrap_or(1.0);
-                pony.fixed_fps = new_chosen.set_fps;
-                pony.prevent_loop = new_chosen.do_not_repeat_animations;
-
-                let speed = match pony.movement_type {
-                    MovementType::None | MovementType::Sleep => 0.0,
-                    _ => new_chosen.speed * 60.0,
-                };
-
-                if speed > 0.0 {
-                    let angle = fastrand::f32() * std::f32::consts::TAU;
-                    pony.vx = angle.cos() * speed;
-                    pony.vy = angle.sin() * speed;
-                } else {
-                    pony.vx = 0.0;
-                    pony.vy = 0.0;
-                }
-
-                println!("[Behavior] {} → {} (forced change, was {} repeated {}x)",
-                         pony.config_name, new_chosen.name, old_behavior_name, pony.current_behavior_repeat_count);
-                return;
-            }
-        }
     } else {
-        // Разные анимации - сбрасываем счётчик
         pony.current_behavior_repeat_count = 0;
     }
 
-    // Вывод в лог
-    if chosen.probability < 0.01 {
-        println!("[RARE!] {} → {} (prob: {})",
-                 pony.config_name, chosen.name, chosen.probability);
-    } else {
-        println!("[Behavior] {} → {} (prob: {})",
-                 pony.config_name, chosen.name, chosen.probability);
+    // ДОБАВЛЕНО: у оригинала нет отдельного ограничения на повтор Stand-
+    // анимаций — это не про верность Pony.vb, а самостоятельное требование:
+    // Stand-анимации (имя содержит "stand", без учёта регистра) не должны
+    // играться больше 2 раз ПОДРЯД. Считаем так: если это уже 3-й подряд
+    // выбор того же Stand-поведения (current_behavior_repeat_count достиг 2
+    // ПОСЛЕ инкремента выше, т.е. до этого оно уже отыграло 2 раза подряд),
+    // принудительно выбираем что-то другое.
+    let is_stand = chosen.name.to_lowercase().contains("stand");
+    let stand_limit_hit = repeats_previous && is_stand && pony.current_behavior_repeat_count >= 2;
+
+    // Поле do_not_repeat_animations (35-я колонка pony.ini) — отдельная,
+    // общая для любых поведений настройка "не повторять этот же выбор
+    // подряд вообще" (срабатывает сразу на первом повторе).
+    let generic_no_repeat_hit = repeats_previous && chosen.do_not_repeat_animations && pony.current_behavior_repeat_count >= 1;
+
+    if stand_limit_hit || generic_no_repeat_hit {
+        if let Some(alt) = weighted_choose_behavior_excluding(&pony.available_behaviors, &old_behavior_name) {
+            println!("[Behavior Limit] {} → {} (was {} x{}, {})",
+                     pony.config_name, alt.name, old_behavior_name, pony.current_behavior_repeat_count,
+                     if stand_limit_hit { "stand limit" } else { "do_not_repeat_animations" });
+            chosen = alt;
+            pony.current_behavior_repeat_count = 0;
+        }
     }
 
-    // Загружаем анимацию
+    if chosen.probability < 0.01 {
+        println!("[RARE!] {} → {} (prob: {})", pony.config_name, chosen.name, chosen.probability);
+    } else {
+        println!("[Behavior] {} → {} (prob: {})", pony.config_name, chosen.name, chosen.probability);
+    }
+
+    apply_chosen_behavior(pony, loader, &chosen);
+}
+
+/// Взвешенный случайный выбор поведения по накопленной вероятности (Chance) —
+/// как в оригинале, Pony.vb::GetCandidateBehavior (упрощённая версия без
+/// фильтрации по группе/достижимости цели, которых нет в этом порту).
+fn weighted_choose_behavior(candidates: &[Behavior]) -> Option<Behavior> {
+    if candidates.is_empty() {
+        return None;
+    }
+    if candidates.len() == 1 {
+        return Some(candidates[0].clone());
+    }
+
+    let total: f32 = candidates.iter().map(|b| b.probability).sum();
+    if total <= 0.0 {
+        // Если у всех Chance = 0 (некорректный .ini) — равномерный выбор,
+        // чтобы поведение вообще могло смениться, а не "зависало" молча.
+        let idx = fastrand::usize(0..candidates.len());
+        return Some(candidates[idx].clone());
+    }
+
+    let random_choice = fastrand::f32() * total;
+    let mut cumulative = 0.0;
+    for b in candidates {
+        cumulative += b.probability;
+        if cumulative >= random_choice {
+            return Some(b.clone());
+        }
+    }
+    candidates.last().cloned()
+}
+
+/// Находит связанное поведение (LinkedBehavior) для ТЕКУЩЕГО поведения
+/// пони, если оно задано в .ini — как Pony.vb::GetLinkedBehavior()
+/// (поиск по имени без учёта регистра среди доступных поведений).
+fn find_linked_behavior(pony: &Pony) -> Option<Behavior> {
+    let current = pony.available_behaviors.iter().find(|b| b.name == pony.current_behavior)?;
+    if current.linked_behavior.is_empty() {
+        return None;
+    }
+    pony.available_behaviors.iter()
+        .find(|b| b.name.eq_ignore_ascii_case(&current.linked_behavior))
+        .cloned()
+}
+
+/// То же самое, но исключая поведение с указанным именем — используется для
+/// принудительной смены при достижении лимита повторов.
+fn weighted_choose_behavior_excluding(candidates: &[Behavior], exclude_name: &str) -> Option<Behavior> {
+    let filtered: Vec<Behavior> = candidates.iter()
+        .filter(|b| b.name != exclude_name)
+        .cloned()
+        .collect();
+    weighted_choose_behavior(&filtered)
+}
+
+/// Загружает анимацию и применяет выбранное поведение к пони: спрайт, кадры,
+/// таймер длительности, скорость и вектор движения. Вынесено в отдельную
+/// функцию, потому что раньше этот блок был продублирован дословно в двух
+/// местах (обычный выбор и форсированная редкая анимация) — после отказа от
+/// форсирования путь выбора остался один, и дублирование ушло само собой.
+fn apply_chosen_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader, chosen: &Behavior) {
     let sprite_name = if !chosen.sprite_right.is_empty() {
         &chosen.sprite_right
     } else {
@@ -1077,21 +1319,148 @@ fn change_pony_behavior(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
     pony.behavior_timer = chosen.min_duration + fastrand::f32() * (chosen.max_duration - chosen.min_duration);
     pony.animation_speed_mult = chosen.set_animation_speed.unwrap_or(1.0);
     pony.fixed_fps = chosen.set_fps;
-    pony.prevent_loop = chosen.do_not_repeat_animations;
+    // ИСПРАВЛЕНО: это ГЛАВНАЯ причина «гифки зацикливаются, хотя в .ini
+    // прописано, что цикличности быть не должно». Флаг "не зацикливать
+    // кадры" в pony.ini — это поле prevent_loop (21-я колонка), отдельное от
+    // do_not_repeat_animations (35-я колонка, про повтор ВЫБОРА поведения, а
+    // не кадров внутри гифки). Раньше код брал значение из
+    // do_not_repeat_animations, а реальный prevent_loop нигде не читался.
+    pony.prevent_loop = chosen.prevent_loop;
 
     let speed = match pony.movement_type {
         MovementType::None | MovementType::Sleep => 0.0,
         _ => chosen.speed * 60.0,
     };
 
-    if speed > 0.0 {
-        let angle = fastrand::f32() * std::f32::consts::TAU;
-        pony.vx = angle.cos() * speed;
-        pony.vy = angle.sin() * speed;
-    } else {
-        pony.vx = 0.0;
-        pony.vy = 0.0;
+    let (vx, vy) = random_velocity_for_movement(&pony.movement_type, speed);
+    pony.vx = vx;
+    pony.vy = vy;
+}
+
+// ИСПРАВЛЕНО: раньше для ЛЮБОГО не-None/Sleep типа движения скорость
+// направлялась под полностью случайным углом 0..360° (`fastrand::f32() *
+// TAU`), а строго горизонтальные/вертикальные типы потом просто обнулялись
+// постфактум в update_ponies(). В результате DiagonalOnly, DiagonalHorizontal,
+// DiagonalVertical, HorizontalVertical и All визуально не отличались друг от
+// друга — все двигались одинаково "по диагонали в любую сторону", то есть
+// фактически не все виды движений из .ini реально проигрывались так, как
+// задумано. В оригинале (Pony.vb::SetMovementWithoutDestination) для каждого
+// типа сначала явно выбирается ОДНА из разрешённых составляющих (горизонталь/
+// вертикаль/диагональ), и для диагонали диапазон угла зависит от того, какие
+// именно составляющие разрешены. Портируем то же самое.
+fn random_velocity_for_movement(movement_type: &MovementType, speed_px_per_sec: f32) -> (f32, f32) {
+    if speed_px_per_sec <= 0.0 {
+        return (0.0, 0.0);
     }
+
+    let allow_h = matches!(movement_type,
+        MovementType::HorizontalOnly | MovementType::HorizontalVertical |
+        MovementType::DiagonalHorizontal | MovementType::All);
+    let allow_v = matches!(movement_type,
+        MovementType::VerticalOnly | MovementType::HorizontalVertical |
+        MovementType::DiagonalVertical | MovementType::All);
+    let allow_d = matches!(movement_type,
+        MovementType::DiagonalOnly | MovementType::DiagonalHorizontal |
+        MovementType::DiagonalVertical | MovementType::All);
+
+    let mut options: Vec<u8> = Vec::with_capacity(3);
+    if allow_h { options.push(0); }
+    if allow_v { options.push(1); }
+    if allow_d { options.push(2); }
+
+    if options.is_empty() {
+        return (0.0, 0.0);
+    }
+
+    let choice = options[fastrand::usize(0..options.len())];
+
+    let (mut mx, mut my) = match choice {
+        0 => (speed_px_per_sec, 0.0),
+        1 => (0.0, speed_px_per_sec),
+        _ => {
+            // Диапазон угла зависит от ВСЕГО набора разрешённых составляющих
+            // (как в оригинале), а не только от того, что выпало сейчас:
+            // Diagonal+Vertical держится ближе к вертикали (15..45°),
+            // Diagonal+Horizontal — ближе к горизонтали (105..135°), любой
+            // другой набор с диагональю — широкий диапазон (15..75°).
+            let angle_deg: f32 = if allow_v && !allow_h {
+                fastrand::f32() * 30.0 + 15.0
+            } else if allow_h && !allow_v {
+                fastrand::f32() * 30.0 + 105.0
+            } else {
+                fastrand::f32() * 60.0 + 15.0
+            };
+            let angle = angle_deg.to_radians();
+            (speed_px_per_sec * angle.sin(), speed_px_per_sec * angle.cos())
+        }
+    };
+
+    if fastrand::bool() { mx = -mx; }
+    if fastrand::bool() { my = -my; }
+
+    (mx, my)
+}
+
+// ДОБАВЛЕНО: настоящий переход в сон — портирует идею _sleepBehavior из
+// оригинала (Pony.vb): ищем поведение, у которого movement реально
+// разобрался в MovementType::Sleep (т.е. в pony.ini явно задан
+// "movement,...,Sleep,..."), и переключаемся на его спрайт/анимацию, как на
+// любое обычное поведение. Раньше сон просто замораживал текущий кадр
+// (animation_speed_mult = 0.0) — пони застывал статичной картинкой той
+// анимации, что играла в момент клика, вместо того чтобы показать анимацию
+// сна. Если в конфиге пони вообще нет поведения с movement = Sleep — берём
+// любое стационарное (speed = 0) как разумный запасной вариант, чтобы пони
+// хотя бы не продолжал бежать/лететь во сне.
+fn enter_sleep(pony: &mut Pony, loader: &mut DesktopPoniesLoader) {
+    pony.vx = 0.0;
+    pony.vy = 0.0;
+    pony.interaction_state = Some(InteractionState::Sleeping);
+    pony.behavior_timer = 999999.0;
+
+    let sleep_behavior = pony.available_behaviors.iter()
+        .find(|b| MovementType::parse(&b.movement) == MovementType::Sleep)
+        .or_else(|| pony.available_behaviors.iter().find(|b| b.speed <= 0.0))
+        .cloned();
+
+    if let Some(behavior) = sleep_behavior {
+        let sprite_name = if !behavior.sprite_right.is_empty() {
+            &behavior.sprite_right
+        } else {
+            &behavior.sprite_left
+        };
+        let animation = loader.load_pony_frames(&pony.config_name, sprite_name);
+        pony.width = animation.width;
+        pony.height = animation.height;
+        pony.animation = animation;
+        pony.current_frame = 0;
+        pony.frame_timer = 0.0;
+        pony.current_behavior = behavior.name.clone();
+        pony.prevent_loop = behavior.prevent_loop;
+        // Анимация сна должна реально проигрываться (мигание/дыхание и т.п.),
+        // а не быть замороженной — используем собственную скорость поведения
+        // из .ini, как и для любого другого поведения.
+        pony.animation_speed_mult = behavior.set_animation_speed.unwrap_or(1.0);
+        pony.fixed_fps = behavior.set_fps;
+    } else {
+        // Ни Sleep-, ни стационарного поведения не нашлось (маловероятно) —
+        // хотя бы гарантируем, что пони не будет молча "бежать" во сне.
+        pony.animation_speed_mult = pony.animation_speed_mult.max(0.1);
+    }
+
+    pony.movement_type = MovementType::Sleep;
+}
+
+/// Будит пони: сбрасывает состояние сна и обнуляет таймер поведения, чтобы
+/// на следующем шаге update_ponies() пони как обычно выбрал новое поведение
+/// через change_pony_behavior() — отдельно восстанавливать "то, что было до
+/// сна" не требуется, ровно как и для пробуждения из mouseover/drag в
+/// оригинале, когда нет более приоритетного состояния для восстановления.
+fn wake_up(pony: &mut Pony) {
+    pony.interaction_state = None;
+    pony.movement_type = MovementType::None;
+    pony.behavior_timer = 0.0;
+    pony.animation_speed_mult = 1.0;
+    pony.current_behavior_repeat_count = 0;
 }
 
 fn update_ponies(
@@ -1279,6 +1648,7 @@ impl ApplicationHandler<UserEvent> for App {
     fn window_event(&mut self, event_loop: &winit::event_loop::ActiveEventLoop, window_id: WindowId, event: WindowEvent) {
         let ui_id = self.ui_window.as_ref().map(|w| w.id());
         let main_id = self.main_window.as_ref().map(|w| w.id());
+        let menu_id = self.menu_window.as_ref().map(|mw| mw.window.id());
         let interaction_window_idx = self.get_interaction_window_id(window_id);
 
         match event {
@@ -1292,6 +1662,62 @@ impl ApplicationHandler<UserEvent> for App {
                 self.mouse_y = position.y as f32;
             }
 
+            // ДОБАВЛЕНО: у меню теперь собственное окно-хитбокс, поэтому его
+            // координаты мыши уже ЛОКАЛЬНЫЕ (0,0 — левый верхний угол меню) —
+            // никакого пересчёта относительно главного окна не требуется.
+            WindowEvent::CursorMoved { position, .. } if Some(window_id) == menu_id => {
+                self.menu_mouse_x = position.x as f32;
+                self.menu_mouse_y = position.y as f32;
+            }
+
+            // ИСПРАВЛЕНО: раньше клики по пунктам меню ловились отдельным
+            // обработчиком на ГЛАВНОМ окне (с временным hit-test), потому что
+            // меню рисовалось прямо на его поверхности. Теперь у меню
+            // собственное окно (см. create_menu_window/MenuWindow) — клики
+            // обрабатываются здесь с локальными координатами меню.
+            WindowEvent::MouseInput { state, button, .. } if Some(window_id) == menu_id => {
+                if state == ElementState::Pressed {
+                    match button {
+                        MouseButton::Left => {
+                            if let Some(item_idx) = self.context_menu.hit_test(self.menu_mouse_x, self.menu_mouse_y) {
+                                if let Some(action) = self.context_menu.get_action(item_idx) {
+                                    // ДОБАВЛЕНО: переходы в подменю "Add Pony" и обратно
+                                    // не должны закрывать меню — только пересобрать
+                                    // список пунктов и подогнать размер окна под него.
+                                    match action {
+                                        PonyAction::OpenAddPonyMenu => {
+                                            let names: Vec<String> = self.loader.configs.iter().map(|c| c.name.clone()).collect();
+                                            self.context_menu.show_add_pony_list(&names);
+                                            self.resize_menu_window_for_items();
+                                        }
+                                        PonyAction::BackToMainMenu => {
+                                            let is_sleeping = self.context_menu.pony_index
+                                                .and_then(|idx| self.ponies.get(idx))
+                                                .map(|p| matches!(p.interaction_state, Some(InteractionState::Sleeping)))
+                                                .unwrap_or(false);
+                                            let all_sleeping = !self.ponies.is_empty()
+                                                && self.ponies.iter().all(|p| matches!(p.interaction_state, Some(InteractionState::Sleeping)));
+                                            self.context_menu.show_main_menu(is_sleeping, all_sleeping);
+                                            self.resize_menu_window_for_items();
+                                        }
+                                        _ => {
+                                            if let Some(menu_pony_idx) = self.context_menu.pony_index {
+                                                self.execute_pony_action(menu_pony_idx, action, event_loop);
+                                            }
+                                            self.close_context_menu();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        MouseButton::Right => {
+                            self.close_context_menu();
+                        }
+                        _ => {}
+                    }
+                }
+            }
+
             WindowEvent::MouseInput { state, button, .. } if interaction_window_idx.is_some() => {
                 let pressed = state == ElementState::Pressed;
                 let iw_idx = interaction_window_idx.unwrap();
@@ -1299,7 +1725,7 @@ impl ApplicationHandler<UserEvent> for App {
                 if let Some(pony_idx) = self.get_pony_under_mouse_in_window(iw_idx) {
                     println!("[Click] Window #{} on pony #{}: {:?} pressed={}",
                              iw_idx, pony_idx, button, pressed);
-                    self.handle_click(pony_idx, button, pressed);
+                    self.handle_click(pony_idx, button, pressed, event_loop);
                 }
             }
 
@@ -1329,6 +1755,11 @@ impl ApplicationHandler<UserEvent> for App {
                 for iw in &self.interaction_windows {
                     iw.window.request_redraw();
                 }
+                // ДОБАВЛЕНО: без этого окно меню отрисовалось бы один раз при
+                // открытии и больше не обновлялось бы — например, подсветка
+                // пункта при наведении мыши не отслеживалась бы в реальном
+                // времени, как у остальных окон (главного и interaction-окон).
+                if let Some(mw) = &self.menu_window { mw.window.request_redraw(); }
             }
             _ => {}
         }
@@ -1482,6 +1913,11 @@ fn main() {
 
     let settings = AppSettings::load(&settings_path);
 
+    // ИСПРАВЛЕНО: fps_limit из сохранённых настроек раньше никогда не
+    // применялся — App.fps_limit был всегда захардкожен в 60 независимо
+    // от значения в desktop_ponies_settings.json.
+    let initial_fps_limit = settings.fps_limit.clamp(10, 120);
+
     let mut monitor_manager = MonitorManager::new();
     monitor_manager.selected_ids = settings.selected_monitors.iter().cloned().collect();
 
@@ -1496,11 +1932,22 @@ fn main() {
         }
     });
 
+    // ИСПРАВЛЕНО: spawn_on_start из настроек раньше нигде не читался — пони
+    // из этого списка никогда не появлялись при запуске. Кладём их в
+    // spawn_queue, который на первом RedrawRequested заспавнит ponies.
+    if !settings.spawn_on_start.is_empty() {
+        let mut q = spawn_q.lock().unwrap();
+        for name in &settings.spawn_on_start {
+            q.push(name.clone());
+        }
+    }
+
     el.run_app(&mut App {
         ponies: Vec::new(),
         main_window: None,
         main_surface: None,
         interaction_windows: Vec::new(),
+        menu_window: None,
         ui_window: None,
         _webview: None,
         last_frame: Instant::now(),
@@ -1516,9 +1963,11 @@ fn main() {
         right_mouse_down: false,
         grabbed_pony: None,
         context_menu: ContextMenu::new(),
+        menu_mouse_x: 0.0,
+        menu_mouse_y: 0.0,
         perf: PerformanceMonitor::new(),
         frame_counter: 0,
-        fps_limit: 60,
+        fps_limit: initial_fps_limit,
         frame_timer: Instant::now(),
         debug_hitboxes: true,
     }).unwrap();

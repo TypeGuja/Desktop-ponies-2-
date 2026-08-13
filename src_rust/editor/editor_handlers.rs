@@ -300,8 +300,10 @@ fn handle_trace_gif_base64(base64_data: &str, sender: &mpsc::Sender<String>) {
     println!("[Editor] Base64 data length: {}", base64_data.len());
 
     // Декодируем base64
-    use base64::decode;
-    let bytes = match decode(base64_data) {
+    // ИСПРАВЛЕНО: в base64 0.21+ убрали свободные функции encode()/decode(),
+    // теперь нужен Engine. Старый вызов base64::decode(...) не компилировался.
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    let bytes = match STANDARD.decode(base64_data) {
         Ok(b) => b,
         Err(e) => {
             println!("[Editor] Base64 decode error: {}", e);

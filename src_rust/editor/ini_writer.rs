@@ -65,15 +65,20 @@ fn write_behavior(content: &mut String, b: &Behavior) {
         format!("{{{}}}", b.sound_files.iter().map(|s| format!("\"{}\"", escape_ini_string(s))).collect::<Vec<_>>().join(","))
     };
 
+    // ИСПРАВЛЕНО: раньше здесь пропускалось поле set_max_fps, из-за чего все
+    // последующие поля (sound_files, target_mode, target_vector, follow_target_name,
+    // auto_select_images_on_follow, follow_moving_behavior, follow_stopped_behavior,
+    // follow_offset_type) записывались со сдвигом на одну колонку, а do_not_repeat_animations
+    // вообще терялось при обратном чтении. Сохранение пони в редакторе портило pony.ini.
     content.push_str(&format!(
-        "Behavior,\"{}\",{},{},{},{},\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",{},{},{},\"{}\",{},\"{}\",\"{}\",\"{}\",\"{}\",{},{},\"{}\",\"{}\",{},{},\"",
+        "Behavior,\"{}\",{},{},{},{},\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",{},{},{},\"{}\",{},\"{}\",\"{}\",\"{}\",\"{}\",{},{},\"{}\",\"{}\",{},{},{},\"",
         escape_ini_string(&b.name), b.probability, b.max_duration, b.min_duration, b.speed,
         escape_ini_string(&b.sprite_right), escape_ini_string(&b.sprite_left), escape_ini_string(&b.movement),
         escape_ini_string(&b.linked_behavior), escape_ini_string(&b.start_speech), escape_ini_string(&b.end_speech),
         b.skip, b.target_x, b.target_y, b.follow_target, b.auto_select_follow,
         escape_ini_string(&b.follow_stopped), escape_ini_string(&b.follow_moving),
         right_center, left_center, b.prevent_loop, b.group, escape_ini_string(&b.follow_offset),
-        b.set_animation_speed.unwrap_or(0.0), b.set_fps.unwrap_or(0.0), sound_files
+        b.set_animation_speed.unwrap_or(0.0), b.set_fps.unwrap_or(0.0), b.set_max_fps.unwrap_or(0.0), sound_files
     ));
 
     match b.target_mode {

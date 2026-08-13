@@ -31,6 +31,15 @@ pub enum MovementType {
     VerticalOnly,
     DiagonalOnly,
     DiagonalHorizontal,
+    // ИСПРАВЛЕНО: в оригинале (Pony.vb, AllowedMoves) есть ещё два составных
+    // типа движения — HorizontalVertical (горизонталь+вертикаль, без
+    // диагонали) и DiagonalVertical (диагональ+вертикаль). Их не было в этом
+    // enum'е вообще, из-за чего парсер (см. parse() ниже) не узнавал строки
+    // "Horizontal_Vertical"/"Diagonal_Vertical" из pony.ini и тихо превращал
+    // такое поведение в MovementType::None — пони с таким movement вообще
+    // переставал двигаться (стоял на месте), хотя по .ini обязан был ходить.
+    HorizontalVertical,
+    DiagonalVertical,
     Sleep,
     Dragged,
 }
@@ -429,6 +438,10 @@ impl MovementType {
             "verticalonly" | "vertical" | "onlyvertical" => MovementType::VerticalOnly,
             "diagonalonly" | "diagonal" | "onlydiagonal" => MovementType::DiagonalOnly,
             "diagonalhorizontal" | "horizontaldiagonal" => MovementType::DiagonalHorizontal,
+            // ДОБАВЛЕНО: раньше эти два варианта проваливались в `_` (None)
+            // — см. комментарий у enum MovementType выше.
+            "horizontalvertical" | "verticalhorizontal" => MovementType::HorizontalVertical,
+            "diagonalvertical" | "verticaldiagonal" => MovementType::DiagonalVertical,
             "sleep" => MovementType::Sleep,
             "dragged" => MovementType::Dragged,
             _ => {
