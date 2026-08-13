@@ -11,16 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveBtn = document.getElementById('btn-save');
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
-            if (EditorState.currentPony && EditorState.originalConfig) {
+            // ИСПРАВЛЕНО: display_name/categories/interactions раньше брались
+            // из EditorState.originalConfig — замороженного снимка на момент
+            // загрузки пони, из-за чего изменение имени/категорий и любые
+            // правки во вкладке Interactions при сохранении молча
+            // отбрасывались (см. фикс EditorState.getConfig() в state.js).
+            const liveConfig = EditorState.getConfig();
+            if (EditorState.currentPony && liveConfig) {
                 const updatedConfig = {
                     name: EditorState.currentPony,
-                    display_name: EditorState.originalConfig.display_name || EditorState.currentPony,
-                    categories: EditorState.originalConfig.categories || [],
-                    tags: EditorState.originalConfig.tags || [],
+                    display_name: liveConfig.display_name || EditorState.currentPony,
+                    categories: liveConfig.categories || [],
+                    tags: liveConfig.tags || [],
                     behaviors: BehaviorEditor.behaviors || [],
                     speaks: SpeechEditor.speeches || [],
                     effects: EffectEditor.effects || [],
-                    interactions: EditorState.originalConfig.interactions || []
+                    interactions: InteractionEditor.interactions || []
                 };
                 console.log('[Editor] Saving pony:', EditorState.currentPony);
                 EditorAPI.savePony(updatedConfig);

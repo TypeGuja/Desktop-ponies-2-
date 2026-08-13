@@ -41,6 +41,21 @@ const EditorState = {
     },
 
     getConfig() {
+        // ИСПРАВЛЕНО: раньше здесь безусловно возвращался originalConfig —
+        // замороженный снимок конфига, сделанный один раз при загрузке пони
+        // (JSON.parse(JSON.stringify(...))). Все реальные правки (имя,
+        // категории и т.д.) применяются к ДРУГОМУ объекту — PonyEditor.currentPonyConfig.
+        // Из-за этого:
+        //  1) PonyEditor.render(EditorState.getConfig()), вызываемый после
+        //     каждого add/delete behavior/speech/effect, отбрасывал все ещё
+        //     не сохранённые правки и откатывал форму к исходным данным;
+        //  2) кнопка Save брала display_name/categories/interactions из
+        //     этого же замороженного снимка — эти поля никогда не
+        //     сохранялись, даже если пользователь их изменил.
+        // Теперь возвращаем актуальный, живой объект, если он есть.
+        if (window.PonyEditor && PonyEditor.currentPonyConfig) {
+            return PonyEditor.currentPonyConfig;
+        }
         return this.originalConfig;
     }
 };

@@ -227,7 +227,11 @@ const PonyEditor = {
             const width = parseInt(document.getElementById('new-gif-width')?.value) || 128;
             const height = parseInt(document.getElementById('new-gif-height')?.value) || 128;
             const frameCount = parseInt(document.getElementById('new-gif-frames')?.value) || 2;
-            const useTransparent = document.getElementById('new-gif-transparent')?.checked || true;
+            // ИСПРАВЛЕНО: было `?.checked || true` — при snake false || true всё
+            // равно даёт true, поэтому чекбокс "прозрачный фон" физически не
+            // мог быть выключен: даже сняв галочку и выбрав цвет фона,
+            // новый спрайт всегда создавался прозрачным.
+            const useTransparent = document.getElementById('new-gif-transparent')?.checked ?? true;
             const bgColor = bgColorInput?.value || '#000000';
 
             if (!spriteName) {
@@ -313,6 +317,12 @@ const PonyEditor = {
         if (config && config.name) {
             this.currentPonyName = config.name;
             this.currentPonyConfig = config;
+        } else if (!config) {
+            // ИСПРАВЛЕНО: раньше при render(null) (например, после удаления
+            // текущей пони) currentPonyName/currentPonyConfig не сбрасывались
+            // и оставались указывать на уже несуществующую пони.
+            this.currentPonyName = null;
+            this.currentPonyConfig = null;
         }
 
         if (!this.container) {
@@ -482,17 +492,29 @@ const PonyEditor = {
             });
         }
 
+        // ИСПРАВЛЕНО: все 4 кнопки "Quick Add" ниже создавали объекты с
+        // полями, которых нет ни в реальной схеме (Behavior/SpeakDef/
+        // EffectDef/InteractionDef в loader.rs), ни в соответствующих
+        // редакторах вкладок (frames/frame_time/loop/mode, trigger,
+        // type, with_pony/response/condition — везде мимо). Эти поля
+        // просто молча отбрасывались при сохранении (editor_handlers.rs
+        // читает только известные ключи), а сама запись отображалась почти
+        // пустой из-за отсутствия настоящих полей. Приведено к реальной
+        // схеме, которую использует ручное редактирование в соответствующих
+        // вкладках.
         if (quickAddBehavior) {
             quickAddBehavior.addEventListener('click', () => {
                 if (!config.behaviors) config.behaviors = [];
                 config.behaviors.push({
                     name: "new_behavior",
+                    probability: 0.1,
+                    min_duration: 5,
+                    max_duration: 15,
+                    speed: 3,
                     sprite_right: "idle_right",
                     sprite_left: "idle_left",
-                    frames: 2,
-                    frame_time: 10,
-                    loop: true,
-                    mode: "idle"
+                    movement: "All",
+                    skip: false
                 });
                 EditorState.markModified();
                 this.render(config);
@@ -505,9 +527,11 @@ const PonyEditor = {
             quickAddSpeech.addEventListener('click', () => {
                 if (!config.speaks) config.speaks = [];
                 config.speaks.push({
+                    name: "new_speech",
                     text: "New speech line",
-                    trigger: "click",
-                    cooldown: 5
+                    sound_files: [],
+                    skip: false,
+                    frequency: 0
                 });
                 EditorState.markModified();
                 this.render(config);
@@ -521,8 +545,11 @@ const PonyEditor = {
                 if (!config.effects) config.effects = [];
                 config.effects.push({
                     name: "new_effect",
-                    type: "sparkle",
-                    duration: 30
+                    linked: "",
+                    sprite_right: "",
+                    sprite_left: "",
+                    duration: 5,
+                    delay: 0
                 });
                 EditorState.markModified();
                 this.render(config);
@@ -535,9 +562,13 @@ const PonyEditor = {
             quickAddInteraction.addEventListener('click', () => {
                 if (!config.interactions) config.interactions = [];
                 config.interactions.push({
-                    with_pony: "target_pony",
-                    response: "Hello there!",
-                    condition: "always"
+                    name: "new_interaction",
+                    probability: 0.1,
+                    cooldown: 125,
+                    targets: [],
+                    target_count: "One",
+                    behaviors: [],
+                    duration: 60
                 });
                 EditorState.markModified();
                 this.render(config);
@@ -596,13 +627,18 @@ const PonyEditor = {
 
         const traceCanvas = document.createElement('canvas');
         traceCanvas.id = 'trace-render-canvas';
+        // ИСПРАВЛЕНО: трейс-гифка должна быть ПОВЕРХ основного холста
+        // (раньше z-index: 1 у трейса и z-index: 2 у mainCanvas давали
+        // обратный порядок — трейс был не виден за основным рисунком).
+        // pointer-events остаётся 'none', пока не включён режим "Move" —
+        // это не мешает рисовать на основном холсте под трейсом.
         traceCanvas.style.cssText = `
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            z-index: 1;
+            z-index: 2;
             image-rendering: crisp-edges;
             image-rendering: pixelated;
             border: 1px solid rgba(203, 166, 247, 0.1);
@@ -612,7 +648,7 @@ const PonyEditor = {
         canvasContainer.insertBefore(traceCanvas, mainCanvas);
 
         mainCanvas.style.position = 'relative';
-        mainCanvas.style.zIndex = '2';
+        mainCanvas.style.zIndex = '1';
 
         const panel = document.createElement('div');
         panel.id = 'trace-panel';
@@ -664,6 +700,7 @@ const PonyEditor = {
             </div>
             
             <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 10px;">
+                <button id="trace-move" class="trace-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer;" title="Toggle drag mode, then drag the trace image on the canvas">🖐 Move</button>
                 <button id="trace-flip-h" class="trace-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer;">↔ Flip H</button>
                 <button id="trace-flip-v" class="trace-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer;">↕ Flip V</button>
                 <button id="trace-grid" class="trace-btn" style="font-size: 10px; padding: 3px 10px; background: #313244; border: 1px solid #45475a; border-radius: 5px; color: #cdd6f4; cursor: pointer;">📐 Grid</button>
@@ -713,6 +750,17 @@ const PonyEditor = {
             _mainCanvas: mainCanvas,
             _stateManager: state,
             _isPlaying: false,
+            // ДОБАВЛЕНО: возможность перетаскивания трейс-гифки по холсту.
+            isMoving: false,
+            offsetX: 0,
+            offsetY: 0,
+            _dragging: false,
+            _dragStartX: 0,
+            _dragStartY: 0,
+            _dragStartOffsetX: 0,
+            _dragStartOffsetY: 0,
+            _dragMoveHandler: null,
+            _dragUpHandler: null,
         };
 
         window._traceState = traceState;
@@ -889,8 +937,12 @@ const PonyEditor = {
             traceCanvas.style.top = '50%';
             traceCanvas.style.left = '50%';
             traceCanvas.style.transform = 'translate(-50%, -50%)';
-            traceCanvas.style.zIndex = '1';
-            traceCanvas.style.pointerEvents = 'none';
+            traceCanvas.style.zIndex = '2';
+            // ИСПРАВЛЕНО: раньше это безусловно сбрасывало pointer-events в
+            // 'none' при каждом ресайзе (ResizeObserver), из-за чего
+            // включённый режим "Move" ломался при первом же изменении
+            // размера окна редактора. Сохраняем текущий режим перетаскивания.
+            traceCanvas.style.pointerEvents = traceState.isMoving ? 'all' : 'none';
 
             renderTrace();
         }
@@ -1048,8 +1100,10 @@ const PonyEditor = {
 
             const drawW = traceState.width * scale;
             const drawH = traceState.height * scale;
-            const offsetX = (canvasW - drawW) / 2;
-            const offsetY = (canvasH - drawH) / 2;
+            // ДОБАВЛЕНО: смещение от перетаскивания (traceState.offsetX/Y),
+            // накладывается поверх центрирования по умолчанию.
+            const offsetX = (canvasW - drawW) / 2 + traceState.offsetX;
+            const offsetY = (canvasH - drawH) / 2 + traceState.offsetY;
 
             ctx.globalAlpha = traceState.opacity;
 
@@ -1169,22 +1223,79 @@ const PonyEditor = {
             renderTrace();
         });
 
+        // ДОБАВЛЕНО: подсветка активного режима через inline-стили — CSS-класс
+        // .trace-btn.active нигде не определён (не найден ни в одном .css
+        // файле), поэтому classList.toggle('active') раньше не давал вообще
+        // никакого видимого эффекта.
+        function setTraceBtnActive(btn, active) {
+            if (!btn) return;
+            btn.classList.toggle('active', active);
+            btn.style.background = active ? '#cba6f7' : '#313244';
+            btn.style.color = active ? '#1e1e2e' : '#cdd6f4';
+            btn.style.borderColor = active ? '#cba6f7' : '#45475a';
+        }
+
         document.getElementById('trace-flip-h').addEventListener('click', function() {
             traceState.flipH = !traceState.flipH;
-            this.classList.toggle('active');
+            setTraceBtnActive(this, traceState.flipH);
             renderTrace();
         });
 
         document.getElementById('trace-flip-v').addEventListener('click', function() {
             traceState.flipV = !traceState.flipV;
-            this.classList.toggle('active');
+            setTraceBtnActive(this, traceState.flipV);
             renderTrace();
         });
 
         document.getElementById('trace-grid').addEventListener('click', function() {
             traceState.showGrid = !traceState.showGrid;
-            this.classList.toggle('active');
+            setTraceBtnActive(this, traceState.showGrid);
             renderTrace();
+        });
+
+        // ДОБАВЛЕНО: перетаскивание трейс-гифки мышью.
+        // Пока режим Move выключен, у traceCanvas pointer-events: none —
+        // клики проходят "сквозь" него на основной холст, рисование пипеткой/
+        // карандашом/ластиком не затрагивается. При включении Move холст
+        // трейса временно становится кликабельным (pointer-events: all) и
+        // перехватывает мышь только для перетаскивания.
+        const moveBtn = document.getElementById('trace-move');
+        moveBtn.addEventListener('click', function() {
+            traceState.isMoving = !traceState.isMoving;
+            setTraceBtnActive(this, traceState.isMoving);
+            traceState.canvas.style.pointerEvents = traceState.isMoving ? 'all' : 'none';
+            traceState.canvas.style.cursor = traceState.isMoving ? 'grab' : 'default';
+        });
+
+        traceState._dragMoveHandler = function(e) {
+            if (!traceState._dragging) return;
+            traceState.offsetX = traceState._dragStartOffsetX + (e.clientX - traceState._dragStartX);
+            traceState.offsetY = traceState._dragStartOffsetY + (e.clientY - traceState._dragStartY);
+            renderTrace();
+        };
+
+        traceState._dragUpHandler = function() {
+            if (!traceState._dragging) return;
+            traceState._dragging = false;
+            traceState.canvas.style.cursor = traceState.isMoving ? 'grab' : 'default';
+            document.removeEventListener('mousemove', traceState._dragMoveHandler);
+            document.removeEventListener('mouseup', traceState._dragUpHandler);
+        };
+
+        traceCanvas.addEventListener('mousedown', function(e) {
+            if (!traceState.isMoving) return;
+            e.preventDefault();
+            traceState._dragging = true;
+            traceState._dragStartX = e.clientX;
+            traceState._dragStartY = e.clientY;
+            traceState._dragStartOffsetX = traceState.offsetX;
+            traceState._dragStartOffsetY = traceState.offsetY;
+            traceState.canvas.style.cursor = 'grabbing';
+            // mousemove/mouseup вешаются на document (а не на traceCanvas),
+            // чтобы перетаскивание не срывалось, если курсор на секунду
+            // выйдет за пределы холста — снимаются сразу же по mouseup.
+            document.addEventListener('mousemove', traceState._dragMoveHandler);
+            document.addEventListener('mouseup', traceState._dragUpHandler);
         });
 
         document.getElementById('trace-reset').addEventListener('click', function() {
@@ -1193,11 +1304,18 @@ const PonyEditor = {
             traceState.flipH = false;
             traceState.flipV = false;
             traceState.showGrid = false;
+            traceState.offsetX = 0;
+            traceState.offsetY = 0;
+            if (traceState.isMoving) {
+                traceState.isMoving = false;
+                traceState.canvas.style.pointerEvents = 'none';
+                traceState.canvas.style.cursor = 'default';
+            }
             document.getElementById('trace-size').value = 1;
             document.getElementById('trace-opacity').value = 0.35;
             document.getElementById('trace-size-value').textContent = '100%';
             document.getElementById('trace-opacity-value').textContent = '35%';
-            document.querySelectorAll('.trace-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.trace-btn').forEach(b => setTraceBtnActive(b, false));
             renderTrace();
         });
 
@@ -1308,6 +1426,16 @@ const PonyEditor = {
             if (window._traceState._resizeObserver) {
                 window._traceState._resizeObserver.disconnect();
             }
+            // ИСПРАВЛЕНО: если панель закрыли посреди перетаскивания трейса
+            // (мышь ещё зажата), document-слушатели drag'а иначе остались бы
+            // висеть до конца сессии редактора — тот же класс утечки, что
+            // раньше был найден у цветовой палитры и пипетки.
+            if (window._traceState._dragMoveHandler) {
+                document.removeEventListener('mousemove', window._traceState._dragMoveHandler);
+            }
+            if (window._traceState._dragUpHandler) {
+                document.removeEventListener('mouseup', window._traceState._dragUpHandler);
+            }
         }
 
         if (panel) panel.remove();
@@ -1395,6 +1523,10 @@ class GifEditorStateManager {
         this.height = 128;
         this.zoom = 1;
         this.tool = 'pencil';
+        // ДОБАВЛЕНО: размер кисти настраивается отдельно для карандаша и
+        // ластика (не общий globalBrushSize) — квадрат NxN, 1 = один пиксель.
+        this.pencilSize = 1;
+        this.eraserSize = 1;
         this.currentColor = { r: 203, g: 166, b: 247, a: 255 };
         this.currentHue = 260;
         this.previewInterval = null;
@@ -1418,6 +1550,14 @@ class GifEditorStateManager {
         if (this.previewInterval) {
             clearInterval(this.previewInterval);
             this.previewInterval = null;
+        }
+
+        // ИСПРАВЛЕНО: закрываем активную пипетку (если была), иначе её
+        // полноэкранный оверлей и document-слушатели остаются навсегда —
+        // см. комментарий у stateManager._stopPipette в initGifEditor.
+        if (this._stopPipette) {
+            this._stopPipette();
+            this._stopPipette = null;
         }
 
         this.eventListeners.forEach(({ element, event, handler }) => {
@@ -1657,8 +1797,20 @@ class GifEditorStateManager {
             previewCanvas.height = 72;
             const previewCtx = previewCanvas.getContext('2d');
             try {
+                // ИСПРАВЛЕНО: раньше putImageData писала полноразмерный кадр
+                // (self.width x self.height, например 128x128) прямо в canvas
+                // 72x72 — putImageData не масштабирует, а просто обрезает,
+                // поэтому в таймлайне был виден только левый верхний угол
+                // кадра, а не весь кадр целиком. Теперь рисуем через
+                // промежуточный canvas нужного размера и масштабируем drawImage.
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = self.width;
+                tempCanvas.height = self.height;
+                const tempCtx = tempCanvas.getContext('2d');
                 const imgData = new ImageData(frame.data, self.width, self.height);
-                previewCtx.putImageData(imgData, 0, 0);
+                tempCtx.putImageData(imgData, 0, 0);
+                previewCtx.imageSmoothingEnabled = false;
+                previewCtx.drawImage(tempCanvas, 0, 0, self.width, self.height, 0, 0, 72, 72);
             } catch(e) {}
 
             div.appendChild(previewCanvas);
@@ -1728,7 +1880,9 @@ function showInlineGifEditor(ponyName, spriteName) {
         
         <div style="padding: 8px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0;">
             <button id="gif-tool-pencil" class="gif-tool-btn active" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✏️ Pencil</button>
+            <input type="number" id="gif-pencil-size" min="1" max="20" step="1" value="1" title="Pencil brush size, px" style="width: 42px; background: #1e1e2e; border: 1px solid #313244; border-radius: 6px; padding: 5px 2px; color: #cdd6f4; font-size: 12px; text-align: center;">
             <button id="gif-tool-eraser" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🧽 Eraser</button>
+            <input type="number" id="gif-eraser-size" min="1" max="20" step="1" value="1" title="Eraser brush size, px" style="width: 42px; background: #1e1e2e; border: 1px solid #313244; border-radius: 6px; padding: 5px 2px; color: #cdd6f4; font-size: 12px; text-align: center;">
             <button id="gif-tool-fill" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🪣 Fill</button>
             <button id="gif-tool-smooth" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✨ Smooth Edges</button>
             
@@ -1905,8 +2059,19 @@ function initGifEditor(stateManager) {
         };
     }
 
-    function setPixelAt(px, py) {
-        if (!stateManager.frames[stateManager.currentFrame] || stateManager.isPickingColor) return;
+    // ДОБАВЛЕНО: размер кисти, отдельно для карандаша и ластика
+    // (stateManager.pencilSize / stateManager.eraserSize). Fill/Smooth
+    // размер кисти не используют — для них всегда 1.
+    function getBrushSize() {
+        if (stateManager.tool === 'pencil') return Math.max(1, Math.min(20, stateManager.pencilSize || 1));
+        if (stateManager.tool === 'eraser') return Math.max(1, Math.min(20, stateManager.eraserSize || 1));
+        return 1;
+    }
+
+    // Закрашивание ОДНОГО пикселя — прежняя логика setPixelAt, вынесена
+    // отдельно, чтобы её можно было применить к каждому пикселю квадрата
+    // кисти без дублирования alpha-блендинга.
+    function paintOnePixel(px, py) {
         if (px < 0 || px >= stateManager.width || py < 0 || py >= stateManager.height) return;
 
         const frame = stateManager.frames[stateManager.currentFrame];
@@ -1938,6 +2103,24 @@ function initGifEditor(stateManager) {
                 frame.data[idx + 1] = 0;
                 frame.data[idx + 2] = 0;
                 frame.data[idx + 3] = 0;
+            }
+        }
+    }
+
+    function setPixelAt(px, py) {
+        if (!stateManager.frames[stateManager.currentFrame] || stateManager.isPickingColor) return;
+
+        const size = getBrushSize();
+        if (size <= 1) {
+            // Поведение по умолчанию (size=1) не изменилось — один пиксель.
+            paintOnePixel(px, py);
+        } else {
+            // ДОБАВЛЕНО: кисть NxN — квадрат вокруг точки клика/движения.
+            const offset = Math.floor((size - 1) / 2);
+            for (let dy = 0; dy < size; dy++) {
+                for (let dx = 0; dx < size; dx++) {
+                    paintOnePixel(px - offset + dx, py - offset + dy);
+                }
             }
         }
 
@@ -2247,6 +2430,32 @@ function initGifEditor(stateManager) {
         setTimeout(() => this.classList.remove('active'), 500);
     });
 
+    // ДОБАВЛЕНО: размер кисти карандаша и ластика настраивается отдельными
+    // полями — переключение инструмента их не сбрасывает и не связывает.
+    const pencilSizeInput = document.getElementById('gif-pencil-size');
+    if (pencilSizeInput) {
+        pencilSizeInput.value = stateManager.pencilSize;
+        pencilSizeInput.addEventListener('input', function() {
+            const v = Math.max(1, Math.min(20, parseInt(this.value, 10) || 1));
+            stateManager.pencilSize = v;
+        });
+        pencilSizeInput.addEventListener('change', function() {
+            this.value = stateManager.pencilSize;
+        });
+    }
+
+    const eraserSizeInput = document.getElementById('gif-eraser-size');
+    if (eraserSizeInput) {
+        eraserSizeInput.value = stateManager.eraserSize;
+        eraserSizeInput.addEventListener('input', function() {
+            const v = Math.max(1, Math.min(20, parseInt(this.value, 10) || 1));
+            stateManager.eraserSize = v;
+        });
+        eraserSizeInput.addEventListener('change', function() {
+            this.value = stateManager.eraserSize;
+        });
+    }
+
     document.getElementById('gif-zoom-in')?.addEventListener('click', () => {
         stateManager.zoom = Math.min(8, stateManager.zoom + 0.25);
         stateManager.drawCanvas();
@@ -2317,8 +2526,11 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-add-frame')?.addEventListener('click', () => {
+        // ИСПРАВЛЕНО: раньше альфа-канал нового кадра принудительно выставлялся
+        // в 255 при нулевых R/G/B — новый кадр появлялся сплошным чёрным
+        // прямоугольником вместо прозрачного (несогласованно с "Clear Frame",
+        // который делает кадр полностью прозрачным через .fill(0)).
         const newData = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
-        for (let i = 3; i < newData.length; i+=4) newData[i] = 255;
         stateManager.addFrame(newData, 10);
         stateManager.currentFrame = stateManager.frames.length - 1;
         stateManager.drawCanvas();
@@ -2390,13 +2602,19 @@ function initGifEditor(stateManager) {
         }
     });
 
-    document.addEventListener('click', (e) => {
+    // ИСПРАВЛЕНО: раньше эти обработчики вешались напрямую через
+    // document.addEventListener и не попадали в stateManager.eventListeners,
+    // поэтому cleanup() их не снимал. При каждом повторном открытии GIF-
+    // редактора (для другого спрайта) добавлялась ещё одна пара постоянных
+    // глобальных слушателей click/keydown, которые никогда не удалялись —
+    // за сессию редактирования нескольких спрайтов их накапливались десятки.
+    stateManager.addEventListener(document, 'click', (e) => {
         if (!colorBtn?.contains(e.target) && !colorDropdown?.contains(e.target)) {
             colorDropdown.style.display = 'none';
         }
     });
 
-    document.addEventListener('keydown', (e) => {
+    stateManager.addEventListener(document, 'keydown', (e) => {
         if (e.key === 'Escape' && colorDropdown?.style.display === 'flex') {
             colorDropdown.style.display = 'none';
         }
@@ -2622,7 +2840,23 @@ function initGifEditor(stateManager) {
             document.removeEventListener('click', pickColor);
             document.removeEventListener('keydown', escHandler);
             canvas.style.cursor = 'crosshair';
+            // ИСПРАВЛЕНО: см. ниже про stateManager._stopPipette — снимаем
+            // ссылку, чтобы cleanup() не дёргал уже отработавшую функцию.
+            if (stateManager._stopPipette === stopPipette) {
+                stateManager._stopPipette = null;
+            }
         }
+
+        // ИСПРАВЛЕНО: если закрыть окно GIF-редактора (кнопка ✕) прямо во
+        // время активной пипетки — не кликнув по холсту и не нажав Escape —
+        // stopPipette() никогда не вызывался. В результате на странице
+        // навсегда оставался невидимый полноэкранный div-оверлей (z-index
+        // 20010, без pointer-events:none) и постоянные document-обработчики
+        // mousemove/click/keydown. Оверлей перехватывал вообще все клики по
+        // странице — весь редактор переставал реагировать на мышь до
+        // перезагрузки. Регистрируем stopPipette, чтобы cleanup() мог его
+        // вызвать при закрытии модалки.
+        stateManager._stopPipette = stopPipette;
 
         function escHandler(e) {
             if (e.key === 'Escape') {
