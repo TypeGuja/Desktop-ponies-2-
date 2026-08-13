@@ -2,7 +2,7 @@
 import sys
 import json
 import traceback
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 from llm_engine import LLMEngine
 from emotion_engine import EmotionEngine

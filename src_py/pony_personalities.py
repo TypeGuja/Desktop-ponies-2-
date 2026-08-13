@@ -1,5 +1,5 @@
 # src_py/pony_personalities.py
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 class PonyPersonalities:
     """База данных личностей пони из MLP:FiM"""

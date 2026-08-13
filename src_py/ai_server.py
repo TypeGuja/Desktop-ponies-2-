@@ -131,10 +131,10 @@ def handle_request(request):
     request_id = request.get("request_id", 0)
     request_type = request.get("request_type", "speech")
     pony_name = request.get("pony_name", "Unknown Pony")
-    personality = request.get("pony_personality", "")
-    text = request.get("text", "")
-    context = request.get("context", [])
-    language = request.get("language", "en")
+    # ИСПРАВЛЕНО: personality/text/context/language раньше читались из
+    # запроса, но нигде не использовались (pyflakes: assigned but never used).
+    # try_ai_response() получает весь request целиком, так что здесь эти поля
+    # не нужны.
 
     # Пробуем AI
     ai_response = try_ai_response(request)

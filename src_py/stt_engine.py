@@ -9,8 +9,14 @@ class STTEngine:
     def __init__(self):
         self._available = False
         self._recognizer = None
+        self._checked = False
 
     def is_available(self) -> bool:
+        # ИСПРАВЛЕНО: та же проблема, что в TTSEngine — is_available() никогда
+        # не запускал load(), поэтому всегда возвращал False.
+        if not self._checked:
+            self._checked = True
+            self.load()
         return self._available
 
     def load(self):

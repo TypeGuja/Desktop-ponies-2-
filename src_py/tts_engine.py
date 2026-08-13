@@ -8,10 +8,19 @@ class TTSEngine:
     def __init__(self):
         self._available = False
         self._engine = None
+        self._checked = False
         self._cache_dir = Path("cache/tts")
         self._cache_dir.mkdir(parents=True, exist_ok=True)
 
     def is_available(self) -> bool:
+        # ИСПРАВЛЕНО: раньше is_available() просто возвращал self._available,
+        # который остаётся False, пока кто-то явно не вызовет load(). Но load()
+        # вызывался только изнутри synthesize(), а synthesize() в server.py
+        # вызывается ТОЛЬКО если is_available() уже вернул True — замкнутый
+        # круг, из-за которого TTS никогда не активировался.
+        if not self._checked:
+            self._checked = True
+            self.load()
         return self._available
 
     def load(self):

@@ -7,7 +7,7 @@ Token-based content moderation with contract types
 import sys
 import json
 from pathlib import Path
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, List
 from enum import Enum
 
 

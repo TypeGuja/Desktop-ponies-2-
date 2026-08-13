@@ -2,7 +2,7 @@
 import sys
 import os
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 
 
 class LLMEngine:
@@ -130,11 +130,11 @@ RULES:
             "*trots happily*",
         ])
         generic = [
-            f"*nuzzles the screen* Hi!",
+            "*nuzzles the screen* Hi!",
             "What a lovely day on your desktop!",
             "*looks around curiously*",
             "Need anything? I'm here!",
-            f"*swishes tail happily*",
+            "*swishes tail happily*",
         ]
         all_responses = catchphrases + generic
         return random.choice(all_responses)

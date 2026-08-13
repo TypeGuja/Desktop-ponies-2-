@@ -1,6 +1,5 @@
 # src_py/emotion_engine.py
 import sys
-import random
 from typing import Optional, List
 
 
