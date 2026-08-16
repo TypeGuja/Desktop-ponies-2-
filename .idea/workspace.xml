@@ -13,27 +13,8 @@
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug_editor.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/ai_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/ai_server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/btcx.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/btcx.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/emotion_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/emotion_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/llm_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/llm_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/pony_personalities.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/pony_personalities.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/rule_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/rule_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/stt_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/stt_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/tts_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/tts_engine.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/context_menu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/context_menu.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/monitor_manager.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/monitor_manager.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -340,6 +321,13 @@
       <workItem from="1786485277443" duration="631000" />
       <workItem from="1786517401045" duration="5155000" />
       <workItem from="1786536251336" duration="248000" />
+      <workItem from="1786711589920" duration="211000" />
+      <workItem from="1786712424122" duration="52000" />
+      <workItem from="1786712498505" duration="19000" />
+      <workItem from="1786712542116" duration="28000" />
+      <workItem from="1786712583087" duration="2289000" />
+      <workItem from="1786733080583" duration="11000" />
+      <workItem from="1786774410038" duration="625000" />
     </task>
     <servers />
   </component>
