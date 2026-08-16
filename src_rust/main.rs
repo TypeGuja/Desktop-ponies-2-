@@ -513,7 +513,7 @@ impl App {
                         if self.debug_hitboxes {
                             let bw = w.get() as usize;
                             let bh = h.get() as usize;
-                            let border_color = 0xFFFF0000;
+                            let border_color = 0xFFFF0000; //behavior 
 
                             for x in 0..bw {
                                 if bh > 0 { buffer[x] = border_color; }

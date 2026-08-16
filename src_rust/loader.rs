@@ -697,6 +697,26 @@ impl DesktopPoniesLoader {
 
     // ==================== НОВАЯ ВЕРСИЯ ЗАГРУЗКИ GIF ====================
 
+    // ИСПРАВЛЕНО: раньше задержка каждого кадра принудительно зажималась в
+    // диапазон [30мс, 500мс] (`.max(0.03).min(0.5)`), а средняя (по медиане)
+    // задержка использовалась как default_delay. В оригинале (C#, Desktop
+    // Sprites: AnimatedImage.cs + GifImage.cs) НИКАКОГО зажима задержки нет
+    // вообще — `Delay = delayTime * 10` (перевод из сотых долей секунды GIF
+    // в миллисекунды), без минимума и максимума. Из-за клампа гифки с
+    // быстрыми кадрами (<30мс — обычное дело для плавных циклов ходьбы)
+    // искусственно замедлялись, а гифки с длинными паузами (>500мс,
+    // например кадр моргания/ожидания) — ускорялись, то есть анимации
+    // визуально не совпадали по темпу с оригиналом даже когда сами кадры
+    // грузились правильно.
+    //
+    // Также в оригинале (AnimatedImage.cs::AnimatedImageFromGif) кадры с
+    // нулевой длительностью ПРОПУСКАЮТСЯ (не показываются) — они не
+    // теряются, потому что их пиксели уже учтены GIF-декодером при
+    // построении следующего кадра через disposal-метод, но сами по себе
+    // рендериться не должны. Исключение — если вообще все кадры нулевые,
+    // тогда последний всё равно оставляют, чтобы было что показать. Раньше
+    // в Rust таких кадров не пропускали вообще, что могло проявляться как
+    // "дёрганье"/лишний пустой кадр в некоторых гифках.
     fn load_gif_animation(&self, path: &Path) -> GifAnimation {
         let mut animation = GifAnimation {
             frames: Vec::new(),
@@ -711,28 +731,34 @@ impl DesktopPoniesLoader {
                     .filter_map(|f| f.ok())
                     .collect();
 
-                if !frames_data.is_empty() {
+                let total_source_frames = frames_data.len();
+
+                if total_source_frames > 0 {
                     let w = frames_data[0].buffer().width();
                     let h = frames_data[0].buffer().height();
-                    let mut delays = Vec::new();
 
-                    for frame in frames_data {
-                        // Получаем задержку кадра из GIF
+                    for (idx, frame) in frames_data.into_iter().enumerate() {
+                        // numer_denom_ms(): соотношение numer/denom уже в
+                        // миллисекундах (как Delay в GifImage.cs) — раньше
+                        // тут ошибочно ещё раз делили на 1000, теперь берём
+                        // как есть и переводим в секунды только при
+                        // сохранении в структуру.
                         let (numer, denom) = frame.delay().numer_denom_ms();
-                        let delay_secs = if numer > 0 && denom > 0 {
-                            (numer as f32 / denom as f32) / 1000.0
-                        } else {
-                            0.1 // Задержка по умолчанию
-                        };
-                        let delay_secs = delay_secs.max(0.03).min(0.5); // Ограничиваем
-                        delays.push(delay_secs);
+                        let delay_ms: i64 = if denom > 0 { numer as i64 / denom as i64 } else { 0 };
+
+                        let is_last = idx + 1 == total_source_frames;
+                        if delay_ms == 0 && !(is_last && animation.frames.is_empty()) {
+                            // Пропускаем кадр нулевой длительности — как в
+                            // оригинале, он не должен рендериться отдельно.
+                            continue;
+                        }
 
                         // Получаем RGBA данные
                         let rgba = frame.into_buffer();
                         let rgba_data = rgba.into_raw();
 
                         // Конвертируем RGBA в ARGB (формат для softbuffer)
-                        let argb: Vec<u32> = rgba_data.chunks(4).map(|p| {
+                        let argb: Vec<u32> = rgba_data.chunks_exact(4).map(|p| {
                             let r = p[0] as u32;
                             let g = p[1] as u32;
                             let b = p[2] as u32;
@@ -743,18 +769,20 @@ impl DesktopPoniesLoader {
 
                         animation.frames.push(GifFrameData {
                             data: argb,
-                            delay: delay_secs,
+                            delay: (delay_ms as f32) / 1000.0,
                         });
                     }
 
                     animation.width = w;
                     animation.height = h;
 
-                    // Устанавливаем задержку по умолчанию (средняя)
-                    if !delays.is_empty() {
-                        delays.sort_by(|a, b| a.partial_cmp(b).unwrap());
-                        animation.default_delay = delays[delays.len() / 2];
-                    }
+                    // default_delay используется только как защитный fallback,
+                    // если current_frame когда-либо выйдет за границы массива
+                    // (в оригинале такого не бывает, границы всегда валидны) —
+                    // берём задержку последнего кадра вместо надуманной "медианы".
+                    animation.default_delay = animation.frames.last()
+                        .map(|f| f.delay)
+                        .unwrap_or(0.1);
                 }
             }
         }
