@@ -81,53 +81,53 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Cargo.Build desktop_ponies_lib.executor&quot;: &quot;Run&quot;,
-    &quot;Cargo.Run desktop-ponies-rs.executor&quot;: &quot;Debug&quot;,
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;JavaScript Debug.gif_editor.html.executor&quot;: &quot;Run&quot;,
-    &quot;JavaScript Debug.index.html.executor&quot;: &quot;Debug&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;Python.Cadance.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.DPP2Launcher.executor&quot;: &quot;Run&quot;,
-    &quot;Python.Fluttershy.executor&quot;: &quot;Run&quot;,
-    &quot;Python.Luna.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.RainbowDash.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gui_controller.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.main (2).executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony1 (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.pony2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.server_core.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dungeon&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/user/Documents/GitHub/Desktop-ponies-2-&quot;,
-    &quot;list.type.of.created.stylesheet&quot;: &quot;CSS&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;org.rust.cargo.project.model.PROJECT_DISCOVERY&quot;: &quot;true&quot;,
-    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/main.rs&quot;: &quot;true&quot;,
-    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs&quot;: &quot;true&quot;,
-    &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/main.rs&quot;: &quot;true&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Cargo.Build desktop_ponies_lib.executor": "Run",
+    "Cargo.Run desktop-ponies-rs.executor": "Run",
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.gif_editor.html.executor": "Run",
+    "JavaScript Debug.index.html.executor": "Debug",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.Cadance.executor": "Run",
+    "Python.DPP2.executor": "Run",
+    "Python.DPP2Launcher.executor": "Run",
+    "Python.Fluttershy.executor": "Run",
+    "Python.Luna.executor": "Debug",
+    "Python.RainbowDash.executor": "Run",
+    "Python.gui_controller.executor": "Run",
+    "Python.main (1).executor": "Run",
+    "Python.main (2).executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.pony (1).executor": "Run",
+    "Python.pony.executor": "Run",
+    "Python.pony1 (1).executor": "Run",
+    "Python.pony2.executor": "Run",
+    "Python.server_core.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.rust.reset.selective.auto.import": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "dungeon",
+    "last_opened_file_path": "C:/Users/user/Documents/GitHub/Desktop-ponies-2-",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
+    "org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/main.rs": "true",
+    "org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs": "true",
+    "org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/main.rs": "true",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\user\Documents\GitHub\Desktop-ponies-2-\DPP2serverUDP\Client\reserve\assets" />
@@ -327,6 +327,7 @@
       <workItem from="1786733080583" duration="11000" />
       <workItem from="1786774410038" duration="625000" />
       <workItem from="1786864184254" duration="1674000" />
+      <workItem from="1787580045158" duration="684000" />
     </task>
     <servers />
   </component>
