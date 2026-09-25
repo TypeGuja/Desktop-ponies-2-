@@ -34,6 +34,17 @@ class IPCServer:
 
             try:
                 request = json.loads(line)
+
+                # Служебные сообщения PythonBridge (rust) приходят как {"type": ...}
+                # — раньше они трактовались как обычный запрос, рукопожатие
+                # не проходило, а shutdown не останавливал сервер.
+                msg_type = request.get("type", "")
+                if msg_type == "handshake":
+                    print(json.dumps({"status": "ready", "request_id": 0}), flush=True)
+                    continue
+                if msg_type == "shutdown":
+                    break
+
                 response = self.handle_request(request)
                 response_json = json.dumps(response, ensure_ascii=False)
                 print(response_json, flush=True)
