@@ -28,19 +28,19 @@ const InteractionEditor = {
                     <div class="form-group"><label>Chance (0-1)</label>
                     <input type="number" step="0.01" min="0" max="1" class="interaction-chance" value="${interaction.probability || 0}" data-index="${i}"></div></div>
                     <div class="form-row"><div class="form-group"><label>Proximity (px)</label>
-                    <input type="number" class="interaction-proximity" value="${interaction.cooldown || 125}" data-index="${i}"></div>
+                    <input type="number" class="interaction-proximity" value="${interaction.proximity ?? 125}" data-index="${i}"></div>
                     <div class="form-group"><label>Target Activation</label>
                     <select class="interaction-target-activation" data-index="${i}">
-                        <option ${interaction.target_count === 'One' ? 'selected' : ''}>One</option>
-                        <option ${interaction.target_count === 'Any' ? 'selected' : ''}>Any</option>
-                        <option ${interaction.target_count === 'All' ? 'selected' : ''}>All</option>
+                        <option ${interaction.activation === 'One' ? 'selected' : ''}>One</option>
+                        <option ${interaction.activation === 'Any' ? 'selected' : ''}>Any</option>
+                        <option ${interaction.activation === 'All' ? 'selected' : ''}>All</option>
                     </select></div></div>
                     <div class="form-group"><label>Targets (comma separated)</label>
                     <input type="text" class="interaction-targets" value="${escapeHtml((interaction.targets || []).join(', '))}" data-index="${i}"></div>
                     <div class="form-group"><label>Behaviors (comma separated)</label>
                     <input type="text" class="interaction-behaviors" value="${escapeHtml((interaction.behaviors || []).join(', '))}" data-index="${i}"></div>
-                    <div class="form-group"><label>Duration (sec)</label>
-                    <input type="number" class="interaction-duration" value="${interaction.duration || 60}" data-index="${i}"></div></div>`;
+                    <div class="form-group"><label>Reactivation delay (sec)</label>
+                    <input type="number" class="interaction-duration" value="${interaction.reactivation_delay ?? 60}" data-index="${i}"></div></div>`;
         });
         return html;
     },
@@ -54,13 +54,11 @@ const InteractionEditor = {
                 this.interactions.push({
                     name: 'New Interaction',
                     probability: 0.1,
-                    cooldown: 125,
+                    proximity: 125,
                     targets: [],
-                    target_count: 'One',
+                    activation: 'One',
                     behaviors: [],
-                    duration: 60,
-                    reactivation_delay: 0,
-                    initiator_name: ''
+                    reactivation_delay: 60
                 });
                 EditorState.markModified();
                 PonyEditor.render(EditorState.getConfig());
@@ -100,7 +98,7 @@ const InteractionEditor = {
             input.addEventListener('change', () => {
                 const idx = parseInt(input.dataset.index);
                 if (this.interactions[idx]) {
-                    this.interactions[idx].cooldown = parseFloat(input.value) || 0;
+                    this.interactions[idx].proximity = parseFloat(input.value) || 0;
                     EditorState.markModified();
                 }
             });
@@ -110,7 +108,7 @@ const InteractionEditor = {
             select.addEventListener('change', () => {
                 const idx = parseInt(select.dataset.index);
                 if (this.interactions[idx]) {
-                    this.interactions[idx].target_count = select.value;
+                    this.interactions[idx].activation = select.value;
                     EditorState.markModified();
                 }
             });
@@ -140,7 +138,7 @@ const InteractionEditor = {
             input.addEventListener('change', () => {
                 const idx = parseInt(input.dataset.index);
                 if (this.interactions[idx]) {
-                    this.interactions[idx].duration = parseFloat(input.value) || 0;
+                    this.interactions[idx].reactivation_delay = parseFloat(input.value) || 0;
                     EditorState.markModified();
                 }
             });

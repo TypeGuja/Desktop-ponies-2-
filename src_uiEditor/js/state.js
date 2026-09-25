@@ -53,7 +53,12 @@ const EditorState = {
         //     этого же замороженного снимка — эти поля никогда не
         //     сохранялись, даже если пользователь их изменил.
         // Теперь возвращаем актуальный, живой объект, если он есть.
-        if (window.PonyEditor && PonyEditor.currentPonyConfig) {
+        // ИСПРАВЛЕНО: `const PonyEditor` на верхнем уровне скрипта НЕ является
+        // свойством window, поэтому прежняя проверка window.PonyEditor всегда была
+        // ложной — getConfig() всегда возвращал замороженный originalConfig, и
+        // после каждого add/edit/delete форма перерисовывалась из исходного
+        // снимка (правки пропадали, а Save отправлял старые данные).
+        if (typeof PonyEditor !== 'undefined' && PonyEditor.currentPonyConfig) {
             return PonyEditor.currentPonyConfig;
         }
         return this.originalConfig;

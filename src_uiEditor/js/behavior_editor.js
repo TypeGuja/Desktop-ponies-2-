@@ -56,24 +56,24 @@ const BehaviorEditor = {
                         <div class="form-group">
                             <label>Chance (0-1)</label>
                             <input type="number" step="0.01" min="0" max="1" class="behavior-chance" 
-                                   value="${behavior.probability || 0}" data-index="${index}">
+                                   value="${behavior.probability ?? 0}" data-index="${index}">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Min Duration (sec)</label>
                             <input type="number" step="0.5" class="behavior-min-duration" 
-                                   value="${behavior.min_duration || 5}" data-index="${index}">
+                                   value="${behavior.min_duration ?? 5}" data-index="${index}">
                         </div>
                         <div class="form-group">
                             <label>Max Duration (sec)</label>
                             <input type="number" step="0.5" class="behavior-max-duration" 
-                                   value="${behavior.max_duration || 15}" data-index="${index}">
+                                   value="${behavior.max_duration ?? 15}" data-index="${index}">
                         </div>
                         <div class="form-group">
                             <label>Speed</label>
                             <input type="number" step="0.5" class="behavior-speed" 
-                                   value="${behavior.speed || 3}" data-index="${index}">
+                                   value="${behavior.speed ?? 3}" data-index="${index}">
                         </div>
                     </div>
                     <div class="form-row">
@@ -100,7 +100,7 @@ const BehaviorEditor = {
                         <div class="form-group">
                             <label>Group</label>
                             <input type="number" class="behavior-group" 
-                                   value="${behavior.group || 0}" data-index="${index}">
+                                   value="${escapeHtml(behavior.group ?? 0)}" data-index="${index}">
                         </div>
                         <div class="form-group">
                             <label>Skip (random selection)</label>
@@ -121,9 +121,27 @@ const BehaviorEditor = {
         return html;
     },
 
+    // Полный набор типов движения, которые понимает загрузчик (loader.rs).
+    // Раньше в списке не хватало HorizontalVertical/DiagonalHorizontal/
+    // DiagonalVertical/MouseOver: такие поведения показывались как "None", а
+    // при правке через диалог молча превращались в None.
+    MOVEMENTS: ['None', 'All', 'HorizontalOnly', 'VerticalOnly', 'DiagonalOnly',
+        'HorizontalVertical', 'DiagonalHorizontal', 'DiagonalVertical', 'MouseOver', 'Sleep', 'Dragged'],
+
+    normalizeMovement(m) {
+        return String(m ?? '').toLowerCase().replace(/[\s_-]/g, '');
+    },
+
     renderMovementOptions(current) {
-        const movements = ['None', 'All', 'HorizontalOnly', 'VerticalOnly', 'DiagonalOnly', 'Sleep', 'Dragged'];
-        return movements.map(m => `<option value="${m}" ${current === m ? 'selected' : ''}>${m}</option>`).join('');
+        const cur = this.normalizeMovement(current);
+        const list = this.MOVEMENTS.slice();
+        // Неизвестное значение из .ini сохраняем как есть отдельным пунктом.
+        const known = list.some(m => this.normalizeMovement(m) === cur);
+        if (current && !known) list.push(current);
+        return list.map(m => {
+            const sel = this.normalizeMovement(m) === cur || (!current && m === 'None');
+            return `<option value="${escapeHtml(m)}" ${sel ? 'selected' : ''}>${escapeHtml(m)}</option>`;
+        }).join('');
     },
 
     loadSpritePreview(ponyName, spriteName, canvas, behaviorIndex = null) {
@@ -158,7 +176,7 @@ const BehaviorEditor = {
             const ctx = canvas?.getContext('2d');
             if (ctx) {
                 ctx.fillStyle = '#f38ba8';
-                ctx.fillRect(0, 0, 64, 64);
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '10px monospace';
                 ctx.fillText('No GIF', 12, 35);
@@ -202,7 +220,7 @@ const BehaviorEditor = {
 
         const imgData = new ImageData(rgbaData, w, h);
 
-        ctx.clearRect(0, 0, 64, 64);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.imageSmoothingEnabled = false;
 
         const tempCanvas = document.createElement('canvas');
@@ -210,7 +228,7 @@ const BehaviorEditor = {
         tempCanvas.height = h;
         const tempCtx = tempCanvas.getContext('2d');
         tempCtx.putImageData(imgData, 0, 0);
-        ctx.drawImage(tempCanvas, 0, 0, w, h, 0, 0, 64, 64);
+        ctx.drawImage(tempCanvas, 0, 0, w, h, 0, 0, canvas.width, canvas.height);
 
         if (canvas._animationId) {
             cancelAnimationFrame(canvas._animationId);
@@ -268,9 +286,9 @@ const BehaviorEditor = {
                         tempCtx.putImageData(imgData, 0, 0);
 
                         const ctx = canvas.getContext('2d');
-                        ctx.clearRect(0, 0, 64, 64);
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(canvas._tempCanvas, 0, 0, canvas._width, canvas._height, 0, 0, 64, 64);
+                        ctx.drawImage(canvas._tempCanvas, 0, 0, canvas._width, canvas._height, 0, 0, canvas.width, canvas.height);
                     }
                 }
 

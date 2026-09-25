@@ -103,21 +103,21 @@ const DialogManager = {
                     <div class="form-row">
                         <div class="form-group">
                             <label>Chance (%)</label>
-                            <input type="number" step="0.1" id="behavior-chance" value="${(behavior?.probability || 0.1) * 100}">
+                            <input type="number" step="0.1" id="behavior-chance" value="${Math.round((behavior?.probability ?? 0.1) * 100000) / 1000}">
                         </div>
                         <div class="form-group">
                             <label>Speed</label>
-                            <input type="number" step="0.5" id="behavior-speed" value="${behavior?.speed || 3}">
+                            <input type="number" step="0.5" id="behavior-speed" value="${behavior?.speed ?? 3}">
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Min Duration (sec)</label>
-                            <input type="number" step="0.5" id="behavior-min-duration" value="${behavior?.min_duration || 5}">
+                            <input type="number" step="0.5" id="behavior-min-duration" value="${behavior?.min_duration ?? 5}">
                         </div>
                         <div class="form-group">
                             <label>Max Duration (sec)</label>
-                            <input type="number" step="0.5" id="behavior-max-duration" value="${behavior?.max_duration || 15}">
+                            <input type="number" step="0.5" id="behavior-max-duration" value="${behavior?.max_duration ?? 15}">
                         </div>
                     </div>
                     <div class="form-row">
@@ -148,18 +148,12 @@ const DialogManager = {
                         <div class="form-group">
                             <label>Movement Type</label>
                             <select id="behavior-movement">
-                                <option value="None">None</option>
-                                <option value="All" ${behavior?.movement === 'All' ? 'selected' : ''}>All</option>
-                                <option value="HorizontalOnly" ${behavior?.movement === 'HorizontalOnly' ? 'selected' : ''}>Horizontal Only</option>
-                                <option value="VerticalOnly" ${behavior?.movement === 'VerticalOnly' ? 'selected' : ''}>Vertical Only</option>
-                                <option value="DiagonalOnly" ${behavior?.movement === 'DiagonalOnly' ? 'selected' : ''}>Diagonal Only</option>
-                                <option value="Sleep" ${behavior?.movement === 'Sleep' ? 'selected' : ''}>Sleep</option>
-                                <option value="Dragged" ${behavior?.movement === 'Dragged' ? 'selected' : ''}>Dragged</option>
+                                ${BehaviorEditor.renderMovementOptions(behavior?.movement)}
                             </select>
                         </div>
                         <div class="form-group">
                             <label>Group</label>
-                            <input type="number" id="behavior-group" value="${behavior?.group || 0}">
+                            <input type="number" id="behavior-group" value="${escapeHtml(behavior?.group ?? 0)}">
                         </div>
                     </div>
                     <div class="form-group">
@@ -193,17 +187,26 @@ const DialogManager = {
         </div>
     `;
 
+        const num = (id, fallback) => {
+            const v = parseFloat(document.getElementById(id).value);
+            return Number.isFinite(v) ? v : fallback;
+        };
+
         this.showModal(html, () => {
+            // ИСПРАВЛЕНО: раньше при редактировании собирался НОВЫЙ объект только из
+            // полей диалога, и все остальные поля поведения (центры спрайтов,
+            // prevent_loop, set_fps, sound_files, follow_*...) терялись.
             onSave({
+                ...(behavior || {}),
                 name: document.getElementById('behavior-name').value,
-                probability: parseFloat(document.getElementById('behavior-chance').value) / 100,
-                speed: parseFloat(document.getElementById('behavior-speed').value),
-                min_duration: parseFloat(document.getElementById('behavior-min-duration').value),
-                max_duration: parseFloat(document.getElementById('behavior-max-duration').value),
+                probability: num('behavior-chance', 10) / 100,
+                speed: num('behavior-speed', 3),
+                min_duration: num('behavior-min-duration', 5),
+                max_duration: num('behavior-max-duration', 15),
                 sprite_right: document.getElementById('behavior-sprite-right').value,
                 sprite_left: document.getElementById('behavior-sprite-left').value,
                 movement: document.getElementById('behavior-movement').value,
-                group: parseInt(document.getElementById('behavior-group').value),
+                group: String(parseInt(document.getElementById('behavior-group').value) || 0),
                 linked_behavior: document.getElementById('behavior-linked').value,
                 start_speech: document.getElementById('behavior-start-speech').value,
                 end_speech: document.getElementById('behavior-end-speech').value,
@@ -284,8 +287,8 @@ const DialogManager = {
                             <textarea id="speech-text" rows="3" placeholder="What the pony says...">${escapeHtml(speech?.text || '')}</textarea>
                         </div>
                         <div class="form-group">
-                            <label>Sound File (MP3/OGG)</label>
-                            <input type="text" id="speech-sound" value="${escapeHtml(speech?.sound_files?.[0] || '')}" placeholder="sound.mp3">
+                            <label>Sound Files (MP3/OGG, comma separated)</label>
+                            <input type="text" id="speech-sound" value="${escapeHtml((speech?.sound_files || []).join(', '))}" placeholder="sound.mp3, sound2.mp3">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -312,11 +315,14 @@ const DialogManager = {
 
         this.showModal(html, () => {
             onSave({
+                ...(speech || {}),
                 name: document.getElementById('speech-name').value,
                 text: document.getElementById('speech-text').value,
-                sound_files: document.getElementById('speech-sound').value ? [document.getElementById('speech-sound').value] : [],
-                group: parseInt(document.getElementById('speech-group').value),
-                frequency: parseFloat(document.getElementById('speech-frequency').value),
+                // раньше сохранялся только один файл — остальные терялись
+                sound_files: document.getElementById('speech-sound').value
+                    .split(',').map(s => s.trim()).filter(s => s),
+                group: parseInt(document.getElementById('speech-group').value) || 0,
+                frequency: parseFloat(document.getElementById('speech-frequency').value) || 0,
                 skip: document.getElementById('speech-skip').checked,
             });
         });
@@ -344,7 +350,7 @@ const DialogManager = {
                             <label>Linked Behavior</label>
                             <select id="effect-linked">
                                 <option value="">None</option>
-                                ${behaviors.map(b => `<option value="${b}" ${effect?.linked === b ? 'selected' : ''}>${b}</option>`).join('')}
+                                ${behaviors.map(b => `<option value="${escapeHtml(b)}" ${effect?.linked === b ? 'selected' : ''}>${escapeHtml(b)}</option>`).join('')}
                             </select>
                         </div>
                         <div class="form-row">
@@ -360,7 +366,7 @@ const DialogManager = {
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Duration (sec)</label>
-                                <input type="number" step="0.5" id="effect-duration" value="${effect?.duration || 5}">
+                                <input type="number" step="0.5" id="effect-duration" value="${effect?.duration ?? 5}">
                             </div>
                             <div class="form-group">
                                 <label>Repeat Delay (sec)</label>
@@ -406,12 +412,13 @@ const DialogManager = {
 
         this.showModal(html, () => {
             onSave({
+                ...(effect || {}),
                 name: document.getElementById('effect-name').value,
                 linked: document.getElementById('effect-linked').value,
                 sprite_right: document.getElementById('effect-sprite-right').value,
                 sprite_left: document.getElementById('effect-sprite-left').value,
-                duration: parseFloat(document.getElementById('effect-duration').value),
-                repeat_delay: parseFloat(document.getElementById('effect-repeat-delay').value),
+                duration: parseFloat(document.getElementById('effect-duration').value) || 0,
+                repeat_delay: parseFloat(document.getElementById('effect-repeat-delay').value) || 0,
                 placement_right: document.getElementById('effect-placement-right').value,
                 placement_left: document.getElementById('effect-placement-left').value,
                 centering_right: document.getElementById('effect-centering-right').value,
@@ -438,11 +445,11 @@ const DialogManager = {
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Chance (%)</label>
-                                <input type="number" step="0.1" id="interaction-chance" value="${(interaction?.probability || 0.25) * 100}">
+                                <input type="number" step="0.1" id="interaction-chance" value="${Math.round((interaction?.probability ?? 0.25) * 100000) / 1000}">
                             </div>
                             <div class="form-group">
                                 <label>Proximity (px)</label>
-                                <input type="number" id="interaction-proximity" value="${interaction?.cooldown || 125}">
+                                <input type="number" id="interaction-proximity" value="${interaction?.proximity ?? 125}">
                             </div>
                         </div>
                         <div class="form-group">
@@ -450,8 +457,8 @@ const DialogManager = {
                             <div id="interaction-targets-list" class="checkbox-group">
                                 ${targets.map(t => `
                                     <label class="checkbox-label">
-                                        <input type="checkbox" value="${t}" ${interaction?.targets?.includes(t) ? 'checked' : ''}>
-                                        ${t}
+                                        <input type="checkbox" value="${escapeHtml(t)}" ${interaction?.targets?.includes(t) ? 'checked' : ''}>
+                                        ${escapeHtml(t)}
                                     </label>
                                 `).join('')}
                             </div>
@@ -469,15 +476,15 @@ const DialogManager = {
                             <div id="interaction-behaviors-list" class="checkbox-group">
                                 ${behaviors.map(b => `
                                     <label class="checkbox-label">
-                                        <input type="checkbox" value="${b}" ${interaction?.behaviors?.includes(b) ? 'checked' : ''}>
-                                        ${b}
+                                        <input type="checkbox" value="${escapeHtml(b)}" ${interaction?.behaviors?.includes(b) ? 'checked' : ''}>
+                                        ${escapeHtml(b)}
                                     </label>
                                 `).join('')}
                             </div>
                         </div>
                         <div class="form-group">
                             <label>Reactivation Delay (sec)</label>
-                            <input type="number" step="0.5" id="interaction-delay" value="${interaction?.reactivation_delay || 60}">
+                            <input type="number" step="0.5" id="interaction-delay" value="${interaction?.reactivation_delay ?? 60}">
                         </div>
                     </div>
                     <div class="dialog-footer">
@@ -495,13 +502,14 @@ const DialogManager = {
                 .map(cb => cb.value);
 
             onSave({
+                ...(interaction || {}),
                 name: document.getElementById('interaction-name').value,
-                probability: parseFloat(document.getElementById('interaction-chance').value) / 100,
-                cooldown: parseInt(document.getElementById('interaction-proximity').value),
+                probability: (parseFloat(document.getElementById('interaction-chance').value) || 0) / 100,
+                proximity: parseInt(document.getElementById('interaction-proximity').value) || 0,
                 targets: selectedTargets,
                 activation: document.getElementById('interaction-activation').value,
                 behaviors: selectedBehaviors,
-                reactivation_delay: parseFloat(document.getElementById('interaction-delay').value),
+                reactivation_delay: parseFloat(document.getElementById('interaction-delay').value) || 0,
             });
         }, true);
     }

@@ -26,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     behaviors: BehaviorEditor.behaviors || [],
                     speaks: SpeechEditor.speeches || [],
                     effects: EffectEditor.effects || [],
-                    interactions: InteractionEditor.interactions || []
+                    interactions: InteractionEditor.interactions || [],
+                    behavior_groups: liveConfig.behavior_groups
                 };
                 console.log('[Editor] Saving pony:', EditorState.currentPony);
                 EditorAPI.savePony(updatedConfig);
@@ -85,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switch (data.type) {
                 case 'ponies_list':
                     console.log('[Editor] Ponies list received, count:', data.data?.length);
-                    PonyList.updateList(data.data);
+                    PonyList.updateList(data.data, data.previews, data.preview_origin);
                     showStatus(`Loaded ${data.data?.length || 0} ponies`);
                     break;
                 case 'pony_config':
@@ -117,23 +118,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('[Editor] Sprite name:', data.sprite_name);
                     console.log('[Editor] Pony name:', data.pony_name);
 
-                    if (window.GifEditorState) {
-                        console.log('[Editor] Found active GIF editor, loading data...');
-                        if (window.GifEditorState.loadGif) {
-                            window.GifEditorState.loadGif(data);
+                    // ИСПРАВЛЕНО: раньше ЛЮБОЙ gif_data (например, запоздавший ответ на
+                    // запрос превью другого спрайта) загружался в открытый GIF-редактор,
+                    // и при нажатии Save чужие кадры перезаписывали файл открытого
+                    // спрайта. Теперь данные принимаются только для того же спрайта
+                    // (или как заглушка 'debug', когда файла ещё нет).
+                    const gifState = window.GifEditorState;
+                    if (gifState && gifState.loadGif) {
+                        const sameSprite = data.pony_name === gifState.ponyName &&
+                            data.sprite_name === gifState.spriteName;
+                        const placeholder = data.pony_name === 'debug';
+                        if (sameSprite || placeholder) {
+                            console.log('[Editor] Loading GIF data into active editor');
+                            gifState.loadGif(data);
                         } else {
-                            window._pendingGifData = data;
-                            console.log('[Editor] Stored pending GIF data');
+                            console.log('[Editor] Ignoring GIF data for another sprite:', data.sprite_name);
                         }
-                    } else {
-                        window._pendingGifData = data;
-                        console.log('[Editor] No active editor, stored for later');
                     }
 
                     if (BehaviorEditor && data.pony_name) {
                         const cacheKey = `${data.pony_name}/${data.sprite_name}`;
                         BehaviorEditor.gifCache.set(cacheKey, data);
                         console.log('[Editor] Cached GIF for:', cacheKey);
+
+                        // Превью в открытом диалоге поведения (canvas #sprite-preview-*).
+                        ['right', 'left'].forEach(side => {
+                            const input = document.getElementById('behavior-sprite-' + side);
+                            const cv = document.getElementById('sprite-preview-' + side);
+                            if (input && cv && input.value.trim() === data.sprite_name) {
+                                BehaviorEditor.drawPreviewOnCanvas(cv, data);
+                            }
+                        });
 
                         const previews = document.querySelectorAll('.sprite-preview');
                         previews.forEach(preview => {

@@ -3,6 +3,8 @@ const PonyList = {
     container: null,
     searchInput: null,
     currentSelected: null,
+    previews: {},
+    previewOrigin: '',
     init: function() {
         this.container = document.getElementById('pony-list');
         this.searchInput = document.getElementById('search-pony');
@@ -21,7 +23,7 @@ const PonyList = {
         this.container.innerHTML = filtered.map(name => `
             <div class="pony-item ${this.currentSelected === name ? 'selected' : ''}" data-name="${escapeHtml(name)}">
                 <div class="pony-info">
-                    <div class="pony-icon">🦄</div>
+                    <div class="pony-icon">${this.iconHtml(name)}</div>
                     <div class="pony-name">${escapeHtml(name)}</div>
                 </div>
                 <div class="pony-actions">
@@ -49,7 +51,17 @@ const PonyList = {
         showStatus(`Loading ${name}...`);
         EditorAPI.loadPony(name);
     },
-    updateList: function(ponies) {
+    // Гифка пони вместо значка (как в меню выбора на главной панели).
+    // Если превью нет или оно не загрузилось — остаётся 🦄.
+    iconHtml: function(name) {
+        const rel = this.previews[name];
+        if (!rel || !this.previewOrigin) return '🦄';
+        const src = this.previewOrigin + 'files/' + encodeURI(rel);
+        return `<img loading="lazy" src="${escapeHtml(src)}" alt="" onerror="this.replaceWith(document.createTextNode('🦄'))">`;
+    },
+    updateList: function(ponies, previews, previewOrigin) {
+        this.previews = previews || {};
+        this.previewOrigin = previewOrigin || '';
         EditorState.allPonies = ponies || [];
         const countEl = document.getElementById('pony-count');
         if (countEl) countEl.textContent = `${EditorState.allPonies.length} ponies loaded`;

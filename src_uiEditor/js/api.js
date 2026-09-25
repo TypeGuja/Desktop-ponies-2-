@@ -36,7 +36,8 @@ const EditorAPI = {
             behaviors: config.behaviors || [],
             speaks: config.speaks || [],
             interactions: config.interactions || [],
-            effects: config.effects || []
+            effects: config.effects || [],
+            behavior_groups: config.behavior_groups
         };
         this.send('editor:save_pony:' + JSON.stringify(saveData));
     },

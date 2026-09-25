@@ -38,7 +38,9 @@ const PonyEditor = {
     },
 
     addGlobalCreateButton() {
+        let tries = 0;
         const checkToolbar = setInterval(() => {
+            if (++tries > 50) { clearInterval(checkToolbar); return; }
             const toolbar = document.querySelector('.editor-toolbar');
             if (toolbar && !document.getElementById('global-create-pony-btn')) {
                 clearInterval(checkToolbar);
@@ -264,9 +266,11 @@ const PonyEditor = {
                 frames.push({ data: Array.from(data), delay: 10 });
             }
 
+            const spriteFile = /\.gif$/i.test(spriteName) ? spriteName : spriteName + '.gif';
+
             const gifData = {
                 pony_name: ponyName,
-                sprite_name: spriteName,
+                sprite_name: spriteFile,
                 frames: frames,
                 width: width,
                 height: height
@@ -277,7 +281,7 @@ const PonyEditor = {
             showStatus(`Creating sprite: ${spriteName}...`);
 
             setTimeout(() => {
-                showInlineGifEditor(ponyName, spriteName);
+                showInlineGifEditor(ponyName, spriteFile);
             }, 1500);
         });
     },
@@ -313,6 +317,13 @@ const PonyEditor = {
 
     render(config) {
         console.log('[PonyEditor] render called with config:', config);
+
+        // ИСПРАВЛЕНО: любое добавление/правка/удаление поведения, реплики и т.п.
+        // вызывает render() заново, и раньше редактор каждый раз прыгал на
+        // вкладку Basic. Запоминаем активную вкладку, если это та же пони.
+        const prevTab = (this.container && config && config.name && config.name === this.currentPonyName)
+            ? this.container.querySelector('.editor-tabs .tab-btn.active')?.dataset.tab
+            : null;
 
         if (config && config.name) {
             this.currentPonyName = config.name;
@@ -388,6 +399,8 @@ const PonyEditor = {
         if (SpeechEditor.bindEvents) SpeechEditor.bindEvents(this.container);
         if (EffectEditor.bindEvents) EffectEditor.bindEvents(this.container);
         if (InteractionEditor.bindEvents) InteractionEditor.bindEvents(this.container);
+
+        if (prevTab && prevTab !== 'basic') this.switchTab(prevTab);
     },
 
     renderBasicTab(config, sprites) {
@@ -564,11 +577,11 @@ const PonyEditor = {
                 config.interactions.push({
                     name: "new_interaction",
                     probability: 0.1,
-                    cooldown: 125,
+                    proximity: 125,
                     targets: [],
-                    target_count: "One",
+                    activation: "One",
                     behaviors: [],
-                    duration: 60
+                    reactivation_delay: 60
                 });
                 EditorState.markModified();
                 this.render(config);
@@ -634,9 +647,8 @@ const PonyEditor = {
         // это не мешает рисовать на основном холсте под трейсом.
         traceCanvas.style.cssText = `
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            top: 0;
+            left: 0;
             pointer-events: none;
             z-index: 2;
             image-rendering: crisp-edges;
@@ -654,8 +666,8 @@ const PonyEditor = {
         panel.id = 'trace-panel';
         panel.style.cssText = `
             position: absolute;
-            bottom: 20px;
-            right: 20px;
+            bottom: 30px;
+            right: 30px;
             z-index: 150;
             background: rgba(30,30,46,0.95);
             border: 1px solid #45475a;
@@ -724,7 +736,10 @@ const PonyEditor = {
             </div>
         `;
 
-        canvasContainer.appendChild(panel);
+        // Панель крепится к неподвижной обёртке вокруг прокручиваемого холста,
+        // а не к самому контейнеру — иначе она уезжает вместе с содержимым
+        // при прокрутке, а не стоит в правом нижнем углу видимой области.
+        (canvasContainer.closest('.gif-canvas-area') || canvasContainer).appendChild(panel);
 
         // ============================================================
         // СОСТОЯНИЕ ТРЕЙСА
@@ -917,11 +932,13 @@ const PonyEditor = {
         // ============================================================
         // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ (без ресайза)
         // ============================================================
-        function forceUpdateTrace() {
+        function forceUpdateTrace(retries = 0) {
             const mainCanvas = document.getElementById('gif-main-canvas');
             const traceCanvas = document.getElementById('trace-render-canvas');
             if (!mainCanvas || !traceCanvas) {
-                setTimeout(forceUpdateTrace, 50);
+                // ИСПРАВЛЕНО: без лимита цикл повторов жил вечно, если редактор GIF
+                // уже закрыт (холсты удалены из DOM).
+                if (retries < 20) setTimeout(() => forceUpdateTrace(retries + 1), 50);
                 return;
             }
 
@@ -934,9 +951,12 @@ const PonyEditor = {
             traceCanvas.style.width = w + 'px';
             traceCanvas.style.height = h + 'px';
             traceCanvas.style.position = 'absolute';
-            traceCanvas.style.top = '50%';
-            traceCanvas.style.left = '50%';
-            traceCanvas.style.transform = 'translate(-50%, -50%)';
+            // Трейс привязан к позиции основного холста внутри прокручиваемой
+            // области (а не к центру видимой части контейнера), поэтому он
+            // неподвижен относительно холста и прокручивается вместе с ним.
+            traceCanvas.style.top = mainCanvas.offsetTop + 'px';
+            traceCanvas.style.left = mainCanvas.offsetLeft + 'px';
+            traceCanvas.style.transform = 'none';
             traceCanvas.style.zIndex = '2';
             // ИСПРАВЛЕНО: раньше это безусловно сбрасывало pointer-events в
             // 'none' при каждом ресайзе (ResizeObserver), из-за чего
@@ -1403,6 +1423,9 @@ const PonyEditor = {
             forceUpdateTrace();
         });
         resizeObserver.observe(mainCanvas);
+        // Холст центрируется через margin: auto, так что при изменении размера
+        // контейнера его смещение меняется без ресайза самого холста.
+        resizeObserver.observe(canvasContainer);
         traceState._resizeObserver = resizeObserver;
 
         if (state.frames && state.frames.length > 0) {
@@ -1445,11 +1468,6 @@ const PonyEditor = {
         if (traceBtn) traceBtn.style.borderColor = '#313244';
 
         window._traceState = null;
-    },
-
-    _updateTraceUI: function(traceState, renderFn) {
-        if (!traceState) return;
-        updateTraceUI();
     },
 
     addTraceButton: function() {
@@ -1509,6 +1527,36 @@ const PonyEditor = {
 // ============================================================
 window.GifEditorState = null;
 
+// Шаги целочисленного зума холста (как в GraphicsGale / Aseprite).
+const GIF_ZOOM_STEPS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 32];
+const GIF_MAX_ZOOM = GIF_ZOOM_STEPS[GIF_ZOOM_STEPS.length - 1];
+// Сколько шагов Ctrl+Z хранится (каждый шаг — копия всех кадров).
+const GIF_UNDO_LIMIT = 100;
+
+// Экранная точка -> ячейка пиксельного буфера: floor((mouse - origin) / zoom).
+// Используем дробный getBoundingClientRect, а не clientWidth (он округлён до
+// целых CSS-пикселей и при масштабе Windows 125% сбивал попадание).
+function gifCanvasPointToPixel(canvas, clientX, clientY, spriteW, spriteH) {
+    const rect = canvas.getBoundingClientRect();
+    const innerW = rect.width - canvas.clientLeft * 2;
+    const innerH = rect.height - canvas.clientTop * 2;
+    const px = Math.floor((clientX - rect.left - canvas.clientLeft) / innerW * spriteW);
+    const py = Math.floor((clientY - rect.top - canvas.clientTop) / innerH * spriteH);
+    return {
+        x: Math.max(0, Math.min(spriteW - 1, px)),
+        y: Math.max(0, Math.min(spriteH - 1, py)),
+        inside: px >= 0 && px < spriteW && py >= 0 && py < spriteH
+    };
+}
+
+function nextGifZoom(zoom, dir) {
+    if (dir > 0) return GIF_ZOOM_STEPS.find(z => z > zoom) || GIF_MAX_ZOOM;
+    for (let i = GIF_ZOOM_STEPS.length - 1; i >= 0; i--) {
+        if (GIF_ZOOM_STEPS[i] < zoom) return GIF_ZOOM_STEPS[i];
+    }
+    return 1;
+}
+
 // ============================================================
 // КЛАСС ДЛЯ УПРАВЛЕНИЯ СОСТОЯНИЕМ GIF РЕДАКТОРА
 // ============================================================
@@ -1539,6 +1587,65 @@ class GifEditorStateManager {
         this.resizeHandler = null;
         this.eventListeners = [];
         this.cleanupFunctions = [];
+        // История для Ctrl+Z / Ctrl+Y: полные снимки кадров до каждого действия.
+        this.undoStack = [];
+        this.redoStack = [];
+    }
+
+    snapshot() {
+        return {
+            frames: this.frames.map(f => ({ data: new Uint8ClampedArray(f.data), delay: f.delay })),
+            width: this.width,
+            height: this.height,
+            currentFrame: this.currentFrame
+        };
+    }
+
+    // Вызывать ПЕРЕД изменением кадров (один раз на мазок/операцию).
+    pushUndo() {
+        this.undoStack.push(this.snapshot());
+        if (this.undoStack.length > GIF_UNDO_LIMIT) this.undoStack.shift();
+        this.redoStack = [];
+        this.updateUndoButtons();
+    }
+
+    restoreSnapshot(s) {
+        const sizeChanged = s.width !== this.width || s.height !== this.height;
+        this.frames = s.frames;
+        this.width = s.width;
+        this.height = s.height;
+        this.currentFrame = Math.min(s.currentFrame, this.frames.length - 1);
+        this.hasChanges = true;
+        if (sizeChanged) this.fitZoom(); else this.drawCanvas();
+        this.updateTimeline();
+        this.updateUndoButtons();
+    }
+
+    undo() {
+        if (this.undoStack.length === 0) return false;
+        this.redoStack.push(this.snapshot());
+        this.restoreSnapshot(this.undoStack.pop());
+        return true;
+    }
+
+    redo() {
+        if (this.redoStack.length === 0) return false;
+        this.undoStack.push(this.snapshot());
+        this.restoreSnapshot(this.redoStack.pop());
+        return true;
+    }
+
+    clearHistory() {
+        this.undoStack = [];
+        this.redoStack = [];
+        this.updateUndoButtons();
+    }
+
+    updateUndoButtons() {
+        const u = document.getElementById('gif-undo');
+        const r = document.getElementById('gif-redo');
+        if (u) u.style.opacity = this.undoStack.length ? '1' : '0.4';
+        if (r) r.style.opacity = this.redoStack.length ? '1' : '0.4';
     }
 
     addEventListener(element, event, handler) {
@@ -1634,11 +1741,20 @@ class GifEditorStateManager {
     }
 
     loadGif(gifData) {
-        console.log('[GIF] loadGif called with data:', gifData ? 'yes' : 'no');
-        console.log('[GIF] frames count:', gifData?.frames?.length);
-
         if (this.isLoading) return;
         this.isLoading = true;
+        try {
+            this._loadGifImpl(gifData);
+        } finally {
+            // Раньше исключение внутри (например, в drawCanvas) оставляло флаг
+            // взведённым, и все последующие загрузки молча игнорировались.
+            this.isLoading = false;
+        }
+    }
+
+    _loadGifImpl(gifData) {
+        console.log('[GIF] loadGif called with data:', gifData ? 'yes' : 'no');
+        console.log('[GIF] frames count:', gifData?.frames?.length);
 
         if (this.previewInterval) {
             clearInterval(this.previewInterval);
@@ -1704,7 +1820,8 @@ class GifEditorStateManager {
         }
 
         this.currentFrame = 0;
-        this.drawCanvas();
+        this.clearHistory();
+        this.fitZoom();
         this.updateTimeline();
         const statusEl = document.getElementById('gif-status');
         if (statusEl) statusEl.textContent = `Loaded ${this.frames.length} frames, ${this.width}x${this.height}`;
@@ -1723,10 +1840,25 @@ class GifEditorStateManager {
             this.frames.push({ data, delay: 10 });
         }
         this.currentFrame = 0;
+        this.clearHistory();
         this.drawCanvas();
         this.updateTimeline();
         const statusEl = document.getElementById('gif-status');
         if (statusEl) statusEl.textContent = `New GIF: ${this.frames.length} frames, ${this.width}x${this.height}`;
+    }
+
+    // Наибольший ЦЕЛЫЙ зум, при котором спрайт помещается в область холста.
+    fitZoom() {
+        const canvas = document.getElementById('gif-main-canvas');
+        const container = canvas && canvas.parentElement;
+        if (container) {
+            const dpr = window.devicePixelRatio || 1;
+            const availW = (container.clientWidth - 44) * dpr;
+            const availH = (container.clientHeight - 44) * dpr;
+            const fit = Math.floor(Math.min(availW / this.width, availH / this.height));
+            this.zoom = Math.max(1, Math.min(GIF_MAX_ZOOM, fit || 1));
+        }
+        this.drawCanvas();
     }
 
     drawCanvas() {
@@ -1737,14 +1869,22 @@ class GifEditorStateManager {
 
         const ctx = canvas.getContext('2d');
         const frame = this.frames[this.currentFrame];
+        // ПИКСЕЛЬ-АРТ: зум только целый (1x, 2x, 3x...) и считается в ФИЗИЧЕСКИХ
+        // пикселях экрана. Раньше зум был дробным (0.1/0.25 шаг, Fit — любой), а
+        // при масштабе Windows 125%/150% браузер ещё раз растягивал холст —
+        // пиксели спрайта становились неровными и "мыльными". Теперь каждый
+        // пиксель спрайта — ровный квадрат zoom x zoom физических пикселей.
+        this.zoom = Math.max(1, Math.min(GIF_MAX_ZOOM, Math.round(this.zoom) || 1));
+        const dpr = window.devicePixelRatio || 1;
         const displayWidth = this.width * this.zoom;
         const displayHeight = this.height * this.zoom;
 
-        if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        if (canvas.width !== displayWidth || canvas.height !== displayHeight || canvas._dpr !== dpr) {
             canvas.width = displayWidth;
             canvas.height = displayHeight;
-            canvas.style.width = displayWidth + 'px';
-            canvas.style.height = displayHeight + 'px';
+            canvas._dpr = dpr;
+            canvas.style.width = (displayWidth / dpr) + 'px';
+            canvas.style.height = (displayHeight / dpr) + 'px';
             canvas.style.imageRendering = 'crisp-edges';
             canvas.style.imageRendering = 'pixelated';
         }
@@ -1765,7 +1905,7 @@ class GifEditorStateManager {
         }
 
         const zoomLevel = document.getElementById('gif-zoom-level');
-        if (zoomLevel) zoomLevel.textContent = Math.round(this.zoom * 100) + '%';
+        if (zoomLevel) zoomLevel.textContent = this.zoom + 'x';
 
         const delayInput = document.getElementById('gif-frame-delay');
         if (delayInput && this.frames[this.currentFrame]) {
@@ -1809,8 +1949,15 @@ class GifEditorStateManager {
                 const tempCtx = tempCanvas.getContext('2d');
                 const imgData = new ImageData(frame.data, self.width, self.height);
                 tempCtx.putImageData(imgData, 0, 0);
+                // Без искажения пропорций; при увеличении — целый множитель,
+                // чтобы пиксели в превью тоже были ровными квадратами.
+                let scale = Math.min(72 / self.width, 72 / self.height);
+                if (scale >= 1) scale = Math.floor(scale);
+                const pw = Math.max(1, Math.round(self.width * scale));
+                const ph = Math.max(1, Math.round(self.height * scale));
                 previewCtx.imageSmoothingEnabled = false;
-                previewCtx.drawImage(tempCanvas, 0, 0, self.width, self.height, 0, 0, 72, 72);
+                previewCtx.drawImage(tempCanvas, 0, 0, self.width, self.height,
+                    Math.floor((72 - pw) / 2), Math.floor((72 - ph) / 2), pw, ph);
             } catch(e) {}
 
             div.appendChild(previewCanvas);
@@ -1879,6 +2026,9 @@ function showInlineGifEditor(ponyName, spriteName) {
         </div>
         
         <div style="padding: 8px 16px; background: #11111b; border-bottom: 1px solid #313244; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; flex-shrink: 0;">
+            <button id="gif-undo" title="Undo (Ctrl+Z)" style="padding: 6px 10px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px; opacity: 0.4;">↶ Undo</button>
+            <button id="gif-redo" title="Redo (Ctrl+Y / Ctrl+Shift+Z)" style="padding: 6px 10px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px; opacity: 0.4;">↷ Redo</button>
+            <div style="width: 1px; height: 28px; background: #313244;"></div>
             <button id="gif-tool-pencil" class="gif-tool-btn active" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">✏️ Pencil</button>
             <input type="number" id="gif-pencil-size" min="1" max="20" step="1" value="1" title="Pencil brush size, px" style="width: 42px; background: #1e1e2e; border: 1px solid #313244; border-radius: 6px; padding: 5px 2px; color: #cdd6f4; font-size: 12px; text-align: center;">
             <button id="gif-tool-eraser" class="gif-tool-btn" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">🧽 Eraser</button>
@@ -1912,7 +2062,7 @@ function showInlineGifEditor(ponyName, spriteName) {
                     🎨 Color
                 </button>
                 
-                <div id="gif-color-dropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 10px; background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 16px; width: 700px; height: 400px; z-index: 20001; box-shadow: 0 12px 40px rgba(0,0,0,0.6); display: flex; flex-direction: column;">
+                <div id="gif-color-dropdown" style="display: none; position: absolute; right: 0; top: 100%; margin-top: 10px; background: #1e1e2e; border: 1px solid #313244; border-radius: 16px; padding: 16px; width: 700px; height: 400px; z-index: 20001; box-shadow: 0 12px 40px rgba(0,0,0,0.6); flex-direction: column;">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0;">
                         <div style="font-size: 16px; font-weight: bold; color: #cdd6f4;">🎨 Color Picker</div>
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -1978,8 +2128,10 @@ function showInlineGifEditor(ponyName, spriteName) {
             <button id="gif-delete-frame" style="padding: 6px 14px; background: #1e1e2e; border: 1px solid #313244; border-radius: 8px; color: #cdd6f4; cursor: pointer; font-size: 13px;">➖ Delete Frame</button>
         </div>
         
-        <div style="flex: 1; display: flex; justify-content: center; align-items: center; background: #0a0a0f; overflow: auto; min-height: 0; padding: 20px; position: relative;" class="gif-canvas-wrapper">
-            <canvas id="gif-main-canvas" style="image-rendering: crisp-edges; image-rendering: pixelated; border: 2px solid #313244; border-radius: 8px; cursor: crosshair; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></canvas>
+        <div style="flex: 1; display: flex; min-height: 0; position: relative;" class="gif-canvas-area">
+        <div style="flex: 1; display: flex; background: #0a0a0f; overflow: auto; min-height: 0; min-width: 0; padding: 20px; position: relative;" class="gif-canvas-wrapper">
+            <canvas id="gif-main-canvas" style="margin: auto; flex-shrink: 0; image-rendering: crisp-edges; image-rendering: pixelated; border: 2px solid #313244; cursor: crosshair; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></canvas>
+        </div>
         </div>
         
         <div style="height: 130px; background: #181825; border-top: 1px solid #313244; padding: 10px; overflow-x: auto; flex-shrink: 0;">
@@ -2046,17 +2198,23 @@ function initGifEditor(stateManager) {
 
     const ctx = canvas.getContext('2d');
     let isDrawingSquare = false;
+    let lastPx = null;
+    let lastPy = null;
+    let timelineScheduled = false;
+
+    // Таймлайн пересоздаёт превью ВСЕХ кадров; раньше это происходило на каждый
+    // mousemove при рисовании. Теперь не чаще одного раза за кадр отрисовки.
+    function scheduleTimelineUpdate() {
+        if (timelineScheduled) return;
+        timelineScheduled = true;
+        requestAnimationFrame(() => {
+            timelineScheduled = false;
+            stateManager.updateTimeline();
+        });
+    }
 
     function getPixelFromMouseEvent(e) {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const pixelX = Math.floor((mouseX / canvas.width) * stateManager.width);
-        const pixelY = Math.floor((mouseY / canvas.height) * stateManager.height);
-        return {
-            x: Math.max(0, Math.min(stateManager.width - 1, pixelX)),
-            y: Math.max(0, Math.min(stateManager.height - 1, pixelY))
-        };
+        return gifCanvasPointToPixel(canvas, e.clientX, e.clientY, stateManager.width, stateManager.height);
     }
 
     // ДОБАВЛЕНО: размер кисти, отдельно для карандаша и ластика
@@ -2083,50 +2241,70 @@ function initGifEditor(stateManager) {
             frame.data[idx + 2] = 0;
             frame.data[idx + 3] = 0;
         } else if (stateManager.tool === 'pencil') {
-            const targetAlpha = stateManager.currentColor.a / 255;
-            const currentAlpha = frame.data[idx + 3] / 255;
-            const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
-
-            if (resultAlpha > 0) {
-                frame.data[idx] = Math.round(
-                    (stateManager.currentColor.r * targetAlpha + frame.data[idx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[idx + 1] = Math.round(
-                    (stateManager.currentColor.g * targetAlpha + frame.data[idx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[idx + 2] = Math.round(
-                    (stateManager.currentColor.b * targetAlpha + frame.data[idx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[idx + 3] = Math.round(resultAlpha * 255);
-            } else {
-                frame.data[idx] = 0;
-                frame.data[idx + 1] = 0;
-                frame.data[idx + 2] = 0;
-                frame.data[idx + 3] = 0;
-            }
+            writeGifPixel(frame.data, idx, stateManager.currentColor);
         }
     }
 
-    function setPixelAt(px, py) {
+    // Пиксель-арт: цвет ПРИСВАИВАЕТСЯ ячейке буфера, без альфа-смешивания с
+    // тем, что было под ним (смешивание давало промежуточные цвета = "мыло").
+    // В GIF прозрачность только 0/1, поэтому альфа тоже приводится к 0 или 255:
+    // что видно в редакторе — то и сохранится.
+    function writeGifPixel(data, idx, color) {
+        if (color.a < 128) {
+            data[idx] = 0;
+            data[idx + 1] = 0;
+            data[idx + 2] = 0;
+            data[idx + 3] = 0;
+        } else {
+            data[idx] = color.r;
+            data[idx + 1] = color.g;
+            data[idx + 2] = color.b;
+            data[idx + 3] = 255;
+        }
+    }
+
+    function setPixelAt(px, py, connectToLast = false) {
         if (!stateManager.frames[stateManager.currentFrame] || stateManager.isPickingColor) return;
 
         const size = getBrushSize();
-        if (size <= 1) {
-            // Поведение по умолчанию (size=1) не изменилось — один пиксель.
-            paintOnePixel(px, py);
-        } else {
-            // ДОБАВЛЕНО: кисть NxN — квадрат вокруг точки клика/движения.
-            const offset = Math.floor((size - 1) / 2);
-            for (let dy = 0; dy < size; dy++) {
-                for (let dx = 0; dx < size; dx++) {
-                    paintOnePixel(px - offset + dx, py - offset + dy);
+        const paintBrush = (cx, cy) => {
+            if (size <= 1) {
+                paintOnePixel(cx, cy);
+            } else {
+                // Кисть NxN — квадрат вокруг точки.
+                const offset = Math.floor((size - 1) / 2);
+                for (let dy = 0; dy < size; dy++) {
+                    for (let dx = 0; dx < size; dx++) {
+                        paintOnePixel(cx - offset + dx, cy - offset + dy);
+                    }
                 }
             }
+        };
+
+        if (connectToLast && lastPx !== null) {
+            // ИСПРАВЛЕНО: при быстром движении мыши рисовались отдельные точки
+            // с пропусками. Соединяем предыдущую и текущую точку линией
+            // Брезенхэма.
+            let x0 = lastPx, y0 = lastPy;
+            const dx = Math.abs(px - x0), dy = -Math.abs(py - y0);
+            const sx = x0 < px ? 1 : -1, sy = y0 < py ? 1 : -1;
+            let err = dx + dy;
+            for (;;) {
+                paintBrush(x0, y0);
+                if (x0 === px && y0 === py) break;
+                const e2 = 2 * err;
+                if (e2 >= dy) { err += dy; x0 += sx; }
+                if (e2 <= dx) { err += dx; y0 += sy; }
+            }
+        } else {
+            paintBrush(px, py);
         }
+        lastPx = px;
+        lastPy = py;
 
         stateManager.hasChanges = true;
         stateManager.drawCanvas();
-        stateManager.updateTimeline();
+        scheduleTimelineUpdate();
     }
 
     function floodFillAt(px, py) {
@@ -2143,56 +2321,50 @@ function initGifEditor(stateManager) {
             a: frame.data[idx + 3]
         };
 
-        if (target.r === stateManager.currentColor.r &&
-            target.g === stateManager.currentColor.g &&
-            target.b === stateManager.currentColor.b &&
-            target.a === stateManager.currentColor.a) return;
+        // Сравниваем с тем, что реально запишется (альфа 0/255), иначе
+        // повторная заливка тем же цветом уходила бы в бесконечный обход.
+        const fillPx = new Uint8ClampedArray(4);
+        writeGifPixel(fillPx, 0, stateManager.currentColor);
+        if (target.r === fillPx[0] && target.g === fillPx[1] &&
+            target.b === fillPx[2] && target.a === fillPx[3]) return;
+        const sameAsTarget = (i) => {
+            const d = frame.data;
+            // Полностью прозрачные пиксели считаются одинаковыми независимо от RGB.
+            if (target.a === 0) return d[i + 3] === 0;
+            return d[i] === target.r && d[i + 1] === target.g &&
+                d[i + 2] === target.b && d[i + 3] === target.a;
+        };
 
-        const queue = [{ x: px, y: py }];
-        const visited = new Set();
-        let processed = 0;
-        const maxProcessed = stateManager.width * stateManager.height;
+        // Стек + Uint8Array вместо queue.shift() и Set<string> (было O(n^2)).
+        const W = stateManager.width;
+        const stack = [px, py];
+        const visited = new Uint8Array(W * stateManager.height);
 
-        while (queue.length > 0 && processed < maxProcessed) {
-            const { x: cx, y: cy } = queue.shift();
-            const key = `${cx},${cy}`;
-            if (visited.has(key)) continue;
-            visited.add(key);
-            processed++;
+        while (stack.length > 0) {
+            const cy = stack.pop();
+            const cx = stack.pop();
+            const vi = cy * W + cx;
+            if (visited[vi]) continue;
+            visited[vi] = 1;
 
             const cidx = (cy * stateManager.width + cx) * 4;
 
-            if (Math.abs(frame.data[cidx] - target.r) > 5 ||
-                Math.abs(frame.data[cidx + 1] - target.g) > 5 ||
-                Math.abs(frame.data[cidx + 2] - target.b) > 5 ||
-                Math.abs(frame.data[cidx + 3] - target.a) > 10) continue;
+            // Точное совпадение цвета (как в GraphicsGale/Paint.NET с допуском 0):
+            // допуск ±5 захватывал соседние оттенки и сливал их в один.
+            if (!sameAsTarget(cidx)) continue;
 
-            const targetAlpha = stateManager.currentColor.a / 255;
-            const currentAlpha = frame.data[cidx + 3] / 255;
-            const resultAlpha = targetAlpha + currentAlpha * (1 - targetAlpha);
+            frame.data.set(fillPx, cidx);
 
-            if (resultAlpha > 0) {
-                frame.data[cidx] = Math.round(
-                    (stateManager.currentColor.r * targetAlpha + frame.data[cidx] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[cidx + 1] = Math.round(
-                    (stateManager.currentColor.g * targetAlpha + frame.data[cidx + 1] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[cidx + 2] = Math.round(
-                    (stateManager.currentColor.b * targetAlpha + frame.data[cidx + 2] * currentAlpha * (1 - targetAlpha)) / resultAlpha
-                );
-                frame.data[cidx + 3] = Math.round(resultAlpha * 255);
-            }
-
-            if (cx > 0) queue.push({ x: cx - 1, y: cy });
-            if (cx < stateManager.width - 1) queue.push({ x: cx + 1, y: cy });
-            if (cy > 0) queue.push({ x: cx, y: cy - 1 });
-            if (cy < stateManager.height - 1) queue.push({ x: cx, y: cy + 1 });
+            if (cx > 0) stack.push(cx - 1, cy);
+            if (cx < stateManager.width - 1) stack.push(cx + 1, cy);
+            if (cy > 0) stack.push(cx, cy - 1);
+            if (cy < stateManager.height - 1) stack.push(cx, cy + 1);
         }
 
         stateManager.hasChanges = true;
         stateManager.drawCanvas();
         stateManager.updateTimeline();
+        return true;
     }
 
     function smoothEdges() {
@@ -2425,6 +2597,7 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-tool-smooth')?.addEventListener('click', function() {
+        stateManager.pushUndo();
         smoothEdges();
         this.classList.add('active');
         setTimeout(() => this.classList.remove('active'), 500);
@@ -2456,13 +2629,15 @@ function initGifEditor(stateManager) {
         });
     }
 
+    // Зум только целыми шагами (см. GIF_ZOOM_STEPS) — дробный масштаб делает
+    // пиксели разного размера.
     document.getElementById('gif-zoom-in')?.addEventListener('click', () => {
-        stateManager.zoom = Math.min(8, stateManager.zoom + 0.25);
+        stateManager.zoom = nextGifZoom(stateManager.zoom, +1);
         stateManager.drawCanvas();
     });
 
     document.getElementById('gif-zoom-out')?.addEventListener('click', () => {
-        stateManager.zoom = Math.max(0.25, stateManager.zoom - 0.25);
+        stateManager.zoom = nextGifZoom(stateManager.zoom, -1);
         stateManager.drawCanvas();
     });
 
@@ -2472,23 +2647,12 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-zoom-fit')?.addEventListener('click', () => {
-        const container = canvas.parentElement;
-        if (container) {
-            const containerWidth = container.clientWidth - 40;
-            const containerHeight = container.clientHeight - 40;
-            const fitZoom = Math.min(containerWidth / stateManager.width, containerHeight / stateManager.height, 4);
-            stateManager.zoom = Math.max(0.25, fitZoom);
-            stateManager.drawCanvas();
-        }
+        stateManager.fitZoom();
     });
 
     canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
-        if (e.deltaY < 0) {
-            stateManager.zoom = Math.min(8, stateManager.zoom + 0.1);
-        } else {
-            stateManager.zoom = Math.max(0.25, stateManager.zoom - 0.1);
-        }
+        stateManager.zoom = nextGifZoom(stateManager.zoom, e.deltaY < 0 ? +1 : -1);
         stateManager.drawCanvas();
     });
 
@@ -2497,27 +2661,35 @@ function initGifEditor(stateManager) {
         stateManager.isDrawing = true;
         e.preventDefault();
         const { x, y } = getPixelFromMouseEvent(e);
-        if (stateManager.tool === 'fill') floodFillAt(x, y);
-        else setPixelAt(x, y);
+        // Один шаг отмены на весь мазок (от нажатия до отпускания) или заливку.
+        stateManager.pushUndo();
+        if (stateManager.tool === 'fill') {
+            // Заливка ничего не изменила — не оставляем пустой шаг отмены.
+            if (!floodFillAt(x, y)) { stateManager.undoStack.pop(); stateManager.updateUndoButtons(); }
+        }
+        else { lastPx = null; setPixelAt(x, y, false); }
     });
 
     canvas.addEventListener('mousemove', (e) => {
         if (!stateManager.isDrawing || stateManager.tool === 'fill' || stateManager.isPickingColor) return;
         e.preventDefault();
         const { x, y } = getPixelFromMouseEvent(e);
-        setPixelAt(x, y);
+        setPixelAt(x, y, true);
     });
 
     canvas.addEventListener('mouseup', () => {
         stateManager.isDrawing = false;
+        lastPx = null;
     });
 
     canvas.addEventListener('mouseleave', () => {
         stateManager.isDrawing = false;
+        lastPx = null;
     });
 
     document.getElementById('gif-clear-frame')?.addEventListener('click', () => {
         if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.pushUndo();
             stateManager.frames[stateManager.currentFrame].data.fill(0);
             stateManager.drawCanvas();
             stateManager.updateTimeline();
@@ -2531,6 +2703,7 @@ function initGifEditor(stateManager) {
         // прямоугольником вместо прозрачного (несогласованно с "Clear Frame",
         // который делает кадр полностью прозрачным через .fill(0)).
         const newData = new Uint8ClampedArray(stateManager.width * stateManager.height * 4);
+        stateManager.pushUndo();
         stateManager.addFrame(newData, 10);
         stateManager.currentFrame = stateManager.frames.length - 1;
         stateManager.drawCanvas();
@@ -2538,6 +2711,7 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-duplicate-frame')?.addEventListener('click', () => {
+        stateManager.pushUndo();
         stateManager.duplicateFrame(stateManager.currentFrame);
         stateManager.currentFrame = Math.min(stateManager.currentFrame + 1, stateManager.frames.length - 1);
         stateManager.drawCanvas();
@@ -2545,41 +2719,47 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-delete-frame')?.addEventListener('click', () => {
+        if (stateManager.frames.length <= 1) return;
+        stateManager.pushUndo();
         stateManager.removeFrame(stateManager.currentFrame);
         stateManager.drawCanvas();
         stateManager.updateTimeline();
     });
 
-    let previewInterval = null;
-
+    // ИСПРАВЛЕНО: (1) предпросмотр использовал задержку только ПЕРВОГО кадра для
+    // всех; теперь каждый кадр держится своё время. (2) Состояние таймера жило
+    // в локальной переменной, а клик по кадру в таймлайне останавливал
+    // предпросмотр через stateManager — кнопка "Preview" после этого требовала
+    // двух нажатий. Источник истины теперь stateManager.previewInterval.
     function startPreview() {
-        if (previewInterval) stopPreview();
-        previewInterval = setInterval(() => {
+        if (stateManager.previewInterval) stopPreview();
+        const tick = () => {
             stateManager.currentFrame = (stateManager.currentFrame + 1) % stateManager.frames.length;
             stateManager.drawCanvas();
             stateManager.updateTimeline();
-        }, stateManager.getFrameDelay(stateManager.currentFrame));
-        previewBtn.textContent = '⏸️ Stop';
+            stateManager.previewInterval = setTimeout(tick, stateManager.getFrameDelay(stateManager.currentFrame));
+        };
+        stateManager.previewInterval = setTimeout(tick, stateManager.getFrameDelay(stateManager.currentFrame));
+        if (previewBtn) previewBtn.textContent = '⏸️ Stop';
     }
 
     function stopPreview() {
-        if (previewInterval) {
-            clearInterval(previewInterval);
-            previewInterval = null;
+        if (stateManager.previewInterval) {
+            clearTimeout(stateManager.previewInterval);
+            stateManager.previewInterval = null;
         }
-        previewBtn.textContent = '▶️ Preview';
+        if (previewBtn) previewBtn.textContent = '▶️ Preview';
     }
 
     previewBtn?.addEventListener('click', () => {
-        if (previewInterval) stopPreview();
+        if (stateManager.previewInterval) stopPreview();
         else startPreview();
-        stateManager.previewInterval = previewInterval;
     });
 
     speedSlider?.addEventListener('input', (e) => {
         stateManager.playSpeed = parseFloat(e.target.value);
         speedValue.textContent = stateManager.playSpeed.toFixed(2) + 'x';
-        if (previewInterval) {
+        if (stateManager.previewInterval) {
             stopPreview();
             startPreview();
         }
@@ -2587,6 +2767,7 @@ function initGifEditor(stateManager) {
 
     delayInput?.addEventListener('change', () => {
         if (stateManager.frames[stateManager.currentFrame]) {
+            stateManager.pushUndo();
             stateManager.setFrameDelay(stateManager.currentFrame, parseInt(delayInput.value));
             stateManager.updateTimeline();
         }
@@ -2612,6 +2793,31 @@ function initGifEditor(stateManager) {
         if (!colorBtn?.contains(e.target) && !colorDropdown?.contains(e.target)) {
             colorDropdown.style.display = 'none';
         }
+    });
+
+    function doUndo() {
+        if (stateManager.isDrawing) return;
+        if (statusEl) statusEl.textContent = stateManager.undo()
+            ? `↶ Undo (${stateManager.undoStack.length} more)` : 'Nothing to undo';
+    }
+    function doRedo() {
+        if (stateManager.isDrawing) return;
+        if (statusEl) statusEl.textContent = stateManager.redo()
+            ? `↷ Redo (${stateManager.redoStack.length} more)` : 'Nothing to redo';
+    }
+    document.getElementById('gif-undo')?.addEventListener('click', doUndo);
+    document.getElementById('gif-redo')?.addEventListener('click', doRedo);
+
+    // Ctrl+Z — отмена, Ctrl+Y / Ctrl+Shift+Z — повтор. e.code, а не e.key,
+    // чтобы работало и в русской раскладке (там e.key === 'я').
+    stateManager.addEventListener(document, 'keydown', (e) => {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+        if (e.code !== 'KeyZ' && e.code !== 'KeyY') return;
+        // В текстовых полях (HEX, задержка) оставляем их собственный Ctrl+Z.
+        const t = e.target;
+        if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range'))) return;
+        e.preventDefault();
+        if (e.code === 'KeyY' || e.shiftKey) doRedo(); else doUndo();
     });
 
     stateManager.addEventListener(document, 'keydown', (e) => {
@@ -2733,12 +2939,7 @@ function initGifEditor(stateManager) {
             pipetteLoupe.style.top = (y - loupeSize/2) + 'px';
             const rect = canvas.getBoundingClientRect();
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                const canvasX = (x - rect.left) / canvas.width;
-                const canvasY = (y - rect.top) / canvas.height;
-                let px = Math.floor(canvasX * stateManager.width);
-                let py = Math.floor(canvasY * stateManager.height);
-                px = Math.max(0, Math.min(stateManager.width - 1, px));
-                py = Math.max(0, Math.min(stateManager.height - 1, py));
+                const { x: px, y: py } = gifCanvasPointToPixel(canvas, x, y, stateManager.width, stateManager.height);
                 if (stateManager.frames[stateManager.currentFrame]) {
                     const frame = stateManager.frames[stateManager.currentFrame];
                     loupeCtx.clearRect(0, 0, loupeSize, loupeSize);
@@ -2806,12 +3007,7 @@ function initGifEditor(stateManager) {
             const x = e.clientX;
             const y = e.clientY;
             if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                const canvasX = (x - rect.left) / canvas.width;
-                const canvasY = (y - rect.top) / canvas.height;
-                let px = Math.floor(canvasX * stateManager.width);
-                let py = Math.floor(canvasY * stateManager.height);
-                px = Math.max(0, Math.min(stateManager.width - 1, px));
-                py = Math.max(0, Math.min(stateManager.height - 1, py));
+                const { x: px, y: py } = gifCanvasPointToPixel(canvas, x, y, stateManager.width, stateManager.height);
                 if (stateManager.frames[stateManager.currentFrame]) {
                     const frame = stateManager.frames[stateManager.currentFrame];
                     const idx = (py * stateManager.width + px) * 4;
@@ -2877,6 +3073,7 @@ function initGifEditor(stateManager) {
             const w = parseInt(newWidth);
             const h = parseInt(newHeight);
             if (!isNaN(w) && !isNaN(h) && w > 0 && h > 0 && w <= 1024 && h <= 1024) {
+                if (w !== stateManager.width || h !== stateManager.height) stateManager.pushUndo();
                 resizeGif(stateManager, w, h, statusEl);
                 stateManager.drawCanvas();
                 stateManager.updateTimeline();
@@ -2965,6 +3162,7 @@ function initGifEditor(stateManager) {
         const insertPosition = fromIdx < toIdx ? fromIdx + 1 : toIdx + 1;
         const sortedNewFrames = fromIdx < toIdx ? newFrames : newFrames.reverse();
 
+        stateManager.pushUndo();
         stateManager.frames.splice(insertPosition, 0, ...sortedNewFrames);
         stateManager.currentFrame = insertPosition;
         stateManager.hasChanges = true;
@@ -3002,6 +3200,7 @@ function initGifEditor(stateManager) {
             delay: f.delay
         }));
 
+        stateManager.pushUndo();
         for (let pass = 0; pass < numPasses; pass++) {
             const newFrames = [];
 
@@ -3014,32 +3213,24 @@ function initGifEditor(stateManager) {
                 const totalPixels = current.data.length;
 
                 for (let j = 0; j < totalPixels; j += 4) {
-                    let r = current.data[j];
-                    let g = current.data[j + 1];
-                    let b = current.data[j + 2];
-                    let a = current.data[j + 3];
-                    let weightSum = 1;
-
-                    if (prev) {
-                        r += prev.data[j];
-                        g += prev.data[j + 1];
-                        b += prev.data[j + 2];
-                        a += prev.data[j + 3];
-                        weightSum++;
+                    // Усреднение с весом по альфе: цвет прозрачных соседей не должен
+                    // подмешиваться (раньше давало тёмный ореол по краям).
+                    let rs = 0, gs = 0, bs = 0, as = 0, n = 0;
+                    for (const fr of [current, prev, next]) {
+                        if (!fr) continue;
+                        const al = fr.data[j + 3];
+                        rs += fr.data[j] * al;
+                        gs += fr.data[j + 1] * al;
+                        bs += fr.data[j + 2] * al;
+                        as += al;
+                        n++;
                     }
-
-                    if (next) {
-                        r += next.data[j];
-                        g += next.data[j + 1];
-                        b += next.data[j + 2];
-                        a += next.data[j + 3];
-                        weightSum++;
+                    if (as > 0) {
+                        newData[j] = Math.round(rs / as);
+                        newData[j + 1] = Math.round(gs / as);
+                        newData[j + 2] = Math.round(bs / as);
                     }
-
-                    newData[j] = Math.round(r / weightSum);
-                    newData[j + 1] = Math.round(g / weightSum);
-                    newData[j + 2] = Math.round(b / weightSum);
-                    newData[j + 3] = Math.round(a / weightSum);
+                    newData[j + 3] = Math.round(as / n);
                 }
 
                 newFrames.push({
@@ -3094,6 +3285,7 @@ function initGifEditor(stateManager) {
     });
 
     document.getElementById('gif-editor-close')?.addEventListener('click', () => {
+        if (stateManager.hasChanges && !confirm('Discard unsaved changes to this sprite?')) return;
         stateManager.cleanup();
         modal.remove();
         window.GifEditorState = null;

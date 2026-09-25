@@ -41,11 +41,11 @@ const EffectEditor = {
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Duration (sec)</label>
-                                <input type="number" step="0.5" class="effect-duration" value="${effect.duration || 5}" data-index="${i}">
+                                <input type="number" step="0.5" class="effect-duration" value="${effect.duration ?? 5}" data-index="${i}">
                             </div>
                             <div class="form-group">
-                                <label>Delay (sec)</label>
-                                <input type="number" step="0.5" class="effect-delay" value="${effect.delay || 0}" data-index="${i}">
+                                <label>Repeat delay (sec)</label>
+                                <input type="number" step="0.5" class="effect-delay" value="${effect.repeat_delay || 0}" data-index="${i}">
                             </div>
                         </div>
                     </div>`;
@@ -65,7 +65,7 @@ const EffectEditor = {
                     sprite_right: '',
                     sprite_left: '',
                     duration: 5,
-                    delay: 0
+                    repeat_delay: 0
                 });
                 EditorState.markModified();
                 PonyEditor.render(EditorState.getConfig());
@@ -85,7 +85,7 @@ const EffectEditor = {
             container.querySelectorAll(selector).forEach(input => {
                 input.addEventListener('change', () => {
                     const idx = parseInt(input.dataset.index);
-                    this.effects[idx][field] = input.type === 'number' ? parseFloat(input.value) : input.value;
+                    this.effects[idx][field] = input.type === 'number' ? (parseFloat(input.value) || 0) : input.value;
                     EditorState.markModified();
                 });
             });
@@ -96,6 +96,6 @@ const EffectEditor = {
         updateField('.effect-sprite-right', 'sprite_right');
         updateField('.effect-sprite-left', 'sprite_left');
         updateField('.effect-duration', 'duration');
-        updateField('.effect-delay', 'delay');
+        updateField('.effect-delay', 'repeat_delay');
     }
 };

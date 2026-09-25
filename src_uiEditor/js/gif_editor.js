@@ -24,6 +24,10 @@ const ctx = canvas.getContext('2d');
 const timeline = document.getElementById('timeline');
 const statusEl = document.getElementById('status');
 
+function updateStatus(text) {
+    statusEl.textContent = text || `Frame ${currentFrame + 1}/${frames.length}, ${width}x${height}`;
+}
+
 // Инициализация палитры
 const palette = document.getElementById('color-palette');
 colors.forEach(color => {
