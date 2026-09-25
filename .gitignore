@@ -1,2 +1,4 @@
 /target
 /desktop-ponies-rs.exe.WebView2
+# ключ облачного ИИ — не коммитить
+/ai_config.json
