@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Ponies</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-container">
+    <header class="app-header">
+        <h1>Desktop Ponies</h1>
+        <div class="header-controls">
+            <button class="icon-btn" onclick="window.close()" title="Close">✕</button>
+        </div>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="browse">Ponies</button>
+        <button class="tab-btn" data-tab="spawn">Spawn</button>
+        <button class="tab-btn" data-tab="active">Active</button>
+        <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+
+    <section id="tab-browse" class="tab-content active">
+        <input type="text" id="search" class="search-input" placeholder="Search ponies...">
+        <div id="pony-list" class="pony-list">
+            <div class="empty-state">Loading ponies...</div>
+        </div>
+    </section>
+
+    <section id="tab-spawn" class="tab-content">
+        <div class="card">
+            <h2>Spawn a Pony</h2>
+            <div class="form-group">
+                <label>Pony Name</label>
+                <input type="text" id="pony-name" placeholder="Start typing pony name..." list="ponies-datalist" autocomplete="off">
+                <datalist id="ponies-datalist"></datalist>
+            </div>
+            <div class="form-group">
+                <label>Position</label>
+                <div class="position-inputs">
+                    <input type="number" id="pos-x" placeholder="X" value="400">
+                    <input type="number" id="pos-y" placeholder="Y" value="300">
+                </div>
+            </div>
+            <button class="btn-primary" id="btn-spawn">✨ Spawn!</button>
+        </div>
+    </section>
+
+    <section id="tab-active" class="tab-content">
+        <div id="active-list" class="pony-list" style="flex:1">
+            <div class="empty-state">No active ponies</div>
+        </div>
+        <button class="btn-danger" id="btn-remove-all">Remove All</button>
+    </section>
+
+    <section id="tab-settings" class="tab-content">
+        <div class="card">
+            <h2>Monitor Settings</h2>
+            <p class="text-muted">Select which monitors show ponies</p>
+            <div id="monitor-list" class="monitor-list">
+                <div class="empty-state">Detecting monitors...</div>
+            </div>
+            <div class="active-actions">
+                <button class="btn-secondary" id="btn-refresh-monitors">🔄 Refresh</button>
+                <button class="btn-primary" id="btn-save-monitors" style="flex:1">💾 Save</button>
+            </div>
+
+            <hr class="divider">
+
+            <h2>Theme</h2>
+            <div class="theme-selector">
+                <div class="theme-option" data-theme="light">☀️ Light</div>
+                <div class="theme-option active" data-theme="dark">🌙 Dark</div>
+                <div class="theme-option" data-theme="black">🖤 Black</div>
+            </div>
+
+            <hr class="divider">
+
+            <h2>Performance</h2>
+            <div class="form-group">
+                <label>FPS Limit: <span id="fps-value">60 FPS</span></label>
+                <input type="range" id="fps-limit" min="10" max="120" value="60" step="10">
+            </div>
+
+            <hr class="divider">
+
+            <h2>AI Dialogs</h2>
+            <p class="text-muted" id="ai-status">Dialogs are off until an API key is set</p>
+            <div class="form-group">
+                <label>API Key</label>
+                <input type="password" id="ai-key" placeholder="sk-... (leave empty to keep current)" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Base URL (OpenAI-compatible)</label>
+                <input type="text" id="ai-url" placeholder="https://api.openai.com/v1">
+            </div>
+            <div class="form-group">
+                <label>Model</label>
+                <input type="text" id="ai-model" placeholder="gpt-4o-mini">
+            </div>
+            <div class="form-group">
+                <label>Reply language</label>
+                <input type="text" id="ai-lang" placeholder="Russian">
+            </div>
+            <div class="active-actions">
+                <button class="btn-secondary" id="btn-ai-clear">Remove key</button>
+                <button class="btn-primary" id="btn-ai-save" style="flex:1">💾 Save AI settings</button>
+            </div>
+
+            <hr class="divider">
+
+            <h2>Tools</h2>
+            <button id="btn-open-editor" class="btn-secondary" style="width: 100%; margin-top: 8px;">
+                ✏️ Open Pony Editor
+            </button>
+        </div>
+    </section>
+
+    <footer class="status-bar">
+        <span id="status-text">Ready</span>
+        <span id="pony-count">Loading...</span>
+    </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
