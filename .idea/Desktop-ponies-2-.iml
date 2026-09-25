@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src_rust" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src-tauri/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src-ui" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/src-tauri/target" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
