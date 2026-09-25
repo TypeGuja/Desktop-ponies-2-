@@ -5,12 +5,41 @@ use std::path::PathBuf;
 use wry::{WebView, WebViewBuilder};
 use winit::window::Window;
 use rust_embed::Embed;
-use crate::loader::DesktopPoniesLoader;
-use crate::editor::editor_handlers::handle_ipc;
+use crate::editor::editor_handlers::{handle_ipc, Shared};
 
 #[derive(Embed)]
 #[folder = "src_uiEditor/"]
 struct UiAssets;
+
+/// Адрес протокола, которым редактор отдаёт гифки-превью из папки Ponies.
+pub const PREVIEW_ORIGIN: &str = if cfg!(windows) { "http://dpf.localhost/" } else { "dpf://localhost/" };
+
+fn serve_preview(root: &std::path::Path, path: &str) -> wry::http::Response<std::borrow::Cow<'static, [u8]>> {
+    let respond = |status: u16, mime: &str, body: Vec<u8>| {
+        wry::http::Response::builder()
+            .status(status)
+            .header("Content-Type", mime)
+            .header("Access-Control-Allow-Origin", "*")
+            .body(std::borrow::Cow::Owned(body))
+            .unwrap()
+    };
+    let rel = path.strip_prefix("/files/").map(|r| urlencoding::decode(r).map(|c| c.to_string()).unwrap_or_default());
+    match rel {
+        Some(rel) if rel.starts_with("Ponies/") && !rel.contains("..") => match std::fs::read(root.join(&rel)) {
+            Ok(bytes) => {
+                let mime = match rel.rsplit('.').next().unwrap_or("").to_ascii_lowercase().as_str() {
+                    "gif" => "image/gif",
+                    "png" => "image/png",
+                    "jpg" | "jpeg" => "image/jpeg",
+                    _ => "application/octet-stream",
+                };
+                respond(200, mime, bytes)
+            }
+            Err(_) => respond(404, "text/plain", b"not found".to_vec()),
+        },
+        _ => respond(403, "text/plain", b"forbidden".to_vec()),
+    }
+}
 
 pub struct EditorWindow {
     pub window: Arc<Window>,
@@ -22,7 +51,7 @@ pub struct EditorWindow {
 impl EditorWindow {
     pub fn from_window(
         window: Arc<Window>,
-        loader: Arc<Mutex<DesktopPoniesLoader>>,
+        loader: Shared,
         ponies_dir: PathBuf,
     ) -> Result<Self, String> {
         let html = build_editor_html();
@@ -36,7 +65,9 @@ impl EditorWindow {
         let tx_to_webview_clone = tx_to_webview.clone();
 
         // КЛЮЧЕВОЕ: используем with_custom_protocol для правильной IPC
+        let preview_root = ponies_dir.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| ponies_dir.clone());
         let webview = WebViewBuilder::new()
+            .with_custom_protocol("dpf".to_string(), move |_id, req| serve_preview(&preview_root, req.uri().path()))
             .with_html(&html)
             .with_ipc_handler(move |request| {
                 let body = request.body();
@@ -64,20 +95,18 @@ impl EditorWindow {
     }
 
     pub fn send_to_webview(&self, message: &str) {
-        // Экранируем сообщение для JavaScript
-        let escaped = message
-            .replace('\\', "\\\\")
-            .replace('\'', "\\'")
-            .replace('"', "\\\"")
-            .replace('\n', "\\n")
-            .replace('\r', "\\r");
+        // ИСПРАВЛЕНО: (1) ручное экранирование не покрывало все управляющие
+        // символы — теперь строковый литерал JS строит serde_json (JSON-строка
+        // валидна как литерал JS). (2) Сообщение раньше вставлялось в скрипт
+        // ДВАЖДЫ (ещё и в console.log) — для GIF на мегабайты это удваивало
+        // размер скрипта и тормозило WebView; теперь один раз.
+        let literal = serde_json::to_string(message).unwrap_or_else(|_| "\"\"".to_string());
 
         let js = format!(
             "(function() {{
                 try {{
-                    console.log('[Editor] Received from Rust:', '{}');
                     if (window.editorReceive) {{
-                        window.editorReceive('{}');
+                        window.editorReceive({});
                     }} else {{
                         console.error('[Editor] window.editorReceive not found');
                     }}
@@ -85,7 +114,7 @@ impl EditorWindow {
                     console.error('[Editor] Error:', e);
                 }}
             }})();",
-            escaped, escaped
+            literal
         );
 
         // ИСПРАВЛЕНО: срез по байтовому индексу мог упасть посреди
@@ -188,7 +217,7 @@ fn build_editor_html() -> String {
             case 'ponies_list':
                 console.log('[Editor] Ponies list received, count:', data.data?.length);
                 if (window.PonyList && window.PonyList.updateList) {
-                    window.PonyList.updateList(data.data);
+                    window.PonyList.updateList(data.data, data.previews, data.preview_origin);
                 }
                 break;
             case 'pony_config':

@@ -151,12 +151,23 @@ impl PythonBridge {
                 let _ = stdin.flush();
             }
         }
-        if let Some(mut process) = self.process.take() {
-            let _ = process.wait();
-        }
-        self.running = false;
+        // ИСПРАВЛЕНО: stdin нужно закрыть ДО wait(), иначе процесс, который
+        // не понял shutdown-сообщение, вечно ждёт ввода, а wait() вешает выход.
         self.stdin = None;
         self.stdout = None;
+        if let Some(mut process) = self.process.take() {
+            let exited = (0..30).any(|_| {
+                match process.try_wait() {
+                    Ok(Some(_)) => true,
+                    _ => { std::thread::sleep(std::time::Duration::from_millis(100)); false }
+                }
+            });
+            if !exited {
+                let _ = process.kill();
+                let _ = process.wait();
+            }
+        }
+        self.running = false;
     }
 }
 

@@ -23,6 +23,8 @@ pub fn menu_size(item_count: usize) -> (u32, u32) {
 // "Add Pony" → список в оригинале) вместо мгновенного случайного спавна.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PonyAction {
+    /// Открыть окно ввода для разговора с пони (только если есть нейросеть).
+    Talk,
     Remove,
     RemoveEvery,
     ToggleSleep,
@@ -59,6 +61,8 @@ pub struct ContextMenu {
     pub pony_index: Option<usize>,
     pub pony_name: Option<String>,
     pub items: Vec<MenuItem>,
+    /// Есть ли доступная нейросеть: без неё пункта «Talk» в меню нет.
+    pub ai_available: bool,
 }
 
 impl ContextMenu {
@@ -73,6 +77,7 @@ impl ContextMenu {
             // должен показывать его имя) — здесь достаточно пустого списка,
             // он не отображается, пока меню не открыто.
             items: Vec::new(),
+            ai_available: false,
         }
     }
 
@@ -82,24 +87,29 @@ impl ContextMenu {
     // от текущего состояния (как в оригинале, DisplayPonyMenu), а не быть
     // статичными.
     pub fn show(&mut self, x: f32, y: f32, pony_index: usize, pony_name: &str,
-                is_sleeping: bool, all_sleeping: bool) {
+                is_sleeping: bool, all_sleeping: bool, ai_available: bool) {
         self.visible = true;
         self.x = x;
         self.y = y;
         self.pony_index = Some(pony_index);
         self.pony_name = Some(pony_name.to_string());
-        self.items = Self::build_main_items(pony_name, is_sleeping, all_sleeping);
+        self.ai_available = ai_available;
+        self.items = Self::build_main_items(pony_name, is_sleeping, all_sleeping, ai_available);
     }
 
     /// Пересобирает пункты в главный список (используется и при первом
     /// открытии, и при возврате из подменю "Add Pony" кнопкой "← Back").
     pub fn show_main_menu(&mut self, is_sleeping: bool, all_sleeping: bool) {
         let pony_name = self.pony_name.clone().unwrap_or_default();
-        self.items = Self::build_main_items(&pony_name, is_sleeping, all_sleeping);
+        self.items = Self::build_main_items(&pony_name, is_sleeping, all_sleeping, self.ai_available);
     }
 
-    fn build_main_items(pony_name: &str, is_sleeping: bool, all_sleeping: bool) -> Vec<MenuItem> {
-        vec![
+    fn build_main_items(pony_name: &str, is_sleeping: bool, all_sleeping: bool, ai_available: bool) -> Vec<MenuItem> {
+        let mut items = Vec::new();
+        if ai_available {
+            items.push(MenuItem::new(&format!("Talk to {}", pony_name), PonyAction::Talk));
+        }
+        items.extend(vec![
             MenuItem::new(&format!("🗑 Remove ({})", pony_name), PonyAction::Remove),
             MenuItem::new(&format!("🗑 Remove Every ({})", pony_name), PonyAction::RemoveEvery),
             MenuItem::new(
@@ -113,7 +123,8 @@ impl ContextMenu {
             MenuItem::new("➕ Add Pony ▸", PonyAction::OpenAddPonyMenu),
             MenuItem::new("🏠 Return to Menu", PonyAction::ReturnToMenu),
             MenuItem::new("✖ Exit", PonyAction::Exit),
-        ]
+        ]);
+        items
     }
 
     // ДОБАВЛЕНО: подменю выбора конкретного пони для добавления — аналог

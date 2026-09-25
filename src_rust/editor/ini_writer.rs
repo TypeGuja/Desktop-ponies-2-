@@ -2,7 +2,7 @@
 use std::fs;
 use std::io::Write;
 use crate::loader::{PonyConfig, Behavior, SpeakDef, InteractionDef, EffectDef,
-                    TargetMode, FollowOffsetType, TargetActivation, Direction};
+                    TargetMode, FollowOffsetType, TargetActivation};
 
 pub fn write_pony_config(config: &PonyConfig) -> Result<(), String> {
     let ini_path = config.directory.join("pony.ini");
@@ -56,6 +56,12 @@ pub fn write_pony_config(config: &PonyConfig) -> Result<(), String> {
 
 fn escape_ini_string(s: &str) -> String { s.replace('"', "\"\"") }
 
+// None должен записываться пустым полем: иначе при чтении получится Some(0.0),
+// и анимация/FPS пони окажутся "замороженными" после сохранения в редакторе.
+fn opt_f32(v: Option<f32>) -> String {
+    v.map(|x| x.to_string()).unwrap_or_default()
+}
+
 fn write_behavior(content: &mut String, b: &Behavior) {
     let right_center = format!("{:.0},{:.0}", b.right_image_center.0, b.right_image_center.1);
     let left_center = format!("{:.0},{:.0}", b.left_image_center.0, b.left_image_center.1);
@@ -71,14 +77,14 @@ fn write_behavior(content: &mut String, b: &Behavior) {
     // follow_offset_type) записывались со сдвигом на одну колонку, а do_not_repeat_animations
     // вообще терялось при обратном чтении. Сохранение пони в редакторе портило pony.ini.
     content.push_str(&format!(
-        "Behavior,\"{}\",{},{},{},{},\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",{},{},{},\"{}\",{},\"{}\",\"{}\",\"{}\",\"{}\",{},{},\"{}\",\"{}\",{},{},{},\"",
+        "Behavior,\"{}\",{},{},{},{},\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",{},{},{},\"{}\",{},\"{}\",\"{}\",\"{}\",\"{}\",{},{},\"{}\",{},{},{},{}",
         escape_ini_string(&b.name), b.probability, b.max_duration, b.min_duration, b.speed,
         escape_ini_string(&b.sprite_right), escape_ini_string(&b.sprite_left), escape_ini_string(&b.movement),
         escape_ini_string(&b.linked_behavior), escape_ini_string(&b.start_speech), escape_ini_string(&b.end_speech),
         b.skip, b.target_x, b.target_y, b.follow_target, b.auto_select_follow,
         escape_ini_string(&b.follow_stopped), escape_ini_string(&b.follow_moving),
         right_center, left_center, b.prevent_loop, b.group, escape_ini_string(&b.follow_offset),
-        b.set_animation_speed.unwrap_or(0.0), b.set_fps.unwrap_or(0.0), b.set_max_fps.unwrap_or(0.0), sound_files
+        opt_f32(b.set_animation_speed), opt_f32(b.set_fps), opt_f32(b.set_max_fps), sound_files
     ));
 
     match b.target_mode {
