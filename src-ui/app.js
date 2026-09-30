@@ -165,6 +165,13 @@
             // Пункт "Skeletal animation" (k: 'skeletal_animation') временно убран из
             // интерфейса; логика в Rust сохранена и по умолчанию выключена.
             { k: 'no_random_duplicates', l: 'No duplicates when choosing random ponies', t: 'bool' } ] },
+        { title: 'Princess Luna magic', items: [
+            { k: 'luna_moves_windows', l: 'Luna sometimes moves windows with her magic', t: 'bool' },
+            { k: 'luna_moves_icons', l: 'Luna sometimes moves desktop icons with her magic', t: 'bool' },
+            { k: 'luna_moves_ponies', l: 'Luna sometimes carries other ponies with her magic', t: 'bool' },
+            { k: 'luna_sleeps_by_cursor', l: 'Luna comes to an idle cursor and sleeps next to it (if already asleep, pulls the cursor to herself)', t: 'bool' },
+            { k: 'luna_cursor_idle_secs', l: 'Cursor idle time before Luna comes (seconds)', t: 'num', min: 3, max: 3600, step: 1 },
+            { k: 'luna_music', l: 'Luna opens Yandex Music by herself (app if installed, otherwise browser) and switches tracks now and then', t: 'bool' } ] },
         { title: 'Performance', items: [
             { k: 'fps_limit', l: 'Frame rate limit (FPS): higher = smoother movement, more CPU', t: 'range', min: 10, max: 240, step: 5 } ] },
         { title: 'Windows', items: [
