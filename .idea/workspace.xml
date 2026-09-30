@@ -12,32 +12,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90845830-9628-4455-8ebc-8123e6d0fb9d" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/discord.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/Desktop-ponies-2-.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Desktop-ponies-2-.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Ponies/Princess Luna/pony.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Ponies/Princess Luna/pony.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Profiles/default.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Profiles/default.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src-ui/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-ui/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src-ui/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_py/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/src_py/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/context_menu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/context_menu.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_handlers.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/editor_window.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/editor/ini_writer.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/loader.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/loader.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_rust/python_bridge.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/python_bridge.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/api.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/behavior_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/dialogs.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/effect_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/gif_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/gif_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/interaction_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/main.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/app.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/app.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/lib.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/lib.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/menu.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/menu.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/options.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/options.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/sim.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/sim.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/ui_state.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/ui_state.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src_rust/winapi.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src_rust/winapi.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/pony_editor.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src_uiEditor/js/state.js" beforeDir="false" afterPath="$PROJECT_DIR$/src_uiEditor/js/state.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +138,7 @@
     &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/ai_controller.rs&quot;: &quot;true&quot;,
     &quot;org.rust.disableDetachedFileInspectionC:/Users/user/Documents/GitHub/Desktop-ponies-2-/src_rust/main.rs&quot;: &quot;true&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;language.rust.cargo.check&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -356,7 +344,16 @@
       <workItem from="1787580045158" duration="684000" />
       <workItem from="1790182131193" duration="8667000" />
       <workItem from="1790304005559" duration="1979000" />
-      <workItem from="1790351479270" duration="3069000" />
+      <workItem from="1790351479270" duration="3553000" />
+      <workItem from="1790435206072" duration="58000" />
+      <workItem from="1790443480464" duration="1660000" />
+      <workItem from="1790484052242" duration="624000" />
+      <workItem from="1790521070535" duration="2778000" />
+      <workItem from="1790530854356" duration="896000" />
+      <workItem from="1790589371698" duration="58000" />
+      <workItem from="1790695971745" duration="10985000" />
+      <workItem from="1790736403704" duration="1098000" />
+      <workItem from="1790781158836" duration="2233000" />
     </task>
     <servers />
   </component>
@@ -386,11 +383,6 @@
           <url>file://$PROJECT_DIR$/src_py/rule_engine.py</url>
           <line>1</line>
           <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src_rust/main.rs</url>
-          <line>2279</line>
-          <option name="timeStamp" value="5" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
