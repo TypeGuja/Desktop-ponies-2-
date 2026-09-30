@@ -1171,6 +1171,7 @@ const PonyEditor = {
 
         window.renderTrace = renderTrace;
         window.applyTraceFrames = applyTraceFrames;
+        window.forceUpdateTrace = forceUpdateTrace;
 
         // ============================================================
         // ОБРАБОТЧИКИ СОБЫТИЙ
@@ -1914,8 +1915,19 @@ class GifEditorStateManager {
 
         if (window._traceState && window._traceState.loaded) {
             if (window._traceState.frames.length > 0) {
-                window._traceState.currentFrame = this.currentFrame % window._traceState.frames.length;
-                if (typeof window.renderTrace === 'function') {
+                // ИСПРАВЛЕНО: раньше здесь принудительно делали
+                // window._traceState.currentFrame = this.currentFrame % ...,
+                // из-за чего трейс на каждый мазок кистью или зум переключался
+                // на кадр с тем же номером, что и текущий кадр основной
+                // гифки, затирая кадр, выбранный вручную в панели трейса.
+                // Кадр трейса теперь меняется только явными действиями
+                // пользователя в самой панели. Позицию/размер трейс-холста
+                // при этом всё равно нужно пересчитывать синхронно (иначе
+                // при зуме трейс на миг съезжает на старые top/left) —
+                // поэтому вызываем forceUpdateTrace(), а не просто renderTrace().
+                if (typeof window.forceUpdateTrace === 'function') {
+                    window.forceUpdateTrace();
+                } else if (typeof window.renderTrace === 'function') {
                     window.renderTrace();
                 }
             }
