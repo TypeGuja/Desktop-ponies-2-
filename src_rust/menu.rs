@@ -20,6 +20,8 @@ pub enum Action {
     RemoveHouse(u64),
     TakeControl(u64, u8),
     Talk(u64),
+    /// Магия Луны: 0 — перенести окно, 1 — перенести иконку.
+    LunaMagic(u64, u8),
     ShowOptions,
     ReturnToMenu,
     Exit,

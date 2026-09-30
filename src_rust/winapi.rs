@@ -167,6 +167,54 @@ pub const VK_S: i32 = 0x53;
 pub const VK_D: i32 = 0x44;
 pub const VK_ESCAPE: i32 = 0x1B;
 
+/// Рабочие области выбранных мониторов (с учётом ограничения области показа) — там, где экран есть на самом деле.
+pub fn allowed_areas(monitors: &[MonitorInfo], selected: &[String], allowed_region: Option<RectI>) -> Vec<RectI> {
+    let chosen: Vec<&MonitorInfo> = monitors.iter().filter(|m| selected.iter().any(|s| s == &m.device_name)).collect();
+    let list: Vec<&MonitorInfo> = if chosen.is_empty() { monitors.iter().filter(|m| m.primary).collect() } else { chosen };
+    let mut out: Vec<RectI> = list.iter().map(|m| if m.work.is_empty() { m.bounds } else { m.work }).collect();
+    if let Some(r) = allowed_region {
+        out = monitors.iter().map(|m| m.bounds.intersect(&r)).filter(|a| !a.is_empty()).collect();
+    }
+    out
+}
+
+/// Куски общего прямоугольника, где экрана нет (мониторы разного размера): там пони ходить нельзя.
+/// Прямоугольник режется по краям мониторов на клетки; клетки вне всех мониторов склеиваются по строкам.
+pub fn dead_zones(bound: RectI, areas: &[RectI]) -> Vec<RectI> {
+    if areas.is_empty() {
+        return Vec::new();
+    }
+    let mut xs: Vec<i32> = vec![bound.x, bound.right()];
+    let mut ys: Vec<i32> = vec![bound.y, bound.bottom()];
+    for a in areas {
+        for v in [a.x, a.right()] {
+            if v > bound.x && v < bound.right() { xs.push(v); }
+        }
+        for v in [a.y, a.bottom()] {
+            if v > bound.y && v < bound.bottom() { ys.push(v); }
+        }
+    }
+    xs.sort(); xs.dedup(); ys.sort(); ys.dedup();
+    let mut out = Vec::new();
+    for yi in 0..ys.len() - 1 {
+        let mut run: Option<(i32, i32)> = None;
+        for xi in 0..xs.len() - 1 {
+            let cell = RectI::new(xs[xi], ys[yi], xs[xi + 1] - xs[xi], ys[yi + 1] - ys[yi]);
+            let covered = areas.iter().any(|a| a.x <= cell.x && a.y <= cell.y && a.right() >= cell.right() && a.bottom() >= cell.bottom());
+            match (covered, run) {
+                (false, None) => run = Some((cell.x, cell.right())),
+                (false, Some((x0, _))) => run = Some((x0, cell.right())),
+                (true, Some((x0, x1))) => { out.push(RectI::new(x0, ys[yi], x1 - x0, ys[yi + 1] - ys[yi])); run = None; }
+                (true, None) => {}
+            }
+        }
+        if let Some((x0, x1)) = run {
+            out.push(RectI::new(x0, ys[yi], x1 - x0, ys[yi + 1] - ys[yi]));
+        }
+    }
+    out
+}
+
 /// Объединение рабочих областей выбранных мониторов (Options.GetAllowedArea).
 pub fn allowed_area(monitors: &[MonitorInfo], selected: &[String], allowed_region: Option<RectI>) -> RectI {
     let all_bounds = monitors.iter().map(|m| m.bounds).reduce(|a, b| a.union(&b)).unwrap_or(RectI::new(0, 0, 1920, 1080));

@@ -9,6 +9,8 @@
 
 use desktop_ponies_lib::ai_chat::{self, AiConfig, ChatMessage};
 use desktop_ponies_lib::audio::Audio;
+use desktop_ponies_lib::desktop::{self, Desktop};
+use desktop_ponies_lib::luna::{self, FrameInput, Luna, LunaSettings, Spell};
 use desktop_ponies_lib::loader::PonyCollection;
 use desktop_ponies_lib::math::{RectI, V2};
 use desktop_ponies_lib::menu::{Action, Click, Item, Menu};
@@ -134,6 +136,10 @@ pub struct App {
     last_draw_at: Instant,
     ragdolls: HashMap<PonyId, RagState>,
     last_rag_at: Instant,
+    /// Магия Луны: окна, иконки, курсор.
+    luna: Luna,
+    desktop: Box<dyn Desktop>,
+    last_luna_at: Instant,
 }
 
 // ------------------------------------------------------------------ helpers
@@ -238,6 +244,9 @@ impl App {
             last_draw_at: Instant::now(),
             ragdolls: HashMap::new(),
             last_rag_at: Instant::now(),
+            luna: Luna::new(None),
+            desktop: desktop::system(),
+            last_luna_at: Instant::now(),
         };
         app.set_collection(collection);
         app.sync_context();
@@ -269,6 +278,8 @@ impl App {
         c.exclusion_zone = o.exclusion_zone;
         c.teleportation_enabled = o.pony_teleport_enabled;
         c.region = winapi::allowed_area(&self.monitors, &o.screens, o.allowed_region);
+        c.areas = winapi::allowed_areas(&self.monitors, &o.screens, o.allowed_region);
+        c.dead_zones = winapi::dead_zones(c.region, &c.areas);
         self.world.max_pony_count = o.max_pony_count.max(0) as usize;
     }
 
@@ -710,6 +721,17 @@ impl App {
             items.push(Item::action(&format!("Talk to {}", p.base.display_name), Action::Talk(id)));
             items.push(Item::separator());
         }
+        if luna::is_luna(p) {
+            items.push(Item::action("Magic: Move a Window", Action::LunaMagic(id, 0)));
+            items.push(Item::action("Magic: Move an Icon", Action::LunaMagic(id, 1)));
+            items.push(Item::action("Magic: Carry a Pony", Action::LunaMagic(id, 7)));
+            items.push(Item::action("Magic: Play a video", Action::LunaMagic(id, 2)));
+            items.push(Item::action("Magic: Open Yandex Music", Action::LunaMagic(id, 3)));
+            items.push(Item::action("Magic: Music Play/Pause", Action::LunaMagic(id, 4)));
+            items.push(Item::action("Magic: Next track", Action::LunaMagic(id, 5)));
+            items.push(Item::action("Magic: Previous track", Action::LunaMagic(id, 6)));
+            items.push(Item::separator());
+        }
         items.push(Item::action(&format!("Remove {}", dir), Action::RemovePony(id)));
         items.push(Item::action(&format!("Remove Every {}", dir), Action::RemoveEvery(dir.clone())));
         items.push(Item::separator());
@@ -825,6 +847,20 @@ impl App {
                 }
             }
             Action::Talk(id) => self.open_chat(event_loop, id),
+            Action::LunaMagic(id, kind) => {
+                let own = self.own_hwnds.borrow().clone();
+                let spell = match kind {
+                    0 => Spell::Window,
+                    1 => Spell::Icon,
+                    2 => Spell::Video,
+                    3 => Spell::Music,
+                    4 => Spell::MusicPlayPause,
+                    5 => Spell::MusicNext,
+                    7 => Spell::Pony,
+                    _ => Spell::MusicPrev,
+                };
+                self.luna.cast(&mut self.world, self.desktop.as_mut(), id, spell, &own);
+            }
             Action::ShowOptions => self.show_panel(Some("options")),
             Action::ReturnToMenu => self.show_panel(Some("ponies")),
             Action::Exit => {
@@ -1139,6 +1175,9 @@ impl App {
         // ---- ИИ: спонтанные реплики
         self.update_ai(now_ms);
 
+        // ---- магия Луны (до симуляции: её цели пони получают на этом же шаге)
+        self.update_luna(cursor, left || right);
+
         // ---- куклы: схваченная пони ведётся корпусом куклы, а не курсором напрямую
         let rag_dt = self.last_rag_at.elapsed().as_secs_f32();
         self.last_rag_at = Instant::now();
@@ -1168,6 +1207,30 @@ impl App {
             self.last_active_push = Instant::now();
             self.push_active(false);
         }
+    }
+
+    fn update_luna(&mut self, cursor: (i32, i32), buttons: bool) {
+        let dt = self.last_luna_at.elapsed().as_secs_f32();
+        self.last_luna_at = Instant::now();
+        let own = self.own_hwnds.borrow().clone();
+        let manual: Vec<PonyId> = self.manual.iter().flatten().copied().collect();
+        let input = FrameInput {
+            cursor,
+            buttons,
+            blocked: self.menu.is_some() || self.dragging.is_some(),
+            manual: &manual,
+            own_hwnds: &own,
+        };
+        let o = &self.options;
+        let settings = LunaSettings {
+            move_windows: o.luna_moves_windows,
+            move_icons: o.luna_moves_icons,
+            sleep_by_cursor: o.luna_sleeps_by_cursor,
+            music: o.luna_music,
+            move_ponies: o.luna_moves_ponies,
+            cursor_idle_secs: o.luna_cursor_idle_secs as f32,
+        };
+        self.luna.update(&mut self.world, self.desktop.as_mut(), &input, &settings, dt);
     }
 
     fn play_sounds(&mut self) {
@@ -1250,6 +1313,9 @@ impl App {
                     let off = if p.is_dragging() && !self.ragdolls.contains_key(&p.id) {
                         let loc = p.location();
                         V2::new(cursor.0 as f32 - loc.x, cursor.1 as f32 - loc.y)
+                    } else if let Some(to) = p.carry.filter(|_| p.is_carried()) {
+                        // пони в магии Луны — так же рисуем там, где она сейчас, а не где была на шаге
+                        to - p.location()
                     } else {
                         p.render_offset(self.last_sim_ms, time_factor)
                     };
@@ -1279,7 +1345,7 @@ impl App {
                                         vx: mv.x * 25.0,
                                         vy: mv.y * 25.0,
                                         facing_right: p.facing_right(),
-                                        dragged: p.drag,
+                                        dragged: p.drag || p.is_carried(),
                                         cursor_rel: if menu_open { None } else { Some((cursor.0 as f32 - cx, cursor.1 as f32 - cy)) },
                                         sleeping: p.is_sleeping(),
                                     };
@@ -1312,6 +1378,9 @@ impl App {
                 }
             }
         }
+
+        // Магия Луны — поверх пони, под репликами и меню.
+        self.luna.draw(&mut buffer, bw, bh, (ox, oy));
 
         // Реплики и меню.
         if let Some(tr) = self.text.as_mut() {

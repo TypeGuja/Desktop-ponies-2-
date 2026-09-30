@@ -16,6 +16,9 @@ pub const SCREENSAVER_PROFILE: &str = "screensaver";
 pub const DEFAULT_FPS_LIMIT: u32 = 60;
 pub const MIN_FPS_LIMIT: u32 = 10;
 pub const MAX_FPS_LIMIT: u32 = 240;
+pub const DEFAULT_LUNA_IDLE_SECS: u32 = 20;
+pub const MIN_LUNA_IDLE_SECS: u32 = 3;
+pub const MAX_LUNA_IDLE_SECS: u32 = 3600;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScreensaverStyle {
@@ -66,6 +69,17 @@ pub struct Options {
     /// Ограничение частоты отрисовки (кадров в секунду). Дополнительная колонка
     /// строки options после skeletal_animation — оригинал её игнорирует.
     pub fps_limit: u32,
+    /// Магия принцессы Луны (luna.rs): переносить окна, иконки, приходить к
+    /// неподвижному курсору. Дополнительные колонки после fps_limit.
+    pub luna_moves_windows: bool,
+    pub luna_moves_icons: bool,
+    pub luna_sleeps_by_cursor: bool,
+    /// Луна сама открывает Яндекс Музыку и переключает треки.
+    pub luna_music: bool,
+    /// Луна переносит магией других пони (они в drag-состоянии).
+    pub luna_moves_ponies: bool,
+    /// Через сколько секунд неподвижности курсора Луна идёт к нему.
+    pub luna_cursor_idle_secs: u32,
     /// Количества пони для запуска: каталог -> число.
     pub pony_counts: BTreeMap<String, i32>,
     pub custom_tags: Vec<String>,
@@ -111,6 +125,12 @@ impl Default for Options {
             // Выключена по умолчанию: переключатель убран из интерфейса, логика осталась.
             skeletal_animation: false,
             fps_limit: DEFAULT_FPS_LIMIT,
+            luna_moves_windows: true,
+            luna_moves_icons: true,
+            luna_sleeps_by_cursor: true,
+            luna_music: true,
+            luna_moves_ponies: true,
+            luna_cursor_idle_secs: DEFAULT_LUNA_IDLE_SECS,
             pony_counts: BTreeMap::new(),
             custom_tags: Vec::new(),
             enable_pony_logs: false,
@@ -265,6 +285,16 @@ impl Options {
         self.background_color = p.parse_i32(Some(0), i32::MIN, i32::MAX);
         self.skeletal_animation = p.parse_bool(Some(false));
         self.fps_limit = p.parse_i32(Some(DEFAULT_FPS_LIMIT as i32), MIN_FPS_LIMIT as i32, MAX_FPS_LIMIT as i32) as u32;
+        self.luna_moves_windows = p.parse_bool(Some(true));
+        self.luna_moves_icons = p.parse_bool(Some(true));
+        self.luna_sleeps_by_cursor = p.parse_bool(Some(true));
+        self.luna_cursor_idle_secs = p.parse_i32(
+            Some(DEFAULT_LUNA_IDLE_SECS as i32),
+            MIN_LUNA_IDLE_SECS as i32,
+            MAX_LUNA_IDLE_SECS as i32,
+        ) as u32;
+        self.luna_music = p.parse_bool(Some(true));
+        self.luna_moves_ponies = p.parse_bool(Some(true));
     }
 
     /// Сохраняет профиль (не default).
@@ -321,6 +351,12 @@ impl Options {
             self.background_color.to_string(),
             b(self.skeletal_animation).to_string(),
             self.fps_limit.to_string(),
+            b(self.luna_moves_windows).to_string(),
+            b(self.luna_moves_icons).to_string(),
+            b(self.luna_sleeps_by_cursor).to_string(),
+            self.luna_cursor_idle_secs.to_string(),
+            b(self.luna_music).to_string(),
+            b(self.luna_moves_ponies).to_string(),
         ]
         .join(",");
         let mut out = String::new();

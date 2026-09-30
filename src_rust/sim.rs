@@ -47,6 +47,10 @@ pub struct Context {
     pub cursor: (i32, i32),
     /// Окно под точкой экрана (для избегания окон / ограничения окном).
     pub window_at_point: Option<Box<dyn Fn(i32, i32) -> Option<RectI>>>,
+    /// Реальные рабочие области мониторов внутри region (пусто = весь region).
+    pub areas: Vec<RectI>,
+    /// Куски region, где экрана нет (мониторы разного размера): пони туда не заходят.
+    pub dead_zones: Vec<RectI>,
 }
 
 impl Context {
@@ -69,7 +73,36 @@ impl Context {
             teleportation_enabled: false,
             cursor: (i32::MIN, i32::MIN),
             window_at_point: None,
+            areas: Vec::new(),
+            dead_zones: Vec::new(),
         }
+    }
+
+    /// Все запретные прямоугольники: зона исключения из настроек и места без экрана.
+    pub fn blocked_regions(&self) -> Vec<RectI> {
+        let mut v = Vec::new();
+        let ex = self.exclusion_region();
+        if !(ex.w == 0 && ex.h == 0) {
+            v.push(ex);
+        }
+        v.extend(self.dead_zones.iter().copied());
+        v
+    }
+
+    /// Рабочая область монитора, в которой точка (или весь region, если мониторы не заданы).
+    pub fn area_at(&self, x: i32, y: i32) -> RectI {
+        self.areas.iter().copied().find(|a| a.contains_point(x, y)).unwrap_or_else(|| {
+            // ближайшая по расстоянию до центра — если точка в «мёртвой зоне»
+            self.areas
+                .iter()
+                .copied()
+                .min_by_key(|a| {
+                    let cx = x.clamp(a.x, a.right() - 1);
+                    let cy = y.clamp(a.y, a.bottom() - 1);
+                    (cx - x).abs() + (cy - y).abs()
+                })
+                .unwrap_or(self.region)
+        })
     }
 
     /// Options.GetExclusionArea
@@ -207,6 +240,14 @@ pub struct InteractionInst {
 
 // ------------------------------------------------------------------ Pony
 
+/// Удержание пони на месте в заданном поведении (Луна колдует: зависает в
+/// позе полёта лицом к цели). Сон, перетаскивание и наведение курсора важнее.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Hold {
+    pub behavior: usize,
+    pub facing_right: bool,
+}
+
 struct EffectRepeat {
     base_index: usize,
     last_external_start: f64,
@@ -265,6 +306,9 @@ pub struct Pony {
     speed_override: Option<f64>,
     pub destination_override: Option<V2>,
     pub follow_target_override: Option<PonyId>,
+    pub hold: Option<Hold>,
+    /// Пони несёт магия (Луна): она в drag-состоянии, но стоит здесь, а не под курсором.
+    pub carry: Option<V2>,
 }
 
 impl Pony {
@@ -319,6 +363,8 @@ impl Pony {
             speed_override: None,
             destination_override: None,
             follow_target_override: None,
+            hold: None,
+            carry: None,
         };
 
         let flagged_sleep = p.behavior_matching(&[&|b: &Behavior| b.allowed_movement & moves::SLEEP != 0]);
@@ -384,6 +430,7 @@ impl Pony {
     pub fn speech_sound(&self) -> Option<&str> { self.current_speech_sound.as_deref() }
     pub fn destination(&self) -> Option<V2> { self.destination }
     pub fn movement(&self) -> V2 { self.movement }
+    pub fn set_facing_right(&mut self, v: bool) { self.facing_right = v; }
 
     /// Сдвиг для отрисовки между шагами симуляции. Симуляция идёт по 25 шагов
     /// в секунду, а кадры рисуются чаще; без этого пони двигались бы рывками
@@ -399,7 +446,9 @@ impl Pony {
     }
     pub fn is_sleeping(&self) -> bool { self.in_sleep }
     /// Пони сейчас тащат мышью (симуляция подтвердила захват).
-    pub fn is_dragging(&self) -> bool { self.in_drag }
+    pub fn is_dragging(&self) -> bool { self.in_drag && self.carry.is_none() }
+    /// Пони в drag-состоянии, но несёт её магия, а не курсор.
+    pub fn is_carried(&self) -> bool { self.in_drag && self.carry.is_some() }
     pub fn speed_override(&self) -> Option<f64> { self.speed_override }
     pub fn set_speed_override(&mut self, v: Option<f64>) { self.speed_override = v.map(|x| x.max(0.0)); }
 
@@ -410,6 +459,7 @@ impl Pony {
             || self.in_sleep
             || self.movement_override.is_some()
             || self.destination_override.is_some()
+            || self.hold.is_some()
     }
 
     pub fn at_destination(&self) -> bool {
@@ -632,9 +682,16 @@ impl World {
             let rf = self.ponies[i].region_f(scale);
             let area = V2::new(region.w as f32 - rf.w, region.h as f32 - rf.h);
             let center = self.ponies[i].current_image().center() * scale;
-            let rx = self.rng.f64() as f32;
-            let ry = self.rng.f64() as f32;
-            self.ponies[i].location = center + V2::new(area.x * rx, area.y * ry) + V2::new(region.x as f32, region.y as f32);
+            let blocked = self.ctx.dead_zones.clone();
+            for attempt in 0..40 {
+                let rx = self.rng.f64() as f32;
+                let ry = self.rng.f64() as f32;
+                self.ponies[i].location = center + V2::new(area.x * rx, area.y * ry) + V2::new(region.x as f32, region.y as f32);
+                let r = self.ponies[i].region_f(scale);
+                if attempt == 39 || !blocked.iter().any(|b| r.intersects(&b.to_f())) {
+                    break;
+                }
+            }
         }
         self.update_state(i, true, true);
     }
@@ -648,6 +705,7 @@ impl World {
         }
         let exited_sleep = self.handle_sleep(i);
         let exited_mo_drag = self.handle_mouseover_and_drag(i);
+        self.apply_hold(i);
         let dest_override = self.ponies[i].destination_override;
         let mut at_override = self.ponies[i].at_destination_override;
         self.send_to_custom_destination(i, dest_override, &mut at_override);
@@ -747,7 +805,7 @@ impl World {
                 self.speak_internal(i, None);
             }
         }
-        let (drag, in_drag) = (self.ponies[i].drag, self.ponies[i].in_drag);
+        let (drag, in_drag) = (self.ponies[i].drag || self.ponies[i].carry.is_some(), self.ponies[i].in_drag);
         if self.ctx.dragging_enabled && drag && !in_drag {
             self.ponies[i].in_drag = true;
             if self.ponies[i].behavior_before_special.is_none() {
@@ -790,6 +848,22 @@ impl World {
             self.extend_behavior_duration_indefinitely(i);
         }
         resumed
+    }
+
+    fn apply_hold(&mut self, i: usize) {
+        let Some(h) = self.ponies[i].hold else { return };
+        {
+            let p = &self.ponies[i];
+            if p.in_sleep || p.in_drag || p.in_mouseover || h.behavior >= p.base.behaviors.len() {
+                return;
+            }
+        }
+        if self.ponies[i].current_behavior != h.behavior {
+            self.end_interaction(i, true, false);
+            self.set_behavior_internal(i, Some(h.behavior), false);
+        }
+        self.ponies[i].facing_right = h.facing_right;
+        self.extend_behavior_duration_indefinitely(i);
     }
 
     fn extend_behavior_duration_indefinitely(&mut self, i: usize) {
@@ -857,6 +931,7 @@ impl World {
             }
         }
 
+        for excl in self.ctx.blocked_regions().into_iter().map(|r| r.to_f()) {
         if !excl.size_is_zero() && cur.intersects(&excl) {
             let change = V2::new((dest.x - loc.x).ceil(), (dest.y - loc.y).ceil());
             cur.x += change.x;
@@ -891,6 +966,10 @@ impl World {
             } else if bottom_d == min_d && bottom_has {
                 dest.y += bottom_d;
             }
+            cur = self.ponies[i].region_f(scale);
+            cur.x += dest.x - loc.x;
+            cur.y += dest.y - loc.y;
+        }
         }
         if V2::dist_sq(dest, loc) < EPSILON { None } else { Some(dest) }
     }
@@ -1171,9 +1250,8 @@ impl World {
             let scale = self.ctx.scale_factor;
             let cur = self.ponies[i].region_f(scale);
             let region = self.ctx.region.to_f();
-            let excl = self.ctx.exclusion_region().to_f();
             let inside = region.contains_rect(&cur);
-            let on_edge = !inside || (!excl.size_is_zero() && cur.intersects(&excl));
+            let on_edge = !inside || self.ctx.blocked_regions().iter().any(|b| cur.intersects(&b.to_f()));
             if on_edge {
                 self.ponies[i].allowing_natural_return = true;
             }
@@ -1245,7 +1323,7 @@ impl World {
         let mut scale_up = false;
         let (special, has_override, dest) = {
             let p = &self.ponies[i];
-            (p.in_mouseover || p.in_drag || p.in_sleep, p.movement_override, p.destination)
+            (p.in_mouseover || p.in_drag || p.in_sleep || p.hold.is_some(), p.movement_override, p.destination)
         };
         if special {
             self.ponies[i].movement = V2::ZERO;
@@ -1385,7 +1463,8 @@ impl World {
 
     fn update_location(&mut self, i: usize) {
         if self.ponies[i].in_drag {
-            self.ponies[i].location = V2::new(self.ctx.cursor.0 as f32, self.ctx.cursor.1 as f32);
+            let cursor = V2::new(self.ctx.cursor.0 as f32, self.ctx.cursor.1 as f32);
+            self.ponies[i].location = self.ponies[i].carry.unwrap_or(cursor);
         } else {
             let mv = self.ponies[i].movement;
             self.ponies[i].location += mv;
@@ -1398,8 +1477,8 @@ impl World {
         let scale = self.ctx.scale_factor;
         let cur = self.ponies[i].region_f(scale);
         let region = self.ctx.region.to_f();
-        let excl = self.ctx.exclusion_region().to_f();
-        self.ponies[i].last_step_in_bounds = region.contains_rect(&cur) && !cur.intersects(&excl);
+        self.ponies[i].last_step_in_bounds =
+            region.contains_rect(&cur) && !self.ctx.blocked_regions().iter().any(|b| cur.intersects(&b.to_f()));
         if self.ponies[i].last_step_in_bounds || !cur.intersects(&region) {
             self.ponies[i].rebounding_into_containment = false;
             self.ponies[i].allowing_natural_return = false;
@@ -1480,8 +1559,9 @@ impl World {
         }
         if !self.ponies[i].allowing_natural_return {
             if self.ponies[i].last_step_in_bounds {
-                let ex = self.ctx.exclusion_region();
-                self.rebound_out_of_exclusion_region(i, ex, true);
+                for ex in self.ctx.blocked_regions() {
+                    self.rebound_out_of_exclusion_region(i, ex, true);
+                }
             }
             let cr = self.ctx.region;
             let check_v = !self.ponies[i].rebounding_into_containment;
@@ -2023,8 +2103,15 @@ impl World {
         self.next_id += 1;
         let region = self.ctx.region;
         let (w, h) = base.image.size;
-        let x = region.x as f64 + self.rng.f64() * (region.w - w as i32).max(0) as f64;
-        let y = region.y as f64 + self.rng.f64() * (region.h - h as i32).max(0) as f64;
+        let (mut x, mut y) = (region.x as f64, region.y as f64);
+        for attempt in 0..40 {
+            x = region.x as f64 + self.rng.f64() * (region.w - w as i32).max(0) as f64;
+            y = region.y as f64 + self.rng.f64() * (region.h - h as i32).max(0) as f64;
+            let r = RectI::new(x as i32, y as i32, w as i32, h as i32).to_f();
+            if attempt == 39 || !self.ctx.dead_zones.iter().any(|b| r.intersects(&b.to_f())) {
+                break;
+            }
+        }
         let mut deployed = HashSet::new();
         for p in &self.ponies {
             if base.visitors.iter().any(|v| ci_eq(v, &p.base.directory)) {
@@ -2228,6 +2315,40 @@ mod tests {
             t += STEP_SIZE;
             w.update(t);
         }
+    }
+
+    #[test]
+    fn ponies_stay_on_real_monitors_of_different_height() {
+        // 1920x1040 слева и 1366x728 справа: под правым монитором экрана нет
+        let left = RectI::new(0, 0, 1920, 1040);
+        let right = RectI::new(1920, 0, 1366, 728);
+        let bound = left.union(&right);
+        let mut w = World::new(Context::new(bound), Some(99));
+        w.ctx.random_speech_chance = 0.0;
+        w.ctx.areas = vec![left, right];
+        w.ctx.dead_zones = crate::winapi::dead_zones(bound, &w.ctx.areas);
+        assert_eq!(w.ctx.dead_zones, vec![RectI::new(1920, 728, 1366, 312)]);
+        let base = make_base("Walker", vec![beh("walk", 1.0, 3.0, moves::ALL, 60, 60)]);
+        let mut ids = Vec::new();
+        for _ in 0..12 {
+            ids.push(w.add_pony(base.clone()));
+        }
+        for p in &w.ponies {
+            assert!(!p.region().to_f().intersects(&w.ctx.dead_zones[0].to_f()), "появилась вне экрана: {:?}", p.region());
+        }
+        let dz = w.ctx.dead_zones[0];
+        let mut worst = 0;
+        let mut t = w.elapsed;
+        for _ in 0..(60.0 * STEP_RATE) as usize {
+            t += STEP_SIZE;
+            w.update(t);
+            for p in &w.ponies {
+                let r = p.region().intersect(&dz);
+                worst = worst.max(r.w.min(r.h));
+            }
+        }
+        // отскок происходит в момент касания: заходить глубже нескольких пикселей нельзя
+        assert!(worst <= 8, "пони уходила вглубь места без экрана на {} px", worst);
     }
 
     #[test]

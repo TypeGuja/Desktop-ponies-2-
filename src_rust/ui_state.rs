@@ -102,6 +102,12 @@ pub fn options_to_json(o: &Options) -> Value {
         "no_random_duplicates": o.no_random_duplicates,
         "skeletal_animation": o.skeletal_animation,
         "fps_limit": o.fps_limit,
+        "luna_moves_windows": o.luna_moves_windows,
+        "luna_moves_icons": o.luna_moves_icons,
+        "luna_sleeps_by_cursor": o.luna_sleeps_by_cursor,
+        "luna_cursor_idle_secs": o.luna_cursor_idle_secs,
+        "luna_music": o.luna_music,
+        "luna_moves_ponies": o.luna_moves_ponies,
         "max_pony_count": o.max_pony_count,
         "time_factor": o.time_factor,
         "scale_factor": o.scale_factor,
@@ -145,6 +151,14 @@ pub fn apply_options_json(o: &mut Options, v: &Value) {
     b(v, "skeletal_animation", &mut o.skeletal_animation);
     if let Some(x) = v.get("fps_limit").and_then(|x| x.as_f64()) {
         o.fps_limit = (x as u32).clamp(crate::options::MIN_FPS_LIMIT, crate::options::MAX_FPS_LIMIT);
+    }
+    b(v, "luna_moves_windows", &mut o.luna_moves_windows);
+    b(v, "luna_moves_icons", &mut o.luna_moves_icons);
+    b(v, "luna_sleeps_by_cursor", &mut o.luna_sleeps_by_cursor);
+    b(v, "luna_music", &mut o.luna_music);
+    b(v, "luna_moves_ponies", &mut o.luna_moves_ponies);
+    if let Some(x) = v.get("luna_cursor_idle_secs").and_then(|x| x.as_f64()) {
+        o.luna_cursor_idle_secs = (x as u32).clamp(crate::options::MIN_LUNA_IDLE_SECS, crate::options::MAX_LUNA_IDLE_SECS);
     }
     if let Some(x) = v.get("max_pony_count").and_then(|x| x.as_f64()) {
         o.max_pony_count = (x as i32).clamp(0, 10000);
